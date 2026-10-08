@@ -28,3 +28,24 @@ logic passed. All model checksums remain authoritative and unchanged.
 Source/measurements: docs/evidence/speech-benchmark.json. Live OpenAI behavior,
 phone conversation naturalness and audible interruption recovery are UNRUN,
 pending a secure replacement key and actual dialogue acceptance.
+
+## Wave 5 scripted behavioral component evals
+
+Two executed scripted evals cover trusted prompt/greeting forwarding, multi-turn
+context snapshots and interruption recovery with future old audio discarded.
+Assertions use scripted provider results; they prove orchestration and isolation,
+not OpenAI factual accuracy, instruction following or dialogue quality. Golden
+turn_cases.json is explicitly marked planned; those entries are not automatically
+counted as executed evals. Live tool/knowledge/summary evals remain later waves.
+
+Native capture quality regression: original 120 ms runtime pre-roll clipped quiet
+opening speech (3/18 errors); measured earlier capture preserved initial words
+(1/18 errors), motivating bounded 480 ms runtime pre-roll. Native classifier
+segment policy and recognition threshold are unchanged. This is public fixture
+speech evidence, not captured customer audio or phone playback evidence.
+
+Final combined 318 passing checks include the strict native VAD/STT/TTS pipeline
+through the unchanged Evolution adapter and two scripted conversation evals.
+Native fixture first words survive the 480 ms runtime pre-roll fix. Three existing
+tenant-isolation evals continue to pass. Provider/network tests exercise real
+loopback SSE, not a live OpenAI account. No new human call acceptance is claimed.

@@ -10,7 +10,8 @@ cd /workspace/VASA
 bash scripts/setup.sh
 ```
 
-This installs the frozen dependency lock, starts only the dedicated PostgreSQL
+This installs the frozen dependency lock, verifies/downloads CPU speech models,
+starts only the dedicated PostgreSQL
 and Redis services, and runs explicit migrations. It has been repeated
 successfully in the current environment. Do not remove data volumes on restart.
 
@@ -53,3 +54,12 @@ the human confirms the diagnostic response was audible. UDP relay connectivity
 also requires real validation. Restart and functional checks in the attached
 published environment passed; restoration into a separate fresh task has not
 been tested.
+
+## Current voice wave
+
+The user confirmed the real media gate passed (98 inbound/20 outbound frames,
+tones heard). Do not repeat that diagnostic gate. CPU speech models are verified
+by setup and all native tests execute in CI. See VOICE_RUNTIME.md for the trusted
+worker and the secure OpenAI binding. No live LLM key is injected yet; replace
+any credential shared in chat through secure settings. Prior paragraphs describe
+cloud-local activation status, not the externally accepted real-call deployment.

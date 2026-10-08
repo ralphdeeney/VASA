@@ -9,7 +9,7 @@ The complete governing instructions are in docs/BUILD_HARNESS.md.
 | 2 | Verified Evolution client, instances/calls/media; mappings, registry, connect/QR UI | Verified transport; real answering/media confirmed by user |
 | 3 | Real caller audio in, prerecorded audio out, heard by caller | PASSED: 98 live inbound frames, 20 diagnostic outbound frames, human confirmed tones |
 | 4 | CPU speech, cancellation/barge-in, LLM adapters/context/fallback | Component/native verified; live provider credential pending |
-| 5 | Integrated conversation state machine | Implemented; combined verification in progress, live LLM acceptance pending |
+| 5 | Integrated conversation state machine | Component/native verified (318 combined checks); live OpenAI acceptance pending secure key |
 | 6 | Generic validated tools and tool evals | Blocked by Gate 5 |
 | 7 | Full tenant-owned call/message/tool/knowledge persistence | Blocked by Gate 6 |
 | 8 | Tenant-isolated CPU embeddings/RAG and Knowledge UI | Blocked by Gate 7 |

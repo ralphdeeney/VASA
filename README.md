@@ -144,9 +144,10 @@ Advanced billing, outbound calling, regional infrastructure, enterprise analytic
 VASA is under construction. The authoritative build instructions are in
 [docs/BUILD_HARNESS.md](docs/BUILD_HARNESS.md), with progress in
 [CURRENT_STATE.md](CURRENT_STATE.md) and the wave sequence in
-[BUILD_PLAN.md](BUILD_PLAN.md). The AI voice pipeline must wait for a proven
-bidirectional WhatsApp media transport. No real call or concurrency target has
-been validated yet.
+[BUILD_PLAN.md](BUILD_PLAN.md). The real bidirectional media gate has passed on user-confirmed call evidence.
+CPU speech and the conversation worker are implemented; see
+[voice runtime setup](docs/VOICE_RUNTIME.md). Live LLM conversation acceptance
+and the concurrency target remain unverified.
 
 ### Local development
 
@@ -170,7 +171,8 @@ Redis; they do not silently skip when dependencies are missing.
 
 To stop only these development services, run `docker compose down`. Omitting
 `--volumes` preserves the dedicated database data. Application processes must be
-restarted after a cloud environment restore. VPS deployment is deferred.
+restarted after a cloud environment restore. An isolated rootless VPS deployment
+package is prepared.
 
 
 ### WhatsApp transport preparation
@@ -198,8 +200,9 @@ WhatsApp connection dashboard; provider credentials never reach the browser.
 
 VASA uses Evolution Go Calls, an Evolution Foundation-based fork, for WhatsApp
 transport. The dependency source, notices and manager branding are retained;
-its license/activation conditions apply. Speech reasoning, tools and knowledge
-remain future build waves, blocked by the real media acceptance gate.
+its license/activation conditions apply. CPU speech and conversation orchestration
+use this proven transport; tools, knowledge and complete call persistence remain
+planned later waves.
 
 ### VPS deployment preparation
 

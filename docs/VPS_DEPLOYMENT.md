@@ -219,3 +219,13 @@ frames does not prove audibility; the caller must confirm hearing the response.
 
 This package is a tested deployment preparation, not evidence that the VPS
 was deployed, activated, paired or can carry a real call.
+
+## Voice worker after the accepted media gate
+
+The user has confirmed real bidirectional media acceptance. The deployment now
+prepares checksum-pinned native CPU speech assets in the persistent VASA private
+volume automatically. Keep that volume as well as Evolution/database volumes.
+See [VOICE_RUNTIME.md](VOICE_RUNTIME.md) for secure OpenAI configuration and the
+trusted worker command. The API process does not start answering calls by itself;
+run the operator worker for a selected tenant-owned paired instance. Live AI
+conversation acceptance remains separate from the passed diagnostic gate.

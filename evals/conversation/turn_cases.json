@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "status": "planned_runtime_evals_not_executed",
+  "evidence_rules": "Injected VAD decisions prove segmentation only. Native fixture checks and real-call behavior are separate evidence.",
+  "cases": [
+    {
+      "id": "voice_during_agent_speech",
+      "given": "Agent is speaking; caller begins real speech lasting at least 60 ms of native voiced evidence.",
+      "expect": "VAD started cancels generation and queued local output before submitting the finished user utterance to STT.",
+      "acceptance": "No old response frames are sent after local cancellation; already transmitted remote audio cannot be claimed cleared."
+    },
+    {
+      "id": "transient_voice_window",
+      "given": "One 30 ms window is voiced, followed by silence.",
+      "expect": "No utterance start, no STT submission, no spurious barge-in."
+    },
+    {
+      "id": "normal_endpoint",
+      "given": "Caller speaks then native classification becomes continuously silent.",
+      "expect": "End after five complete silent 60 ms frames; retain up to 120 ms preroll and trailing silence. Native classifier hangover must be measured separately."
+    },
+    {
+      "id": "short_pause",
+      "given": "Caller pauses for 240 ms of classified silence and resumes speech.",
+      "expect": "Preserve one utterance and reset endpoint silence counter."
+    },
+    {
+      "id": "continuous_speech_bound",
+      "given": "Native classifier continues indicating speech beyond 20 seconds.",
+      "expect": "Emit a bounded segment within 20 seconds; future segments never retain completed-turn audio."
+    },
+    {
+      "id": "stt_timeout_after_endpoint",
+      "given": "An ended utterance is queued and STT exceeds its deadline.",
+      "expect": "Surface a controlled runtime failure, release the segment, keep media receive bounded, and do not fabricate recognized speech."
+    },
+    {
+      "id": "disconnect_during_candidate",
+      "given": "Media ends before sufficient voiced evidence starts an utterance.",
+      "expect": "Discard the candidate without starting work or leaking its audio into another call."
+    },
+    {
+      "id": "concurrent_call_isolation",
+      "given": "One call is speaking while another is silent.",
+      "expect": "Each call uses its own VAD and buffers; silent call cannot inherit the speaking call's start or segment."
+    }
+  ]
+}

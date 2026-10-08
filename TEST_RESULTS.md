@@ -116,3 +116,49 @@ Restarted API live/ready/login returned HTTP 200 with DB/cache healthy. Native
 models run in the production image as UID 1000 with read-only root; local TTS
 produced 29 valid frames. Image includes native CPU shared libraries and pinned
 frozen dependencies; no models, secrets or caller recordings are embedded.
+
+## Wave 5 — conversation runtime integration
+
+23 scripted runtime component tests pass: interruptible greeting, streaming
+transcription, per-call context snapshots, bounded history/audio, paced output,
+LLM/TTS/STT/media failures/deadlines, concurrent tenant isolation, late stale
+output rejection and cancellation. These providers are explicitly scripted;
+live reasoning and audible dialogue are not established.
+
+13 trusted worker checks pass, including actual SQL tenant ownership controls,
+foreign instance rejection before upstream work, answer/media/runtime failures,
+metadata privacy and independent hangup/Redis cleanup. A repeated-cancellation
+regression initially skipped Redis deletion; the separately owned bounded
+shielded cleanup task now passes that regression.
+
+The final production image also passed native model initialization and TTS
+under the deployed 512 MiB/one-CPU limits, UID 1000 and read-only root. Produced
+26 valid frames; process maximum RSS was 269164 KiB. This is one controlled
+native smoke, not a simultaneous-call or API-plus-worker load benchmark.
+Worker help and missing-provider preflight returned sanitized actionable output;
+no call was answered when a provider binding was absent.
+
+Native transport integration initially failed the strict first-word assertion.
+Measured WebRTC onset at frame 7 / 420 ms: old 120 ms rolling capture began at
+frame 5 / 300 ms and recognized 3/18 words incorrectly (16.67% WER); earlier capture
+recognized 1/18 (5.56%) and restored AFTER EARLY. Runtime capture pre-roll is now
+bounded 480 ms / eight frames, separate from classifier segment 120 ms pre-roll.
+Deterministic delayed-onset and bounded-idle-buffer regressions verify the fix;
+the strict original pipeline quality assertion is retained. The same wave also
+fixes delayed LISTENING state callbacks overwriting newer response phases with
+state revision guards. Twenty repeated earlier runtime/eval rounds passed 520
+executions; newer pre-roll regressions are included in final verification.
+
+Final combined run: `bash scripts/check.sh --junitxml=reports/voice-wave-final.xml -q`
+passed 318 tests with zero failures/errors/skips; current JUnit inspected. Ruff
+lint/format and strict mypy pass. One existing non-failing Starlette TestClient
+deprecation warning remains. This includes 26 runtime checks, 22 worker checks,
+2 scripted conversation evals and the actual native speech/unchanged-adapter
+local WebSocket pipeline, alongside the previous 158 foundation/deployment checks
+and 109 speech/LLM checks. No disabled suites or silent missing-model skips.
+
+Final production voice image rebuilt after all fixes:
+`sha256:f8a007c0fc8edbb3af36d416a44443782ba728be5763446d74fdbb4d4184bf00`.
+Installed worker help succeeds with read-only root; migrations have no drift.
+Docker Compose deployment config and shell syntax validate without rendering
+credentials. Actual rootless VPS run and live OpenAI dialogue remain unrun.

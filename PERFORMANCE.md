@@ -34,3 +34,8 @@ LLM first token, TTS first frame and speech-end to output times; scripted metric
 must not be presented as real provider/phone timings. Remote queued output,
 dropped frames and playback cannot be observed with the current source API.
 Ten simultaneous CPU calls remain unmeasured; worker admission is bounded to two.
+
+Production single-process native smoke with Docker limits 512 MiB/one CPU:
+STT/TTS initialization and short TTS speech succeeded as UID 1000/read-only root;
+maximum observed process RSS 269164 KiB. This excludes simultaneous calls and
+additional API process memory; do not infer deployment capacity from it.

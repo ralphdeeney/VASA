@@ -98,6 +98,9 @@ services:
       context: ..
       dockerfile: docker/vasa.Dockerfile
     user: "1000:1000"
+    env_file:
+      - path: ../.local/llm.env
+        required: false
     environment:
       VASA_ENVIRONMENT: production
       VASA_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?required}:${POSTGRES_PASSWORD:?required}@postgres:5432/${POSTGRES_DB:?required}
@@ -113,7 +116,7 @@ services:
     ports:
       - "127.0.0.1:${VASA_API_PORT:-18081}:8080"
     volumes:
-      # Local acceptance reports and outbound diagnostic audio only; no caller recording.
+      # Verified CPU models and diagnostic reports; no caller recording.
       - vasa-diagnostics:/opt/vasa/.local
     depends_on:
       postgres:

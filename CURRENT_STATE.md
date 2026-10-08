@@ -1,14 +1,14 @@
 # Current state
 
 Current wave: 5 (Conversation runtime; Wave 4 CPU Voice Intelligence verified)
-Current slice: combined native speech, trusted inbound worker and cancellation verification
-Completed slices: Wave 0 governance/tooling/contracts; Wave 1 tenant PostgreSQL/pgvector/Redis and isolation; Wave 2 verified pinned-source Evolution adapter, authenticated instance mapping/control and QR dashboard; Wave 3 real-call media acceptance; Wave 4 CPU VAD/STT/TTS, bounded native cancellation and streamed LLM adapters
-Active agents: orchestrator integration; Voice/Speech native regression/benchmark; Backend worker preflight; Test/Eval native transport pipeline and conversation cases
+Current slice: Wave 5 component/native verified; live OpenAI acceptance pending secure key
+Completed slices: Wave 0 governance/tooling/contracts; Wave 1 tenant PostgreSQL/pgvector/Redis and isolation; Wave 2 verified pinned-source Evolution adapter, authenticated instance mapping/control and QR dashboard; Wave 3 real-call media acceptance; Wave 4 CPU VAD/STT/TTS, bounded native cancellation and streamed LLM adapters; Wave 5 conversation runtime, trusted inbound worker and native local-WebSocket integration
+Active agents: orchestrator final upload/remote verification; specialist implementations complete
 Blockers:
 - OpenAI is selected primary, but no secure usable binding is injected. The credential pasted in chat must be revoked/replaced through VASA_OPENAI_API_KEY in environment settings, saved/published. Do not store or use the exposed credential. Anthropic is optional. Live LLM acceptance awaits this prerequisite; independent checks continue.
 - Historical cloud SSH to vasa-builder@2.25.172.155:22 was refused before authentication; proxy CONNECT closed without SSH banner. No successful VPS connection or remote changes are claimed. This does not block independent development or negate the user's accepted real call.
-Failed checks: native TTS callback polarity regression identified during review and being corrected against pinned upstream C++ source; no disabled tests or weakened acceptance thresholds.
-Next action: complete combined pipeline/preflight/eval checks, record actual native benchmark, rebuild deployment image, commit verified wave slices and upload. Then use a secure provider binding for live LLM tests; do not repeat the passed diagnostic call gate.
+Failed checks: none outstanding. Native TTS callback polarity, repeated-cancel cache cleanup, delayed state callbacks and clipped initial speech regressions fixed and verified; no tests disabled or acceptance thresholds weakened.
+Next action: securely configure a replacement VASA_OPENAI_API_KEY, save/publish, then verify real OpenAI behavior and proceed to the next permitted graph gate. No need to repeat the passed diagnostic media call. Do not claim Wave 5 live dialogue acceptance or unlock dependent behavioral completion from scripted results.
 
 Real-call Gate 3: PASSED on the user's explicit report on 2026-10-08. Evolution
 answered an actual inbound WhatsApp call; VASA received 98 live caller frames,
@@ -32,15 +32,12 @@ identity persistence with volumes retained. Cloud-local vendor license was
 inactive; this is distinct from the externally passed real call. Rootless VPS
 runtime and active-license survival remain unrun. See TEST_RESULTS.md.
 
-Latest combined preliminary verification: 286 tests passed, no failures/errors/
-skips; Ruff and strict mypy passed. Worker cleanup tests exposed repeated-cancel
-cache cleanup interruption; corrected by a separately owned shielded cleanup
-task, with 13 worker tests now passing. Final expanded checks are pending.
+Final combined verification: 318 passed, zero failures/errors/skips; current JUnit inspected at reports/voice-wave-final.xml. Ruff lint/format and strict mypy pass. Actual WebRTC -> streaming Sherpa STT -> scripted LLM -> local Sherpa TTS -> unchanged Evolution WebSocket adapter passed with first-word accuracy retained. OpenAI/Anthropic loopback SSE components and two scripted dialogue evals passed. Worker preflight/ownership/admission/cleanup checks passed. Live OpenAI remains unrun.
 
 Reusable setup was repeated twice with verified speech assets and dedicated
 healthy PostgreSQL/Redis; migrations report no drift. Production voice image
 built and native CPU TTS generated 29 frames as UID 1000 with read-only root.
-Final image rebuild follows native/worker fixes. Startup instructions and secure
+Final image rebuilt after all fixes; packaged worker help and imports verified. Startup instructions and secure
 provider requirements are saved in the environment draft; saving does not
 publish or inject a key. Existing Ponytail preference and unrestricted network
 are retained. Separate fresh-task restoration is not verified.

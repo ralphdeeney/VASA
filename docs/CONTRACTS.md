@@ -55,7 +55,9 @@ Evolution routes/media/authentication unchanged.
   before any visible output. No partial response mixing or unbounded retries.
 - ConversationRuntime.run(context, media, on_state=None) receives continuously
   while speech recognition, reasoning or playback runs. STT begins during
-  speech, not after endpoint. Generation checks cancel old greeting/LLM/TTS and
+  speech, not after endpoint. A bounded 480 ms runtime capture pre-roll preserves
+  quiet initial words before native onset (VAD segment pre-roll remains 120 ms).
+  Generation checks cancel old greeting/LLM/TTS and
   future output on voiced onset; playback is paced one frame per 60ms. The
   transport has no remote queue-clear primitive and none is invented.
 - RuntimeConfig holds trusted server instructions/greeting and finite call,

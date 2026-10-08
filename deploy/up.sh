@@ -20,6 +20,7 @@ uv run --frozen python scripts/prepare_evolution.py
 compose=(docker compose --env-file .local/vps.env -f deploy/compose.yaml)
 "${compose[@]}" config --quiet
 "${compose[@]}" build
+"${compose[@]}" run --rm --no-deps vasa python scripts/prepare_speech.py
 "${compose[@]}" up -d --wait --wait-timeout 120 postgres redis evolution
 "${compose[@]}" run --rm --no-deps vasa alembic upgrade head
 "${compose[@]}" up -d --wait --wait-timeout 120 vasa
