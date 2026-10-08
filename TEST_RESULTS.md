@@ -106,7 +106,7 @@ No live API reasoning is claimed.
 
 Review caught VITS callback polarity differing from the Python binding's docs;
 the pinned C++ implementation establishes 1=continue/0=stop. Fixed callback and
-actual multi-sentence native regression preserve the final spoken sentence.
+actual multi-sentence native regression preserve both synthesized batches.
 No acceptance threshold changed. The cache rejects symlink ancestors/component
 directories before any network or mutation.
 
@@ -162,3 +162,27 @@ Final production voice image rebuilt after all fixes:
 Installed worker help succeeds with read-only root; migrations have no drift.
 Docker Compose deployment config and shell syntax validate without rendering
 credentials. Actual rootless VPS run and live OpenAI dialogue remain unrun.
+
+Remote CI at code 757e1be: PR run 37857727899 passed; parallel push 37857723710
+failed one supplemental STT word assertion in the TTS completion regression
+(appointment recognized as ultimate; final sentence still generated). Corrected
+the regression to observe actual native VITS batch progress 0.5/1.0 and exact
+resampled frame count; an inverted callback still fails by missing batch 2.
+Native inference/audio remain real. Independent STT fixture WER acceptance is
+unchanged. Updated 20 native checks passed; combined and new remote checks follow.
+
+A subsequent full run also exposed randomized articulation in the separate
+supplemental roundtrip (appointment transcribed as acquaintment). Production
+VITS now disables stochastic noise for consistent business speech, verified with
+byte-identical repeated output and the original appointment/tomorrow assertions.
+All 43 native/VAD checks pass. Native batching regression directly verifies both
+real progress callbacks plus exact resampled frame count and an actual wrong-
+polarity negative control. Independent recording WER remains 7.79%, unchanged.
+Benchmarks are regenerated for this final production setting.
+
+Latest final combined run passed 318 tests, zero failures/errors/skips, with
+original supplemental word assertions and the real batching negative control.
+Ruff/format/strict mypy pass. Final production image
+`sha256:5a89802d2f9addc649b42949c4bf8f0cae3b63d2d776c93d3e7d241120343b70`
+produced 49 identical repeated speech frames under 512 MiB/one CPU/read-only root
+as UID 1000. Updated benchmark evidence records the final zero-noise settings.

@@ -5,7 +5,8 @@ frames and three tones heard. The pinned Evolution transport is unchanged.
 
 CPU speech uses native WebRTC VAD, streaming Zipformer ONNX recognition and
 LJSpeech/Piper ONNX synthesis. Speech models are initialized once per worker;
-utterance state is isolated. Inference runs off the event loop, with bounded
+utterance state is isolated. VITS stochastic noise is disabled for consistent
+business-word articulation; repeated identical input yields identical speech. Inference runs off the event loop, with bounded
 admission and cancellation ownership. TTS produces mono PCM16 16 kHz, 60 ms
 frames. Model preparation verifies pinned hashes and retains source/model cards.
 The bundled espeak-ng phonemizer data retains its upstream license; review the

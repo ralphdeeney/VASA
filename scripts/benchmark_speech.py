@@ -179,7 +179,12 @@ async def benchmark(directory: Path, iterations: int, num_threads: int) -> dict[
                 for name in ["sherpa-onnx", "sherpa-onnx-core", "numpy", "scipy"]
             },
         },
-        "models": {"asr_commit": ASR_COMMIT, "tts_archive_sha256": TTS_ARCHIVE_SHA256},
+        "models": {
+            "asr_commit": ASR_COMMIT,
+            "tts_archive_sha256": TTS_ARCHIVE_SHA256,
+            "tts_noise_scale": 0.0,
+            "tts_noise_scale_w": 0.0,
+        },
         "measurement_policy": {
             "cold_load": "First constructor in this process; OS file cache was not flushed",
             "stt": "Transcribe includes model warmup/final tail; WAV decode/resampling excluded",

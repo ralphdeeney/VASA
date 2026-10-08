@@ -45,3 +45,11 @@ are retained. Separate fresh-task restoration is not verified.
 Work continues on build/vasa-foundation and draft PR #1:
 https://github.com/ralphdeeney/VASA/pull/1. No browser/WhatsApp E2E framework is
 built. All live-provider, real-call and component evidence remain distinct.
+
+Remote verification note: initial PR CI for 757e1be passed; its parallel push CI
+exposed a TTS completeness test coupled to stochastic supplemental STT spelling.
+The corrected native regression directly measures both synthesized batches and
+resampled frame completeness; no recognition acceptance threshold changed.
+Final local verification passed all 318 checks; rebuilt read-only UID 1000
+image verifies deterministic speech. Updated benchmarks are recorded; new remote
+CI verification is in progress.

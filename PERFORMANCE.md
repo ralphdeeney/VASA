@@ -16,13 +16,13 @@ no paced playback and no live WhatsApp latency in these numbers.
 
 | Measurement | P50 | P95 | Samples |
 |---|---:|---:|---:|
-| STT full fixture processing | 482.17 ms | 1090.56 ms | 15 |
-| STT processing/audio duration | 0.06513 | 0.09930 | 15 |
-| TTS full phrase processing | 815.26 ms | 842.74 ms | 5 |
-| TTS first local audio | 158.02 ms | 189.38 ms | 5 |
-| TTS processing/audio duration | 0.26130 | 0.28008 | 5 |
+| STT full fixture processing | 300.39 ms | 823.58 ms | 15 |
+| STT processing/audio duration | 0.04615  | 0.05385  | 15 |
+| TTS full phrase processing | 782.62 ms | 812.77 ms | 5 |
+| TTS first local audio | 193.31 ms | 202.08 ms | 5 |
+| TTS processing/audio duration | 0.26620  | 0.27645  | 5 |
 
-First constructors in benchmark process: STT 316.98 ms, TTS 2316.11 ms; OS file
+First constructors in benchmark process: STT 403.72 ms, TTS 1900.09 ms; OS file
 cache was not flushed, so these are not uncached-disk startup measurements.
 STT includes encoder zero-context warmup/final tail, excludes WAV conversion;
 TTS includes synthesis/resampling/framing. Three unique fixtures have aggregate
@@ -39,3 +39,8 @@ Production single-process native smoke with Docker limits 512 MiB/one CPU:
 STT/TTS initialization and short TTS speech succeeded as UID 1000/read-only root;
 maximum observed process RSS 269164 KiB. This excludes simultaneous calls and
 additional API process memory; do not infer deployment capacity from it.
+
+Final benchmark refreshed after disabling stochastic VITS noise; model hashes
+and independent recognition acceptance unchanged. Native TTS repeated output
+is byte-identical; the report records both noise scales as zero. Measurements
+remain sequential CPU components, not phone/LLM latency or concurrency.

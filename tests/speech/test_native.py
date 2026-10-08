@@ -7,8 +7,9 @@ import tarfile
 import threading
 import time
 import wave
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -114,6 +115,8 @@ async def test_real_tts_audio_format_and_supplemental_recognition(
         for frame in frames
     )
     pcm = b"".join(frame.pcm for frame in frames)
+    repeated = b"".join([frame.pcm async for frame in tts.synthesize(text)])
+    assert repeated == pcm  # Production articulation must not depend on random prosody.
     assert np.max(np.abs(np.frombuffer(pcm, dtype="<i2").astype(np.int32))) > 1000
     updates = [text async for text in stt.transcribe(pcm_frames(pcm))]
     assert "appointment" in updates[-1].lower()
@@ -179,17 +182,42 @@ async def test_native_tts_callback_preserves_multi_sentence_batches(
     providers: tuple[SherpaSTT, SherpaTTS],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    stt, tts = providers
+    _, tts = providers
     text = "Thank you for calling. Your appointment is confirmed for tomorrow morning."
-    # Exercise actual VITS batching rather than hiding callback polarity behind
-    # the normal sentence chunker. The native model and audio remain real.
+    native = tts._model
+    batches: list[tuple[int, float]] = []
+
+    class ObserveActualModel:
+        def generate(
+            self, text: str, *, sid: int, speed: float, callback: Callable[[Any, float], int]
+        ) -> Any:
+            def observe(samples: Any, progress: float) -> int:
+                batches.append((len(samples), progress))
+                return callback(samples, progress)
+
+            return native.generate(text, sid=sid, speed=speed, callback=observe)
+
+    # Observe real VITS callbacks, without replacing inference or generated audio.
+    # The configured model emits one sentence per batch. An inverted callback
+    # stops after progress 0.5, before the second actual sentence can be synthesized.
+    monkeypatch.setattr(tts, "_model", ObserveActualModel())
     monkeypatch.setattr("vasa.speech.synthesis.text_chunks", lambda _: [text])
-    audio = b"".join([frame.pcm async for frame in tts.synthesize(text)])
-    updates = [value async for value in stt.transcribe(pcm_frames(audio))]
-    # The final sentence is the regression target: an inverted callback stops
-    # after the first native sentence batch, so these words cannot be spoken.
-    assert "appointment" in updates[-1].lower()
-    assert "morning" in updates[-1].lower()
+    frames = [frame async for frame in tts.synthesize(text)]
+    assert [progress for _, progress in batches] == [0.5, 1.0]
+    samples = sum(count for count, _ in batches)
+    expected_frames = math.ceil(math.ceil(samples * 16000 / 22050) / 960)
+    assert len(frames) == expected_frames
+    assert all(len(frame.pcm) == 1920 for frame in frames)
+    stopped: list[float] = []
+
+    def wrong_polarity(samples: Any, progress: float) -> int:
+        stopped.append(progress)
+        return 0
+
+    # Actual native negative control establishes that the regression detects
+    # early stopping, independently of synthesized wording or STT substitutions.
+    await asyncio.to_thread(native.generate, text, sid=0, speed=1.0, callback=wrong_polarity)
+    assert stopped == [0.5]
 
 
 async def test_native_offload_cancellation_keeps_admission_until_inference_finishes() -> None:

@@ -46,6 +46,10 @@ class SherpaTTS:
             model=str(model_dir / "en_US-ljspeech-medium.onnx"),
             tokens=str(model_dir / "tokens.txt"),
             data_dir=str(model_dir / "espeak-ng-data"),
+            # Stable business-word articulation; random prosody made otherwise
+            # identical phrases inconsistently intelligible in native roundtrips.
+            noise_scale=0.0,
+            noise_scale_w=0.0,
         )
         config = native.OfflineTtsConfig(
             model=native.OfflineTtsModelConfig(vits=vits, num_threads=num_threads, provider="cpu"),
