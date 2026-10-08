@@ -35,9 +35,9 @@ The source's default Docker ignore excludes tests; VASA retains them. Build runs
 
 The checked-in patch removes credential-bearing request query logging, token cache logs, partial license-key prints and registration URL logs; panic logging emits a fixed event without credential-bearing request dumps. It changes no API/media/licensing behavior. Source LICENSE/NOTICE and upstream branding are preserved.
 
-Current build blocker: official Go module ZIP downloads redirect to storage.googleapis.com, denied by the cloud network policy. Trust was corrected after the initial missing-CA failure; checksums/signatures were not disabled. Source tests, compile and provider startup therefore remain unrun. Compose configuration and source preparation were validated; a valid recipe is not a successful deployment.
+After user publication on 2026-10-08, official Go module ZIP downloads and verification passed. Call registry/stream tests, call-package vet, CGO server compilation, Docker image creation and healthy provider startup completed successfully. Trust remains enabled through the host-authoritative CA bundle; checksums/signatures were not disabled. See TEST_RESULTS.md for the recorded image identity and VASA checks.
 
-Saved network additions: storage.googleapis.com, license.evolutionfoundation.com.br, api.github.com. Apply/publish environment settings before retrying the affected build/license/PR operations.
+The previous artifact-download denial is resolved. The user-published policy is unrestricted, and GitHub API access also works. The agent has not changed that policy. The current prerequisite is an inactive vendor license: actual instance provisioning returns 503 LICENSE_REQUIRED. There is no remaining need to repeat the earlier domain-publication action.
 
 ## License, pairing and media prerequisites
 
