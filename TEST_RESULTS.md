@@ -83,3 +83,36 @@ returned the same error. The existing configured HTTP(S) proxy accepted CONNECT
 but closed after an SSH identification string, without a server SSH banner.
 No authentication attempt reached the server, no SSH identity is available in
 this environment, and no password/private key was requested.
+
+## Real-call bidirectional acceptance — PASSED
+
+2026-10-08: the user confirmed an actual inbound WhatsApp call was answered
+through Evolution Go Calls. VASA received 98 live caller audio frames and sent
+20 diagnostic audio frames. The human caller confirmed hearing the three rising
+diagnostic tones. Gate 3 is PASSED and permits Wave 4 progression. This evidence
+comes from the user's real-world acceptance report; no additional cloud call,
+latency trace or active-license persistence check is claimed.
+
+## Wave 4 — native CPU Voice Intelligence
+
+2026-10-08: 23 VAD tests, 20 native speech/security/lifecycle tests and 66
+OpenAI/Anthropic/local SSE checks passed without skips. Recognition uses three
+independent checksum-pinned upstream recordings; native inference actually runs.
+Audio resampling/framing, per-utterance isolation, actual inference cancellation,
+checksum corruption and archive/path/symlink defenses are exercised. Provider
+stream bounds, context isolation, malformed/tool responses, cancellation,
+timeouts and failover-before-output are verified with loopback HTTP servers.
+No live API reasoning is claimed.
+
+Review caught VITS callback polarity differing from the Python binding's docs;
+the pinned C++ implementation establishes 1=continue/0=stop. Fixed callback and
+actual multi-sentence native regression preserve the final spoken sentence.
+No acceptance threshold changed. The cache rejects symlink ancestors/component
+directories before any network or mutation.
+
+`bash scripts/setup.sh` repeated twice; verified speech cache reused, dedicated
+PostgreSQL/Redis healthy, migrations applied and Alembic check found no drift.
+Restarted API live/ready/login returned HTTP 200 with DB/cache healthy. Native
+models run in the production image as UID 1000 with read-only root; local TTS
+produced 29 valid frames. Image includes native CPU shared libraries and pinned
+frozen dependencies; no models, secrets or caller recordings are embedded.

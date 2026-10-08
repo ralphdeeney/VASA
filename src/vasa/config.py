@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, SecretStr
@@ -19,3 +20,9 @@ class Settings(BaseSettings):
     evolution_admin_key: SecretStr = SecretStr("")
     evolution_stream_key: SecretStr = SecretStr("")
     evolution_instance_key: SecretStr = SecretStr("")
+    speech_model_root: Path = Path(".local/speech")
+    openai_api_key: SecretStr = SecretStr("")
+    anthropic_api_key: SecretStr = SecretStr("")
+    openai_model: str = "gpt-4o-mini"
+    anthropic_model: str = "claude-sonnet-4-6"
+    llm_primary: Literal["openai", "anthropic"] = "openai"

@@ -27,4 +27,47 @@ Pinned Calls source: luis-kovi/evolution-go-calls at e21ce0dd7634f3047410c893b5e
 - Dashboard Agent owns src/vasa/dashboard/ only; exports router serving /login and authenticated /dashboard (dependency vasa.control.auth.require_context). Use no external CDN/dependencies, no browser secret values, textContent for untrusted fields, no raw HTML injection. Login form, logout, instance list/create/connect/disconnect, QR/status polling with CSRF. Model-provider/knowledge/calls screens wait for future waves.
 - Test/Eval owns tests/control/ and evals/tenant_isolation/test_control_access.py; test real auth/CSRF/rate limits/tenant mapping using app.state.evolution stub with positive upstream call controls; mocks are component evidence, never real-call acceptance.
 
-Shared files and contracts change only through the orchestrator. Evolution license activation and WhatsApp/network human prerequisites do not count as passed from mocks. The AI pipeline remains blocked by Gate 3.
+Shared files and contracts change only through the orchestrator. Evolution license activation and WhatsApp/network human prerequisites do not count as passed from mocks. Gate 3 was subsequently satisfied by user-confirmed real-call evidence below.
+
+## Wave 4/5 freeze — CPU speech and conversation
+
+Gate 3 PASSED on the user's actual-call report: 98 live inbound frames, 20
+diagnostic outbound frames, caller confirmed tones audible. Keep all verified
+Evolution routes/media/authentication unchanged.
+
+- Existing STTProvider and TTSProvider protocols remain unchanged. SherpaSTT
+  receives an asynchronous PCM frame stream and yields cumulative partial text;
+  the final nonempty update after finite input is the completed utterance.
+  Each call owns its native recognizer stream; models are shared with bounded
+  offload and cancellation-safe worker capacity.
+- SherpaSTT(model_dir: Path, num_threads=2, max_streams=10) and
+  SherpaTTS(model_dir: Path, num_threads=2, max_concurrency=2) expose aclose().
+  TTS is local ONNX CPU inference and returns PCM16 mono/16000Hz/1920-byte
+  frames. Caller audio is not recorded. Models and source licenses/checksums
+  are managed by scripts/prepare_speech.py outside Git.
+- StreamingVAD.process(AudioFrame) -> VadResult(started, ended, speech,
+  segment), finish() -> segment or None. VadConfig: native WebRTC
+  aggressiveness 2, 60ms minimum onset, 300ms silence endpoint, 120ms preroll,
+  20-second maximum utterance. VAD state is private to a call.
+- LLMProvider yields {type: text, text: delta}. Unexpected tool output is
+  rejected until Wave 6. OpenAIProvider/AnthropicProvider use reusable bounded
+  streaming HTTP clients and aclose(); FallbackProvider changes provider only
+  before any visible output. No partial response mixing or unbounded retries.
+- ConversationRuntime.run(context, media, on_state=None) receives continuously
+  while speech recognition, reasoning or playback runs. STT begins during
+  speech, not after endpoint. Generation checks cancel old greeting/LLM/TTS and
+  future output on voiced onset; playback is paced one frame per 60ms. The
+  transport has no remote queue-clear primitive and none is invented.
+- RuntimeConfig holds trusted server instructions/greeting and finite call,
+  turn, history, response, queue and provider limits. Histories and native
+  streams never cross tenant/call boundaries. Diagnostic metrics carry counts
+  and local times, not caller transcript/audio or secrets.
+- The outer voice worker resolves user/tenant/instance ownership from SQL,
+  preflights models/provider configuration, answers and opens media using the
+  existing EvolutionClient, updates expiring call state and always cleans up.
+  No incoming event can choose its own tenant.
+
+Speech accuracy acceptance is an aggregate word error rate <=0.15 over at least
+three independent pinned English fixtures; native TTS must produce bounded
+nonempty valid speech frames. Native measurements and scripted model component
+evals are distinct from live LLM behavior and real-phone dialogue acceptance.

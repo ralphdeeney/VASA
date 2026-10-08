@@ -18,12 +18,15 @@ COPY --chown=1000:1000 src/ ./src/
 RUN uv sync --frozen --no-dev --no-editable --no-cache
 
 FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 AS runtime
+RUN apt-get update && apt-get install -y --no-install-recommends libstdc++6 libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
 RUN groupadd --gid 1000 vasa && useradd --uid 1000 --gid 1000 --create-home vasa
 COPY --from=build /usr/local/share/vasa-host-trust.pem /usr/local/share/vasa-host-trust.pem
 COPY --from=build --chown=0:0 /opt/vasa/.venv /opt/vasa/.venv
 COPY --chmod=0755 --chown=0:0 migrations/ /opt/vasa/migrations/
 COPY --chmod=0644 --chown=0:0 alembic.ini /opt/vasa/alembic.ini
 COPY --chmod=0644 --chown=0:0 scripts/evolution_status.py /opt/vasa/scripts/evolution_status.py
+COPY --chmod=0644 --chown=0:0 scripts/prepare_speech.py /opt/vasa/scripts/prepare_speech.py
 RUN find /opt/vasa/migrations -type f -exec chmod 0644 {} + \
     && chmod 0755 /opt/vasa/scripts \
     && mkdir /opt/vasa/.local && chown 1000:1000 /opt/vasa/.local \

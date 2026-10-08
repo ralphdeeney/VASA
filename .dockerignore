@@ -9,6 +9,7 @@
 !migrations/**
 !scripts/
 !scripts/evolution_status.py
+!scripts/prepare_speech.py
 !docker/
 !docker/vasa.Dockerfile
 !.local/

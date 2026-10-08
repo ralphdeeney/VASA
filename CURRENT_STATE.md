@@ -1,22 +1,50 @@
 # Current state
 
-Current wave: 2 (source build and provider startup verified; activation pending)
-Current slice: rootless VPS deployment package prepared; SSH connectivity prerequisite
-Completed slices: Wave 0 governance/tooling/contracts; Wave 1 tenant PostgreSQL/pgvector/Redis and isolation; Wave 2 typed verified-source adapter, authenticated instance mapping/control, login/QR/status dashboard, unit/component/real-service checks; manual media probe preparation
-Active agents: none; deployment specialists finished; verified package ready for upload
+Current wave: 5 (Conversation runtime; Wave 4 CPU Voice Intelligence verified)
+Current slice: combined native speech, trusted inbound worker and cancellation verification
+Completed slices: Wave 0 governance/tooling/contracts; Wave 1 tenant PostgreSQL/pgvector/Redis and isolation; Wave 2 verified pinned-source Evolution adapter, authenticated instance mapping/control and QR dashboard; Wave 3 real-call media acceptance; Wave 4 CPU VAD/STT/TTS, bounded native cancellation and streamed LLM adapters
+Active agents: orchestrator integration; Voice/Speech native regression/benchmark; Backend worker preflight; Test/Eval native transport pipeline and conversation cases
 Blockers:
-- Evolution vendor license is inactive. Real POST /instance/create returns HTTP 503 LICENSE_REQUIRED, preventing provisioning/pairing/calls.
-- User confirmed vasa-builder@2.25.172.155 port 22 and verified externally that SSH is listening. Retry from this cloud environment is still refused before authentication. The configured proxy accepts CONNECT but closes when SSH begins, without a server banner. No successful SSH session or VPS changes. No SSH agent/identity is configured here, but connectivity must work before authentication can be tested.
-- WhatsApp pairing and real inbound-call gate are unrun; dynamic UDP relay connectivity is unverified
-Failed checks: none outstanding in source build or VASA verification. Earlier artifact-download denial is resolved after user publication. License enforcement is an expected prerequisite, not a passing call test.
-Next action: establish a supported SSH route from this environment to the confirmed VPS, then provision a dedicated public-key identity securely if needed (never request a password/private key in chat). Verify existing rootless Docker and dedicated project ownership, then deploy /opt/vasa using deploy/up.sh. Complete official activation on that persistent VPS via the documented SSH tunnel; do not activate the temporary cloud instance. Bootstrap a client login, pair WhatsApp and run the manual incoming-call probe. Wait for human audibility confirmation before Gate 3 progression.
+- OpenAI is selected primary, but no secure usable binding is injected. The credential pasted in chat must be revoked/replaced through VASA_OPENAI_API_KEY in environment settings, saved/published. Do not store or use the exposed credential. Anthropic is optional. Live LLM acceptance awaits this prerequisite; independent checks continue.
+- Historical cloud SSH to vasa-builder@2.25.172.155:22 was refused before authentication; proxy CONNECT closed without SSH banner. No successful VPS connection or remote changes are claimed. This does not block independent development or negate the user's accepted real call.
+Failed checks: native TTS callback polarity regression identified during review and being corrected against pinned upstream C++ source; no disabled tests or weakened acceptance thresholds.
+Next action: complete combined pipeline/preflight/eval checks, record actual native benchmark, rebuild deployment image, commit verified wave slices and upload. Then use a secure provider binding for live LLM tests; do not repeat the passed diagnostic call gate.
 
-Latest post-publication verification: 110 passing checks, zero failures/errors/skips, including 3 tenant-isolation evals; Ruff and strict mypy pass. Current JUnit: reports/published-restore.xml. Alembic no drift. Restarted API /health/live, /health/ready and /login return HTTP 200; database and Redis are healthy. Evolution Go modules download/verify, call-package tests/vet, CGO server compilation and Docker startup all passed. Real /server/ok returns 200, /license/status is inactive, and instance provisioning is blocked with 503 LICENSE_REQUIRED. No AI/speech/tools/knowledge implementation, live media gate or voice benchmark is claimed.
+Real-call Gate 3: PASSED on the user's explicit report on 2026-10-08. Evolution
+answered an actual inbound WhatsApp call; VASA received 98 live caller frames,
+sent 20 diagnostic frames and the human caller heard three rising tones. This
+is user-supplied real-world evidence, not a new cloud call. No dropped-frame,
+latency trace, activated-license persistence or concurrency result is inferred.
+The proven Evolution transport remains unchanged.
 
-VPS preparation and connection are now authorized, superseding the earlier deferral. deploy/compose.yaml, deploy/up.sh, scripts/prepare_vps.py, docker/vasa.Dockerfile and docs/VPS_DEPLOYMENT.md provide isolated rootless deployment, required private credentials, stable database/license volumes, localhost port checks and exact SSH activation commands. No successful VPS connection, rootless VPS runtime or actual vendor activation has been verified.
+Wave 4 initial native accuracy: 6 errors / 77 reference words across three
+independent pinned recordings, aggregate WER 7.79%, within the predefined 15%
+threshold. Native CPU speech and scripted OpenAI/Anthropic SSE component checks
+pass. Wave 5 reader, turn detection, per-call context, response chunking, pacing,
+interruption generation guards and bounded cleanup are implemented. Tools fail
+closed until Wave 6. Full persistence remains Wave 7; worker logs omit caller
+identifiers, audio and transcripts. Live AI-call naturalness is unverified.
 
-Latest deployment slice checks: 158 passed, zero failures/errors/skips; Ruff and strict mypy pass. App image built with pinned Python/uv/frozen dependencies as UID 1000. Separate cloud Docker project vasa-package-check passed migrations, four healthy services, actual Manager/login/ready HTTP 200, and provider status/license checks. Internal proxy precedence fixed with both NO_PROXY and no_proxy. Stored runtime_configs instance identity survived down/up without deleting volumes; activated license persistence remains unrun. Read-only application root and a private diagnostic volume were verified. The isolated smoke containers were stopped; volumes preserved. These checks used the cloud's existing Docker engine, not a rootless VPS.
+Earlier foundation/deployment evidence: 158 checks passed without skips; pinned
+Evolution source tests/vet/build and healthy cloud startup passed. A separate
+cloud deployment project passed migrations, HTTP readiness/Manager and database
+identity persistence with volumes retained. Cloud-local vendor license was
+inactive; this is distinct from the externally passed real call. Rootless VPS
+runtime and active-license survival remain unrun. See TEST_RESULTS.md.
 
-No automated browser/WhatsApp E2E framework is built. Work is uploaded to build/vasa-foundation and draft PR #1 is open at https://github.com/ralphdeeney/VASA/pull/1. Earlier GitHub Verify run 37818843714 passed for code/evidence commit 1dd7714; current checks are shown on the PR. Restoration into a separate fresh task remains unverified; the attached published environment's service restart and functional checks passed.
+Latest combined preliminary verification: 286 tests passed, no failures/errors/
+skips; Ruff and strict mypy passed. Worker cleanup tests exposed repeated-cancel
+cache cleanup interruption; corrected by a separately owned shielded cleanup
+task, with 13 worker tests now passing. Final expanded checks are pending.
 
-Cloud publication is confirmed by configuration metadata and actual successful operations. The published installation/startup instructions remain usable; user-published network policy is unrestricted and has not been changed by the agent. No additional network-setting action is needed for the previously blocked Go/GitHub operations. See docs/CLOUD_ENVIRONMENT.md for reproducible commands and limitations.
+Reusable setup was repeated twice with verified speech assets and dedicated
+healthy PostgreSQL/Redis; migrations report no drift. Production voice image
+built and native CPU TTS generated 29 frames as UID 1000 with read-only root.
+Final image rebuild follows native/worker fixes. Startup instructions and secure
+provider requirements are saved in the environment draft; saving does not
+publish or inject a key. Existing Ponytail preference and unrestricted network
+are retained. Separate fresh-task restoration is not verified.
+
+Work continues on build/vasa-foundation and draft PR #1:
+https://github.com/ralphdeeney/VASA/pull/1. No browser/WhatsApp E2E framework is
+built. All live-provider, real-call and component evidence remain distinct.

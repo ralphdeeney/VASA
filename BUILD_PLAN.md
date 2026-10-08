@@ -6,10 +6,10 @@ The complete governing instructions are in docs/BUILD_HARNESS.md.
 | --- | --- | --- |
 | 0 | Repository/governance, config, contracts, checks, health, eval framework | Verified |
 | 1 | PostgreSQL/Redis, tenant foundations, test fixtures and isolation evals | Verified |
-| 2 | Verified Evolution client, instances/calls/media; mappings, registry, connect/QR UI | Components/source build/provider startup verified; license activation pending |
-| 3 | Real caller audio in, prerecorded audio out, heard by caller | Probe prepared; human pairing/real-call gates unrun; downstream blocked |
-| 4 | CPU speech, cancellation/barge-in, LLM adapters/context/fallback | Blocked by Gate 3 |
-| 5 | Integrated conversation state machine | Blocked by Gate 4 |
+| 2 | Verified Evolution client, instances/calls/media; mappings, registry, connect/QR UI | Verified transport; real answering/media confirmed by user |
+| 3 | Real caller audio in, prerecorded audio out, heard by caller | PASSED: 98 live inbound frames, 20 diagnostic outbound frames, human confirmed tones |
+| 4 | CPU speech, cancellation/barge-in, LLM adapters/context/fallback | Component/native verified; live provider credential pending |
+| 5 | Integrated conversation state machine | Implemented; combined verification in progress, live LLM acceptance pending |
 | 6 | Generic validated tools and tool evals | Blocked by Gate 5 |
 | 7 | Full tenant-owned call/message/tool/knowledge persistence | Blocked by Gate 6 |
 | 8 | Tenant-isolated CPU embeddings/RAG and Knowledge UI | Blocked by Gate 7 |
@@ -22,5 +22,6 @@ Current Wave 2 deployment preparation: isolated rootless VPS package and
 activation tunnel procedure implemented and cloud component-verified. Actual
 SSH deployment is blocked because the confirmed address refuses port 22 from
 this environment; a proxy-route probe also closes before the SSH handshake.
-The user verified externally that SSH is listening. Licensing will be completed on
-the persistent VPS instead of the temporary cloud instance. Gate 3 is unchanged.
+The user verified externally that SSH is listening. These historical deployment
+limitations do not block independent speech/runtime development. The user's
+subsequent real-call acceptance satisfies Gate 3; keep the proven transport.
