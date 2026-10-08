@@ -50,3 +50,23 @@ class CallSession:
     external_call_id: str
     state: CallState = CallState.RINGING
     metadata: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class ConnectionStatus:
+    connected: bool
+    logged_in: bool
+    name: str
+
+
+@dataclass(frozen=True, slots=True)
+class PairingQR:
+    qrcode: str
+    passkey_stage: str
+
+
+@dataclass(frozen=True, slots=True)
+class IncomingCall:
+    instance_id: str
+    call_id: str
+    caller_jid: str

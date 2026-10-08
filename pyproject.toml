@@ -12,6 +12,7 @@ dependencies = [
   "redis>=5.2,<7",
   "alembic>=1.15,<2",
   "httpx>=0.28,<1",
+  "websockets>=15,<17",
 ]
 
 [dependency-groups]

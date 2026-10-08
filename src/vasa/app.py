@@ -2,7 +2,8 @@ import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from redis.asyncio import Redis
 from redis.asyncio.retry import Retry
@@ -10,7 +11,11 @@ from redis.backoff import NoBackoff
 from sqlalchemy import text
 
 from vasa.config import Settings
+from vasa.control.routes import router as control_router
+from vasa.dashboard.router import router as dashboard_router
+from vasa.evolution.client import EvolutionCalls
 from vasa.logging import configure_logging
+from vasa.request_limits import ControlBodyLimit
 from vasa.storage.cache import CallRegistry
 from vasa.storage.database import Database
 
@@ -26,6 +31,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             timeout_seconds=configuration.dependency_timeout_seconds,
         )
         cache: Redis | None = None
+        evolution: EvolutionCalls | None = None
         try:
             cache = Redis.from_url(
                 configuration.redis_url.get_secret_value(),
@@ -39,15 +45,44 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             application.state.database = database
             application.state.redis = cache
             application.state.call_registry = CallRegistry(cache)
+            application.state.settings = configuration
+            keys = (
+                configuration.evolution_admin_key.get_secret_value(),
+                configuration.evolution_stream_key.get_secret_value(),
+                configuration.evolution_instance_key.get_secret_value(),
+            )
+            if all(keys):
+                evolution = EvolutionCalls(configuration.evolution_base_url, *keys)
+            application.state.evolution = evolution
             yield
         finally:
             try:
-                if cache is not None:
-                    await cache.aclose()
+                try:
+                    if evolution is not None:
+                        await evolution.aclose()
+                finally:
+                    if cache is not None:
+                        await cache.aclose()
             finally:
                 await database.aclose()
 
     app = FastAPI(title="VASA", version="0.1.0", lifespan=lifespan)
+    app.add_middleware(ControlBodyLimit)
+    app.include_router(control_router)
+    app.include_router(dashboard_router)
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid_request(request: Request, error: RequestValidationError) -> JSONResponse:
+        # Pydantic's default errors include raw input, which can be a login password.
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": [
+                    {"loc": list(item["loc"]), "type": item["type"], "msg": "Invalid request"}
+                    for item in error.errors()
+                ]
+            },
+        )
 
     @app.get("/health/live")
     async def live() -> dict[str, str]:

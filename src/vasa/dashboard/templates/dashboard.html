@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WhatsApp · VASA</title>
+    <link rel="stylesheet" href="/dashboard/assets/styles.css">
+    <script src="/dashboard/assets/dashboard.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="wordmark" href="/dashboard" aria-label="VASA dashboard">VASA<span
+         class="brand-dot" aria-hidden="true"></span></a>
+      <div class="account-actions">
+        <span id="account-email" class="small muted"></span>
+        <button id="logout" class="button secondary compact" type="button" disabled>Sign out</button>
+      </div>
+    </header>
+    <main class="workspace">
+      <div class="page-heading">
+        <p class="eyebrow">Your workspace</p>
+        <h1>WhatsApp connections</h1>
+        <p class="muted">Connect your business account and keep track of its connection.</p>
+      </div>
+      <p id="page-status" class="small muted" role="status" aria-live="polite">Loading your workspace…</p>
+      <p id="page-error" class="notice error" role="alert" tabindex="-1" hidden></p>
+      <div class="connection-layout">
+        <section class="card connection-list" aria-labelledby="connections-heading">
+          <h2 id="connections-heading">Your accounts</h2>
+          <p id="empty-state" class="muted small" hidden>Add your first account to get started.</p>
+          <ul id="instance-list" class="instance-list" aria-label="WhatsApp accounts"></ul>
+          <form id="create-form" class="create-form">
+            <label for="instance-name">Account name</label>
+            <input id="instance-name" name="name" placeholder="e.g. Customer support"
+                   maxlength="200" required disabled>
+            <button id="create-submit" class="secondary" type="submit" disabled>Add account</button>
+          </form>
+        </section>
+        <section class="card connection-detail" aria-labelledby="selected-name">
+          <div class="detail-heading">
+            <div>
+              <p class="eyebrow">Connection</p>
+              <h2 id="selected-name">Choose an account</h2>
+            </div>
+            <span id="connection-badge" class="badge">No account selected</span>
+          </div>
+          <p id="connection-message" class="muted">Select an account or add one to connect WhatsApp.</p>
+          <div id="connection-controls" class="button-row" hidden>
+            <button id="connect" type="button" disabled>Connect WhatsApp</button>
+            <button id="disconnect" class="secondary" type="button" disabled>Disconnect</button>
+            <button id="refresh" class="secondary" type="button" disabled>Refresh status</button>
+          </div>
+          <div id="qr-panel" class="qr-panel" hidden>
+            <div class="qr-image-wrap"><img id="qr-image" alt="QR code to connect your WhatsApp account"
+                width="256" height="256" hidden></div>
+            <div class="qr-instructions">
+              <h3>Link your WhatsApp account</h3>
+              <ol>
+                <li>Open WhatsApp on your phone.</li>
+                <li>Open <strong>Linked devices</strong> in Settings or the menu.</li>
+                <li>Tap <strong>Link a device</strong> and scan this code.</li>
+              </ol>
+              <p class="small muted">Keep this page open. It updates when your account connects.</p>
+            </div>
+          </div>
+          <p id="connection-status" class="small muted" role="status" aria-live="polite"></p>
+          <p id="connection-error" class="notice error" role="alert" tabindex="-1" hidden></p>
+        </section>
+      </div>
+      <noscript><p class="notice">Enable JavaScript to manage your WhatsApp connections.</p></noscript>
+    </main>
+  </body>
+</html>

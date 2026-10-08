@@ -5,7 +5,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="VASA_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_prefix="VASA_", env_file=(".local/vasa.env", ".env"), extra="ignore"
+    )
 
     environment: Literal["development", "test", "production"] = "development"
     database_url: SecretStr = SecretStr(
@@ -13,3 +15,7 @@ class Settings(BaseSettings):
     )
     redis_url: SecretStr = SecretStr("redis://127.0.0.1:6389/0")
     dependency_timeout_seconds: float = Field(default=3.0, gt=0, le=30)
+    evolution_base_url: str = "http://127.0.0.1:4000"
+    evolution_admin_key: SecretStr = SecretStr("")
+    evolution_stream_key: SecretStr = SecretStr("")
+    evolution_instance_key: SecretStr = SecretStr("")

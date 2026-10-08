@@ -1,5 +1,5 @@
 # Eval results
 
-2026-10-08: 2 Wave 1 tenant-isolation evals passed against real PostgreSQL/Redis with positive own-tenant controls. Guessed foreign agent ids/list access and foreign call-state read/delete attempts cannot expose or destroy another tenant's state through the implemented repositories.
+2026-10-08: 3 tenant-isolation evals passed. Two cover explicit tenant SQL agents and Redis call-state reads/deletes; one exercises authenticated foreign-instance API access denied with HTTP 404 before any upstream operation, with own-tenant positive controls. Real PostgreSQL/Redis and server-derived session contexts are used.
 
-Conversation, tool, knowledge, summary and latency evals are unrun and depend on later waves. There are no claims about those components or real call media. Planned golden cases are not passing results.
+Conversation, tool, knowledge, summary and latency evals are UNRUN because those implementation waves are blocked by real media proof. Planned golden cases are not passing results. Local WebSocket and diagnostic probe tests are component checks, not real-call evidence.

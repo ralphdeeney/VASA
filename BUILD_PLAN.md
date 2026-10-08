@@ -6,8 +6,8 @@ The complete governing instructions are in docs/BUILD_HARNESS.md.
 | --- | --- | --- |
 | 0 | Repository/governance, config, contracts, checks, health, eval framework | Verified |
 | 1 | PostgreSQL/Redis, tenant foundations, test fixtures and isolation evals | Verified |
-| 2 | Verified Evolution client, instances/calls/media; mappings, registry, connect/QR UI | Source verified; implementation in progress |
-| 3 | Real caller audio in, prerecorded audio out, heard by caller | Human pairing and real-call gates; blocks downstream work |
+| 2 | Verified Evolution client, instances/calls/media; mappings, registry, connect/QR UI | Components verified; live build/license integration blocked |
+| 3 | Real caller audio in, prerecorded audio out, heard by caller | Probe prepared; human pairing/real-call gates unrun; downstream blocked |
 | 4 | CPU speech, cancellation/barge-in, LLM adapters/context/fallback | Blocked by Gate 3 |
 | 5 | Integrated conversation state machine | Blocked by Gate 4 |
 | 6 | Generic validated tools and tool evals | Blocked by Gate 5 |

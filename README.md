@@ -171,3 +171,32 @@ Redis; they do not silently skip when dependencies are missing.
 To stop only these development services, run `docker compose down`. Omitting
 `--volumes` preserves the dedicated database data. Application processes must be
 restarted after a cloud environment restore. VPS deployment is deferred.
+
+
+### WhatsApp transport preparation
+
+The Calls integration pins the reviewed PR #1 commit rather than the fork's
+main branch. See [the verified contracts and blockers](docs/EVOLUTION_TRANSPORT.md).
+After network settings permit the required downloads:
+
+```bash
+bash scripts/evolution-setup.sh
+uv run --frozen python scripts/evolution_status.py
+```
+
+Evolution vendor license activation precedes pairing. Generated service keys live
+in ignored `.local/` files with restrictive permissions; they are not printed or
+committed. Once services are available, create a client login without putting its
+password on the command line:
+
+```bash
+uv run --frozen python -m vasa.control.bootstrap --email owner@example.com --tenant "My business"
+```
+
+The command prompts securely. The API serves a login page and an authenticated
+WhatsApp connection dashboard; provider credentials never reach the browser.
+
+VASA uses Evolution Go Calls, an Evolution Foundation-based fork, for WhatsApp
+transport. The dependency source, notices and manager branding are retained;
+its license/activation conditions apply. Speech reasoning, tools and knowledge
+remain future build waves, blocked by the real media acceptance gate.
