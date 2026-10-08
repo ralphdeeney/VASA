@@ -6,6 +6,6 @@ FastAPI hosts control APIs. PostgreSQL/pgvector owns durable tenant data. Redis 
 
 n8n is only an external business-action integration. No provider/admin secrets reach browser clients. Audio is not recorded by default. Full call states are in src/vasa/contracts/models.py; transitions, cancellation and resource cleanup are implemented in later transport/runtime waves.
 
-Deployment is deferred. Current work uses the isolated cloud checkout as non-root agent, with a dedicated compose project binding services to loopback only. No VPS changes are authorized for this phase.
+Deployment preparation is authorized. Cloud development uses a dedicated compose project; deploy/compose.yaml separately defines the vasa-vps project for /opt/vasa and the existing rootless vasa-builder user. APIs bind to loopback only; database/cache are private network services. Stable credentials and PostgreSQL volumes preserve Evolution session/runtime license data. Direct VPS connection was attempted but port 22 refused it; no VPS changes have been made.
 
 Do not implement a supposed Evolution Go wire protocol until verified. The ordinary Evolution API is not sufficient evidence of bidirectional call audio support.

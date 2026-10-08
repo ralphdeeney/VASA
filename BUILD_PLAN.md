@@ -17,3 +17,10 @@ The complete governing instructions are in docs/BUILD_HARNESS.md.
 | 10 | Combined tests/evals, profiling and repeated-call stabilization | Blocked by prior gates |
 
 Wave 1 establishes only the database models needed for tenancy; Wave 7 expands persistence. Wave 6 defines knowledge_search's contract, with functional knowledge retrieval verified after Wave 8. Thresholds must be documented before behavioral/performance gates; no invented passing results.
+
+Current Wave 2 deployment preparation: isolated rootless VPS package and
+activation tunnel procedure implemented and cloud component-verified. Actual
+SSH deployment is blocked because the confirmed address refuses port 22 from
+this environment; a proxy-route probe also closes before the SSH handshake.
+The user verified externally that SSH is listening. Licensing will be completed on
+the persistent VPS instead of the temporary cloud instance. Gate 3 is unchanged.

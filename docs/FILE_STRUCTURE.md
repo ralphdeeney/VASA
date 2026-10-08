@@ -7,6 +7,7 @@ VASA/
 ├── pyproject.toml, uv.lock, compose.yaml, alembic.ini
 ├── docs/                    # Full harness, contracts, transport evidence
 ├── docker/                  # Pinned-source build recipe and logging-only patch
+├── deploy/                  # Rootless VPS Compose, private-env template and startup
 ├── migrations/              # Tenant foundation, ownership FK, users/instances
 ├── scripts/                 # Setup, verification, source preparation and status
 ├── src/vasa/

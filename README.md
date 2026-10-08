@@ -200,3 +200,12 @@ VASA uses Evolution Go Calls, an Evolution Foundation-based fork, for WhatsApp
 transport. The dependency source, notices and manager branding are retained;
 its license/activation conditions apply. Speech reasoning, tools and knowledge
 remain future build waves, blocked by the real media acceptance gate.
+
+### VPS deployment preparation
+
+The isolated rootless deployment package and activation tunnel commands are in
+[docs/VPS_DEPLOYMENT.md](docs/VPS_DEPLOYMENT.md). It generates private credentials,
+builds the pinned source automatically and preserves project database/license
+state. Evolution and VASA bind to localhost ports 18080 and 18081 by default;
+occupied ports are refused. No successful VPS connection or deployment has been
+performed yet.

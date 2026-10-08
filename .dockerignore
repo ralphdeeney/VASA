@@ -1,0 +1,18 @@
+# An allowlist keeps Git, credentials, tests, caches and local runtime data out of the image.
+**
+!pyproject.toml
+!uv.lock
+!alembic.ini
+!src/
+!src/**
+!migrations/
+!migrations/**
+!scripts/
+!scripts/evolution_status.py
+!docker/
+!docker/vasa.Dockerfile
+!.local/
+!.local/evolution-source/
+!.local/evolution-source/vasa-host-trust.pem
+**/__pycache__/
+**/*.pyc

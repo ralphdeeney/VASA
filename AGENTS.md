@@ -2,7 +2,7 @@
 
 Read docs/BUILD_HARNESS.md, ARCHITECTURE.md, BUILD_PLAN.md, CURRENT_STATE.md, DECISIONS.md, TEST_RESULTS.md, EVAL_RESULTS.md and PERFORMANCE.md before work. Resume from recorded state.
 
-Use the existing checkout; cloud tasks are already isolated. Do not create worktrees unless the user requests one. Work in the cloud workspace for now; do not connect to or modify a VPS.
+Use the existing checkout; cloud tasks are already isolated. Do not create worktrees unless the user requests one. VPS deployment preparation and a connection attempt are now authorized. Deploy only under /opt/vasa as the existing rootless vasa-builder user after verifying SSH address/access and dedicated project ownership. Never modify unrelated VPS services, Docker installations, firewall rules or reverse proxies.
 
 The orchestrator owns shared contracts, migrations, dependency declarations and integration. Assign specialists separate file ownership; no simultaneous edits of shared files. Freeze each wave's interfaces in docs/CONTRACTS.md before parallel work. Request interface changes from the orchestrator. Wave 0 is orchestrator only.
 
