@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "planned_cases": [
+    {"id": "conversation-greeting", "suite": "conversation", "wave": 5},
+    {"id": "conversation-interruption", "suite": "conversation", "wave": 5},
+    {"id": "tools-schema-and-ownership", "suite": "tool_calls", "wave": 6},
+    {"id": "knowledge-supported-answer", "suite": "knowledge", "wave": 8},
+    {"id": "knowledge-cross-tenant-denial", "suite": "tenant_isolation", "wave": 8},
+    {"id": "summary-accurate-outcome", "suite": "summaries", "wave": 7},
+    {"id": "latency-measured-p50-p95", "suite": "latency", "wave": 10}
+  ]
+}

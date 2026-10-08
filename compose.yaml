@@ -1,0 +1,31 @@
+name: vasa-dev
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: vasa
+      POSTGRES_PASSWORD: vasa_local_only
+      POSTGRES_DB: vasa
+    ports:
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vasa -d vasa"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: "no"
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:6389:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: "no"
+volumes:
+  postgres-data:
