@@ -3,7 +3,7 @@
 Current wave: 5 (Conversation runtime; Wave 4 CPU Voice Intelligence verified)
 Current slice: Wave 5 component/native verified; live OpenAI acceptance pending secure key
 Completed slices: Wave 0 governance/tooling/contracts; Wave 1 tenant PostgreSQL/pgvector/Redis and isolation; Wave 2 verified pinned-source Evolution adapter, authenticated instance mapping/control and QR dashboard; Wave 3 real-call media acceptance; Wave 4 CPU VAD/STT/TTS, bounded native cancellation and streamed LLM adapters; Wave 5 conversation runtime, trusted inbound worker and native local-WebSocket integration
-Active agents: orchestrator final upload/remote verification; specialist implementations complete
+Active agents: none; requested independent build and verification complete, awaiting secure OpenAI binding
 Blockers:
 - OpenAI is selected primary, but no secure usable binding is injected. The credential pasted in chat must be revoked/replaced through VASA_OPENAI_API_KEY in environment settings, saved/published. Do not store or use the exposed credential. Anthropic is optional. Live LLM acceptance awaits this prerequisite; independent checks continue.
 - Historical cloud SSH to vasa-builder@2.25.172.155:22 was refused before authentication; proxy CONNECT closed without SSH banner. No successful VPS connection or remote changes are claimed. This does not block independent development or negate the user's accepted real call.
@@ -51,5 +51,13 @@ exposed a TTS completeness test coupled to stochastic supplemental STT spelling.
 The corrected native regression directly measures both synthesized batches and
 resampled frame completeness; no recognition acceptance threshold changed.
 Final local verification passed all 318 checks; rebuilt read-only UID 1000
-image verifies deterministic speech. Updated benchmarks are recorded; new remote
-CI verification is in progress.
+image verifies deterministic speech. Updated benchmarks are recorded; both remote
+CI runs passed for code 61b57d9 (push 37858367544, PR 37858371785).
+
+Final source and evidence uploaded to build/vasa-foundation. Code commit
+61b57d9e3d85a70ae6d49075a87ee1fa19e17e79 passed both GitHub Verify workflows
+with 318 checks. The subsequent CI-recording documentation commit changes no
+implementation; do not infer its own workflow status from the source runs.
+No secure provider binding is configured, no exposed key was stored or used,
+and no live AI-call or ten-call capacity claim is made. Remaining graph gate:
+live OpenAI behavior/real dialogue acceptance before dependent wave completion.

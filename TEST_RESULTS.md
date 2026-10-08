@@ -186,3 +186,10 @@ Ruff/format/strict mypy pass. Final production image
 `sha256:5a89802d2f9addc649b42949c4bf8f0cae3b63d2d776c93d3e7d241120343b70`
 produced 49 identical repeated speech frames under 512 MiB/one CPU/read-only root
 as UID 1000. Updated benchmark evidence records the final zero-noise settings.
+
+Final remote verification: GitHub push run 37858367544 and PR run 37858371785
+both completed successfully for code 61b57d9e3d85a70ae6d49075a87ee1fa19e17e79
+(confirmed via gh run watch --exit-status). Both fresh Ubuntu workflows prepared
+verified native assets, migrated real PostgreSQL, and ran the full 318-check
+suite with Ruff/format/strict mypy. Source tests were not excluded. A subsequent
+documentation-only CI evidence commit does not inherit these workflow results.
