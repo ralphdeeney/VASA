@@ -26,6 +26,7 @@ packages = ["src/vasa"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "evals"]
+pythonpath = ["."]
 asyncio_mode = "auto"
 markers = ["integration: requires real PostgreSQL and Redis", "eval: behavioral acceptance scenario"]
 

@@ -137,3 +137,37 @@ VASA V1 focuses on one thing:
 > **Reliable AI-powered inbound WhatsApp voice conversations with business tool execution.**
 
 Advanced billing, outbound calling, regional infrastructure, enterprise analytics and other communication channels are intentionally left for later versions.
+
+
+## Development status
+
+VASA is under construction. The authoritative build instructions are in
+[docs/BUILD_HARNESS.md](docs/BUILD_HARNESS.md), with progress in
+[CURRENT_STATE.md](CURRENT_STATE.md) and the wave sequence in
+[BUILD_PLAN.md](BUILD_PLAN.md). The AI voice pipeline must wait for a proven
+bidirectional WhatsApp media transport. No real call or concurrency target has
+been validated yet.
+
+### Local development
+
+Requirements: Python 3.12+, uv 0.12.19+, and access to a Docker/Compose runtime
+permitted to manage only the dedicated `vasa-dev` project. Ports bind to loopback.
+The Compose database password is a local-only example, never a deployment secret.
+
+```bash
+bash scripts/setup.sh
+bash scripts/check.sh
+uv run --frozen uvicorn vasa.app:app --host 127.0.0.1 --port 8080
+```
+
+`GET /health/live` checks the API process. `GET /health/ready` executes database
+and Redis checks and returns 503 if either fails. Migrations run explicitly;
+the application does not create or alter tables on startup.
+
+Optional overrides can be placed in an ignored `.env` using `.env.example` as a
+starting point. Never commit credentials. Tests require real local PostgreSQL and
+Redis; they do not silently skip when dependencies are missing.
+
+To stop only these development services, run `docker compose down`. Omitting
+`--volumes` preserves the dedicated database data. Application processes must be
+restarted after a cloud environment restore. VPS deployment is deferred.

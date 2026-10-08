@@ -5,8 +5,8 @@ The complete governing instructions are in docs/BUILD_HARNESS.md.
 | Wave | Scope | Progress |
 | --- | --- | --- |
 | 0 | Repository/governance, config, contracts, checks, health, eval framework | Verified |
-| 1 | PostgreSQL/Redis, tenant foundations, test fixtures and isolation evals | In progress |
-| 2 | Verified Evolution client, instances/calls/media; mappings, registry, connect/QR UI | Pending upstream verification |
+| 1 | PostgreSQL/Redis, tenant foundations, test fixtures and isolation evals | Verified |
+| 2 | Verified Evolution client, instances/calls/media; mappings, registry, connect/QR UI | Source verified; implementation in progress |
 | 3 | Real caller audio in, prerecorded audio out, heard by caller | Human pairing and real-call gates; blocks downstream work |
 | 4 | CPU speech, cancellation/barge-in, LLM adapters/context/fallback | Blocked by Gate 3 |
 | 5 | Integrated conversation state machine | Blocked by Gate 4 |
