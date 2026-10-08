@@ -35,6 +35,12 @@ Real provider HTTP checks: `/server/ok` returns 200 with the expected status;
 503 with `LICENSE_REQUIRED`. No upstream instance was created by that blocked
 request. This confirms the activation prerequisite, not real calling.
 
-GitHub API read access now works. Vendor activation, WhatsApp pairing, dynamic
-UDP relays, actual call answering/media/hangup, remote CI and a separate fresh
-task restoration remain unverified.
+GitHub API access and draft PR creation now work. GitHub Verify run
+37818843714 for code/evidence commit 1dd7714326e35d2ef00d16e093fa753289349669
+completed successfully (confirmed with `gh run watch --exit-status`). This
+validates the remote foundation workflow; it does not build the licensed
+provider or exercise WhatsApp. Later documentation-only commits can trigger
+additional workflow runs; their results must not be inferred from this one.
+
+Vendor activation, WhatsApp pairing, dynamic UDP relays, actual call
+answering/media/hangup and a separate fresh task restoration remain unverified.
