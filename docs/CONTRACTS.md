@@ -1,5 +1,20 @@
 # Wave contracts
 
+## Kitten Micro candidate freeze — 2026-10-09
+
+Add optional `KittenMicroTTS(model_dir: Path, *, num_threads=1,
+max_streams=10, queue_frames=8)` with the existing synthesize/aclose contract.
+Keep mono PCM16/16 kHz/60 ms framing, bounded native ownership and cancellation.
+Reuse natural chunking and bounded playback; upstream acoustic segment callbacks
+must not be described as incremental decoder streaming. No arbitrary speech cache.
+Keep Kokoro INT8 the default until actual VPS evidence and human listening pass.
+Root owns configuration, model preparation, dependencies, deployment and shared
+integration. Provider specialist owns kitten.py, any explicitly agreed Kokoro
+initialization hooks, and Kitten tests. Benchmark specialist owns benchmark harness
+extension, benchmark tests and reproduction instructions. Research specialist owns
+model/license provenance only. All three providers are compared sequentially with
+identical texts, buffering, thread counts, affinity and iteration counts.
+
 ## Kokoro-first optimization freeze — 2026-10-09
 
 User explicitly supersedes the LJSpeech default: Kokoro INT8 becomes the worker

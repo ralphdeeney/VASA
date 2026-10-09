@@ -11,6 +11,7 @@ import time
 from collections import OrderedDict
 from collections.abc import AsyncIterator, Callable, Collection
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 from numpy.typing import NDArray
@@ -95,6 +96,9 @@ GENERIC_CACHE_PHRASES = frozenset({"Certainly, I can help.", "One moment, please
 
 
 class KokoroInt8TTS:
+    _worker_name = "vasa-kokoro-int8"
+    _speaker_id = 0
+
     def __init__(
         self,
         model_dir: Path,
@@ -129,7 +133,22 @@ class KokoroInt8TTS:
         self._cache: OrderedDict[str, bytes] = OrderedDict()
         self._cache_size = 0
         started = time.monotonic()
+        self._verify_assets(model_dir)
+        self._model = self._create_model(model_dir, num_threads)
+        self._resample = importlib.import_module("scipy.signal").resample_poly
+        self.load_seconds = time.monotonic() - started
+        self._worker = NativeWorker(self._worker_name)
+        self._streams = asyncio.Semaphore(max_streams)
+        self._slot = asyncio.Semaphore(1)
+        self._pending: set[asyncio.Task[bytes]] = set()
+        self._stops: set[threading.Event] = set()
+        self._closed = False
+        self._close_task: asyncio.Task[None] | None = None
+
+    def _verify_assets(self, model_dir: Path) -> None:
         verify_kokoro_int8(model_dir)
+
+    def _create_model(self, model_dir: Path, num_threads: int) -> Any:
         native = importlib.import_module("sherpa_onnx")
         kokoro = native.OfflineTtsKokoroModelConfig(
             model=str(model_dir / "model.int8.onnx"),
@@ -139,7 +158,7 @@ class KokoroInt8TTS:
             lexicon=str(model_dir / "lexicon-us-en.txt"),
             lang="en-us",
         )
-        self._model = native.OfflineTts(
+        return native.OfflineTts(
             native.OfflineTtsConfig(
                 model=native.OfflineTtsModelConfig(
                     kokoro=kokoro, num_threads=num_threads, provider="cpu"
@@ -147,15 +166,6 @@ class KokoroInt8TTS:
                 max_num_sentences=1,
             )
         )
-        self._resample = importlib.import_module("scipy.signal").resample_poly
-        self.load_seconds = time.monotonic() - started
-        self._worker = NativeWorker("vasa-kokoro-int8")
-        self._streams = asyncio.Semaphore(max_streams)
-        self._slot = asyncio.Semaphore(1)
-        self._pending: set[asyncio.Task[bytes]] = set()
-        self._stops: set[threading.Event] = set()
-        self._closed = False
-        self._close_task: asyncio.Task[None] | None = None
 
     def _pcm(self, samples: NDArray[np.float32], rate: int) -> bytes:
         samples = np.asarray(samples, dtype=np.float32)
@@ -165,7 +175,7 @@ class KokoroInt8TTS:
             or not 0 < len(samples) <= rate * 30
             or not np.isfinite(samples).all()
         ):
-            raise RuntimeError("Invalid native Kokoro output")
+            raise RuntimeError("Invalid native speech output")
         if rate != 16000:
             divisor = math.gcd(rate, 16000)
             samples = np.asarray(
@@ -200,13 +210,13 @@ class KokoroInt8TTS:
             callback_seen = True
             if stop.is_set():
                 return 0
-            # Sherpa 1.13.8 Kokoro invokes this after a complete acoustic
+            # Sherpa's acoustic-segment providers invoke this after a complete
             # segment. Queue it immediately; the returned waveform duplicates it.
             return int(consume(self._pcm(samples, int(getattr(self._model, "sample_rate", 24000)))))
 
         if stop.is_set():
             return b""
-        audio = self._model.generate(text, sid=0, speed=1.0, callback=callback)
+        audio = self._model.generate(text, sid=self._speaker_id, speed=1.0, callback=callback)
         if stop.is_set():
             return b""
         if not callback_seen:

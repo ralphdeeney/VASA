@@ -1,5 +1,18 @@
 # Performance
 
+2026-10-09 Kitten Micro 0.8 matched cloud A/B: three samples/text, affinity0/1,
+two-CPU quota, TTS1/STT1, uncached, actual buffered runtime. STT-contention
+sentence P50/P95: Kitten2.136/2.309s, Kokoro4.132/4.149s, Piper0.219/0.224s.
+Sentence RTF maxima0.313/1.282/0.093; combined CPU2.746/4.481/0.348s; long
+peak RSS489.5/617.4/376.2MiB; long max gaps1.764/4.099/0.001s. Kitten solo
+sentence CPU2.156s versus Kokoro4.127/Piper0.250. Kitten's sentence audio7.48s
+versus3.24/2.40s contributes to its favorable RTF. Consumer cancellation<0.15ms
+but before-first native cleanup1.258s; no late frames. Early reuse RSS grows,
+then changes about1.3MiB between B trials2/3; long soak is unrun. Preferred
+1s first/300ms gap targets are unmet. Cloud evidence is not VPS/phone evidence;
+keep the default unchanged pending server and listening results. All records,
+WAVs and manual commands: docs/tts-evaluation/kitten-micro/.
+
 2026-10-09 Kokoro-first buffered cloud measurements (one sample/text/profile):
 TTS1/STT1 generic prewarmed ack0.6ms, unseen business sentence4.071s/RTF1.257,
 four-sentence maximum gap4.127s, combined peakRSS508.8MiB. TTS2/STT1 sentence

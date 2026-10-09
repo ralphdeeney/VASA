@@ -1,0 +1,20 @@
+{
+  "status": "pending_human_review",
+  "reviewer": null,
+  "reviewed_at": null,
+  "same_texts": {
+    "short": "Certainly, I can help.",
+    "sentence": "Your appointment is confirmed for tomorrow morning at ten o'clock.",
+    "long": "I can help you arrange an appointment. Please tell me which day works best for you and whether you prefer the morning or afternoon. Once I have checked the available times, I will read the details back so you can confirm them. If your plans change, you can contact our team to reschedule.",
+    "legacy": "Hello. Your appointment is confirmed for tomorrow morning."
+  },
+  "questions": {
+    "kitten_noticeably_more_natural_than_piper": null,
+    "kitten_pronunciation_acceptable": null,
+    "kitten_pacing_acceptable": null,
+    "chunk_continuity_acceptable": null,
+    "kitten_vs_kokoro_quality_tradeoff_acceptable": null
+  },
+  "notes": null,
+  "promotion_allowed": false
+}

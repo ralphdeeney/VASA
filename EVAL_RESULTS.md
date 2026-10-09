@@ -1,5 +1,13 @@
 # Eval results
 
+2026-10-09 Kitten Micro: all existing evals pass within the 539-check full suite,
+including tenant isolation, knowledge, tools, summaries and interruption.
+Matched cloud A/B records are under docs/tts-evaluation/kitten-micro/. Real STT
+fixture WER remained 1/18 for all candidates; Kitten had no observed processing
+deadline overruns in 21 complete fixture runs. One fixture and three repetitions
+remain limited evidence. Actual VPS A/B/C and human naturalness are pending;
+automated evidence does not promote a model or establish phone acceptance.
+
 2026-10-09 integration: the pinned CPU embedding evaluator scored 19/20
 independent paraphrase queries with the expected passage first (0.95), above
 the declared 0.90 threshold. Tenant SQL isolation, identity filtering and

@@ -32,6 +32,7 @@ from vasa.llm import AnthropicProvider, FallbackProvider, OpenAIProvider
 from vasa.runtime import ConversationRuntime, RuntimeConfig
 from vasa.runtime_finalization import AuditedExecutor, DurableCall
 from vasa.speech import SherpaSTT, SherpaTTS, SpeechModels
+from vasa.speech.kitten import KittenMicroTTS
 from vasa.speech.kokoro import KokoroInt8TTS
 from vasa.storage.cache import CallRegistry
 from vasa.storage.database import Database
@@ -420,7 +421,7 @@ async def run(
         from vasa.tools.webhooks_config import load_webhooks
 
         stt: SherpaSTT | None = None
-        tts: SherpaTTS | KokoroInt8TTS | None = None
+        tts: SherpaTTS | KokoroInt8TTS | KittenMicroTTS | None = None
         knowledge = KnowledgeService(database)
         resources.push_async_callback(knowledge.aclose)
         registry = CallRegistry(cache)
@@ -530,7 +531,14 @@ async def run(
                             SherpaSTT, models.stt_dir, num_threads=settings.stt_num_threads
                         )
                         resources.push_async_callback(stt.aclose)
-                        if settings.tts_provider == "kokoro-int8":
+                        if settings.tts_provider == "kitten-micro":
+                            tts = await asyncio.to_thread(
+                                KittenMicroTTS,
+                                settings.kitten_model_dir,
+                                num_threads=settings.kitten_num_threads,
+                            )
+                            resources.push_async_callback(tts.aclose)
+                        elif settings.tts_provider == "kokoro-int8":
                             tts = await asyncio.to_thread(
                                 KokoroInt8TTS,
                                 settings.kokoro_model_dir,

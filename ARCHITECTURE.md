@@ -1,5 +1,13 @@
 # Architecture
 
+Kitten Micro 0.8 is an optional trusted environment TTS candidate alongside
+Kokoro INT8 and Piper. It shares the existing bounded segment callback,
+framing and native cancellation ownership implementation with model-specific
+initialization; one CPU-thread model is preloaded/shared per worker. Mono PCM16,
+16kHz, 60ms frames and Evolution transport remain unchanged. Micro caching is
+disabled by default; no arbitrary tenant/generated shared speech cache is added.
+Kokoro remains the default pending actual VPS and human listening validation.
+
 Kokoro INT8 is the primary CPU TTS provider, with Piper available by trusted
 server configuration. LJSpeech is retired from the active deployment. A shared
 preloaded model emits native callback PCM into bounded queues; the runtime

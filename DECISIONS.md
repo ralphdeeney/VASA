@@ -1,5 +1,15 @@
 # Decisions
 
+2026-10-09 add optional Kitten Micro 0.8 behind trusted environment selection;
+reuse bounded native callback/framing/cancellation behavior, retaining Kokoro
+default and Piper fallback. Official Micro/HF provenance and Apache model
+license are verified separately from newer KittenTTS2; no inference dependency
+is added. Cloud latency/CPU/RAM improve over Kokoro, but preferred first/gap
+targets and actual VPS/human gates remain unmet. Do not promote from cloud or
+RTF alone. Kitten caching defaults disabled. Prepare assets with
+scripts/prepare_speech.py --kitten-micro. Manual VPS execution follows the
+user's instruction to skip refused SSH; no remote deployment is performed.
+
 2026-10-09 explicit user instruction supersedes the earlier LJSpeech-default
 decision: Kokoro INT8 becomes primary and LJSpeech is retired from active
 configuration, preparation, worker and agent voice settings. Retain Piper as

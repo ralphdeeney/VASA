@@ -152,6 +152,8 @@ services:
       <<: *vasa-environment
       VASA_MAX_ACTIVE_CALLS: ${VASA_MAX_ACTIVE_CALLS:-2}
       VASA_TTS_PROVIDER: ${VASA_TTS_PROVIDER:-kokoro-int8}
+      VASA_KITTEN_MODEL_DIR: /opt/vasa/.local/speech/kitten-micro
+      VASA_KITTEN_NUM_THREADS: ${VASA_KITTEN_NUM_THREADS:-1}
       VASA_KOKORO_MODEL_DIR: /opt/vasa/.local/speech/kokoro-int8
       VASA_KOKORO_NUM_THREADS: ${VASA_KOKORO_NUM_THREADS:-1}
       VASA_STT_NUM_THREADS: ${VASA_STT_NUM_THREADS:-1}

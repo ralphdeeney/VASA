@@ -1,0 +1,631 @@
+{
+  "host": "Codex managed cloud, not target VPS",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "source_base_commit": "fe2d0a7bca0b4549ec64520583790071df44cbf3",
+  "branch": "build/vasa-foundation",
+  "systems_by_cohort": {
+    "kitten-micro-A": {
+      "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+      "cpu_affinity": [
+        0,
+        1
+      ],
+      "cgroup_limits": {
+        "cpu.max": "200000 100000",
+        "memory.max": "8589934592"
+      },
+      "versions": {
+        "sherpa-onnx": "1.13.8",
+        "sherpa-onnx-core": "1.13.8",
+        "numpy": "2.5.3",
+        "scipy": "1.18.1"
+      }
+    },
+    "kokoro-int8-A": {
+      "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+      "cpu_affinity": [
+        0,
+        1
+      ],
+      "cgroup_limits": {
+        "cpu.max": "200000 100000",
+        "memory.max": "8589934592"
+      },
+      "versions": {
+        "sherpa-onnx": "1.13.8",
+        "sherpa-onnx-core": "1.13.8",
+        "numpy": "2.5.3",
+        "scipy": "1.18.1"
+      }
+    },
+    "piper-A": {
+      "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+      "cpu_affinity": [
+        0,
+        1
+      ],
+      "cgroup_limits": {
+        "cpu.max": "200000 100000",
+        "memory.max": "8589934592"
+      },
+      "versions": {
+        "sherpa-onnx": "1.13.8",
+        "sherpa-onnx-core": "1.13.8",
+        "numpy": "2.5.3",
+        "scipy": "1.18.1"
+      }
+    },
+    "kitten-micro-B": {
+      "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+      "cpu_affinity": [
+        0,
+        1
+      ],
+      "cgroup_limits": {
+        "cpu.max": "200000 100000",
+        "memory.max": "8589934592"
+      },
+      "versions": {
+        "sherpa-onnx": "1.13.8",
+        "sherpa-onnx-core": "1.13.8",
+        "numpy": "2.5.3",
+        "scipy": "1.18.1"
+      }
+    },
+    "kokoro-int8-B": {
+      "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+      "cpu_affinity": [
+        0,
+        1
+      ],
+      "cgroup_limits": {
+        "cpu.max": "200000 100000",
+        "memory.max": "8589934592"
+      },
+      "versions": {
+        "sherpa-onnx": "1.13.8",
+        "sherpa-onnx-core": "1.13.8",
+        "numpy": "2.5.3",
+        "scipy": "1.18.1"
+      }
+    },
+    "piper-B": {
+      "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+      "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+      "cpu_model": "AMD EPYC 9V74 80-Core Processor",
+      "cpu_affinity": [
+        0,
+        1
+      ],
+      "cgroup_limits": {
+        "cpu.max": "200000 100000",
+        "memory.max": "8589934592"
+      },
+      "versions": {
+        "sherpa-onnx": "1.13.8",
+        "sherpa-onnx-core": "1.13.8",
+        "numpy": "2.5.3",
+        "scipy": "1.18.1"
+      }
+    }
+  },
+  "container_snapshots_by_cohort": {
+    "kitten-micro-A": {
+      "before": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "4.48%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.52%",
+            "MemUsage": "51.88MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "0.29%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "3.855MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      },
+      "after": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "0.00%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.52%",
+            "MemUsage": "51.98MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "0.29%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "3.68MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      }
+    },
+    "kokoro-int8-A": {
+      "before": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "4.26%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.52%",
+            "MemUsage": "51.93MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "1.99%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "3.848MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      },
+      "after": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "4.14%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.52%",
+            "MemUsage": "52.1MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "1.96%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "3.961MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      }
+    },
+    "piper-A": {
+      "before": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "4.01%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.52%",
+            "MemUsage": "51.99MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "2.16%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "3.875MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      },
+      "after": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "0.00%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.52%",
+            "MemUsage": "51.99MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "0.28%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "3.738MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      }
+    },
+    "kitten-micro-B": {
+      "before": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "3.93%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.52%",
+            "MemUsage": "52.14MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "2.03%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "3.766MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      },
+      "after": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "6.05%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.52%",
+            "MemUsage": "51.95MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "2.36%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "3.73MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      }
+    },
+    "kokoro-int8-B": {
+      "before": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "4.22%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.52%",
+            "MemUsage": "52.12MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "1.96%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "3.867MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      },
+      "after": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "4.54%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.53%",
+            "MemUsage": "52.34MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "2.37%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "4.055MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      }
+    },
+    "piper-B": {
+      "before": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "4.06%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.52%",
+            "MemUsage": "51.91MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "0.31%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "3.684MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      },
+      "after": {
+        "containers": [
+          {
+            "ID": "7b3787b51370",
+            "Names": "vasa-dev-postgres-1",
+            "Image": "pgvector/pgvector:pg17",
+            "Status": "Up 16 hours (healthy)"
+          },
+          {
+            "ID": "77cb2229f874",
+            "Names": "vasa-dev-redis-1",
+            "Image": "redis:7.4-alpine",
+            "Status": "Up 16 hours (healthy)"
+          }
+        ],
+        "stats": [
+          {
+            "BlockIO": "545kB / 213MB",
+            "CPUPerc": "0.00%",
+            "Container": "7b3787b51370",
+            "ID": "7b3787b51370",
+            "MemPerc": "0.52%",
+            "MemUsage": "52.05MiB / 9.735GiB",
+            "Name": "vasa-dev-postgres-1",
+            "NetIO": "6.9MB / 5.43MB",
+            "PIDs": "6"
+          },
+          {
+            "BlockIO": "36.9kB / 0B",
+            "CPUPerc": "0.30%",
+            "Container": "77cb2229f874",
+            "ID": "77cb2229f874",
+            "MemPerc": "0.04%",
+            "MemUsage": "3.98MiB / 9.735GiB",
+            "Name": "vasa-dev-redis-1",
+            "NetIO": "1.46MB / 1.48MB",
+            "PIDs": "6"
+          }
+        ]
+      }
+    }
+  },
+  "vps_access": {
+    "status": "skipped_per_user_instruction",
+    "recorded_address": "vasa-builder@2.25.172.155:22",
+    "prior_failure": "Connection refused",
+    "new_attempt_claimed": false,
+    "manual_reproduction": "REPRODUCE.md"
+  },
+  "source_files_sha256": {
+    "src/vasa/speech/kitten.py": "15cfd1c870d673189041c3a36cdc6df663c530a331334ea14bdb17cbc48e6055",
+    "src/vasa/speech/kokoro.py": "5a886c44de94628d8dd3db0c628c88ed2e405cba2ba4a6719988cff9a5d58114",
+    "src/vasa/speech/synthesis.py": "816948d4f4d2fe6fc2737196464d15d2837c7887b933b225abba9df5cc487b6c",
+    "src/vasa/runtime/conversation.py": "c7241ca22b6dfb0f62213855f4f71f3ff7b269b078263389f48c6996ab39aa68",
+    "scripts/benchmark_kokoro_int8_vps.py": "bad047ecbdb1fe1b46a303c049a30a4ba0b80610b7c4b89eaa109ca133e9f10a",
+    "uv.lock": "0369a7a487d9c14b9064b6cbf08c2fc99f4016b118c4cae39362118b6be20faa"
+  }
+}

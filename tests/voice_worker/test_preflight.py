@@ -388,28 +388,34 @@ def test_cli_reports_fixed_error_without_exception_details(
     assert PRIVATE_DETAIL not in output.err and "Traceback" not in output.err
 
 
-@pytest.mark.parametrize("tts_provider", ["piper", "kokoro-int8"])
+@pytest.mark.parametrize("tts_provider", ["piper", "kokoro-int8", "kitten-micro"])
 async def test_all_mode_shares_native_models_and_derives_each_call_context(
     monkeypatch: pytest.MonkeyPatch,
     tts_provider: str,
 ) -> None:
     rig = PreflightRig(monkeypatch)
     rig.settings.tts_provider = tts_provider
-    if tts_provider == "kokoro-int8":
+    if tts_provider in {"kokoro-int8", "kitten-micro"}:
 
         class Kokoro:
             def __init__(self, path: Path, *, num_threads: int) -> None:
-                assert path == rig.settings.kokoro_model_dir
+                assert path == (
+                    rig.settings.kitten_model_dir
+                    if tts_provider == "kitten-micro"
+                    else rig.settings.kokoro_model_dir
+                )
                 assert num_threads == 1
-                rig.created.append("kokoro-int8")
+                rig.created.append(tts_provider)
 
             async def aclose(self) -> None:
-                rig.closed.append("kokoro-int8")
+                rig.closed.append(tts_provider)
 
             async def warmup(self) -> None:
                 assert not rig.contexts  # Startup completes before any call is admitted.
 
-        monkeypatch.setattr(worker, "KokoroInt8TTS", Kokoro)
+        monkeypatch.setattr(
+            worker, "KittenMicroTTS" if tts_provider == "kitten-micro" else "KokoroInt8TTS", Kokoro
+        )
     contexts = [rig.context, TenantContext(uuid4(), uuid4())]
     mappings = [(contexts[0], uuid4(), "owned-a"), (contexts[1], uuid4(), "owned-b")]
 
@@ -440,7 +446,7 @@ async def test_all_mode_shares_native_models_and_derives_each_call_context(
                 await task
             await asyncio.sleep(0.01)
         assert set(rig.contexts) == set(contexts)
-        expected_tts = "kokoro-int8" if tts_provider == "kokoro-int8" else "tts"
+        expected_tts = tts_provider if tts_provider != "piper" else "tts"
         assert rig.created.count("stt") == rig.created.count(expected_tts) == 1
         assert rig.created.count("tts") == (1 if tts_provider == "piper" else 0)
         assert rig.created.count("openai") == 2

@@ -1,5 +1,23 @@
 # Current state
 
+2026-10-09 current wave: stabilization / optional Kitten Micro evaluation.
+Current slice: complete locally; actual VPS A/B/C and human listening pending.
+Kitten Micro 0.8 is selectable alongside Kokoro INT8/Piper, with one shared
+preloaded model, one native thread, bounded PCM16/16kHz/60ms delivery and
+existing cancellation. Kokoro remains the default. Exact model/dependency/
+license pins and optional asset preparation are integrated. Six sequential
+uncached A/B cloud cohorts measured 54 responses and 108 WAVs. STT1 sentence
+P50: Kitten 2.136s / Kokoro 4.132s / Piper 0.219s; RTF maxima 0.313/1.282/0.093;
+long gaps 1.764/4.099/0.001s. Kitten misses preferred 1s first/300ms gap targets.
+Full checks: 539 pass, zero failures/errors/skips; Ruff/format/strict mypy pass
+(55 sources). Native Micro reuse/framing and three-provider worker sharing are
+covered. Compose configuration and deployment script syntax pass.
+Active specialists: none. Failed checks: none outstanding. Blockers: manual
+VPS workload validation and human listening. Prior refused SSH is skipped per
+user instruction. Next action: run server commands and review matched WAVs
+before promotion. Evidence: docs/tts-evaluation/kitten-micro/.
+Earlier entries below are historical.
+
 2026-10-09 user explicitly selected Kokoro and retired LJSpeech. Kokoro INT8
 is now the code/Compose default; Piper remains selectable. Active source/API/
 dashboard/model preparation no longer select or download LJSpeech. Migration

@@ -1,0 +1,205 @@
+{
+  "verified_at_utc": "2026-10-09",
+  "model": "KittenML/kitten-tts-micro-0.8",
+  "version": "0.8",
+  "parameters_reported_by_upstream": 40000000,
+  "native_sample_rate": 24000,
+  "precision": "Official Micro mixed/dynamic-quantized ONNX: INT8/UINT8 quantized initializers plus FP32/FP16 auxiliaries; not FP32-only or all-INT8",
+  "huggingface_revision": "1ccf72b2c2048fd17efac7de2fab32d10e225084",
+  "huggingface_model_license": "Apache-2.0",
+  "huggingface_model_card_url": "https://huggingface.co/KittenML/kitten-tts-micro-0.8/blob/1ccf72b2c2048fd17efac7de2fab32d10e225084/README.md",
+  "huggingface_lfs_sha256": {
+    "kitten_tts_micro_v0_8.onnx": "95481626fee1ba70ce683e69c534fc7cb38433c46ce42d3abbeafb4b9f1a4123",
+    "voices.npz": "112710c1be8ad0e967c190fb0fd95cbe5848ec4791b93209f20b28b7da20dac1"
+  },
+  "archive": {
+    "id": 418191833,
+    "name": "kitten-micro-en-v0_8.tar.bz2",
+    "browser_download_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kitten-micro-en-v0_8.tar.bz2",
+    "digest": "sha256:85faaea7511ca9d1d2f251fed0a4553bdf0d1ee046102fa60ddd8046c751f76f",
+    "size": 44423643,
+    "created_at": "2026-05-12T08:15:15Z",
+    "updated_at": "2026-05-12T08:15:17Z"
+  },
+  "archive_verified_sha256": "85faaea7511ca9d1d2f251fed0a4553bdf0d1ee046102fa60ddd8046c751f76f",
+  "prepared_files_sha256": {
+    "README.md": "e8751a029481521364265c7c95acf0394fa3580671f19e99c1e9ce51c74ba9d6",
+    "voices.bin": "12ad10f1fcce8a458b5cf79769b8edd4ba0e11e9fb6532fd192c3500b2b37a5d",
+    "model.onnx": "7cf07fcc77f3823c55fc9fb49594cfa421861a6eee9d63640cce708a174103f8",
+    "tokens.txt": "934a4188addc7665dd3410256bb622169242357fbb99d840d9351209b486dabb",
+    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+  },
+  "espeak_tree_sha256": "e9c56f8c7cc79f16b1a2dc482074ed777e5b881da2a215a6f99630284dc4b3b8",
+  "espeak_tree_file_count": 355,
+  "speaker_ids": {
+    "0": "Jasper",
+    "1": "Bella",
+    "2": "Bruno",
+    "3": "Luna",
+    "4": "Hugo",
+    "5": "Rosie",
+    "6": "Leo",
+    "7": "Kiki"
+  },
+  "upstream_config": {
+    "name": "Kitten TTS Micro",
+    "version": "0.8",
+    "type": "ONNX2",
+    "model": "kitten-tts-micro-0.8",
+    "voices": "voices.npz",
+    "model_file": "kitten_tts_micro_v0_8.onnx",
+    "speed_priors": {},
+    "voice_aliases": {
+      "Bella": "expr-voice-2-f",
+      "Jasper": "expr-voice-2-m",
+      "Luna": "expr-voice-3-f",
+      "Bruno": "expr-voice-3-m",
+      "Rosie": "expr-voice-4-f",
+      "Hugo": "expr-voice-4-m",
+      "Kiki": "expr-voice-5-f",
+      "Leo": "expr-voice-5-m"
+    }
+  },
+  "native_config": {
+    "sherpa_version": "1.13.8",
+    "class": "OfflineTtsKittenModelConfig",
+    "model": "model.onnx",
+    "voices": "voices.bin",
+    "tokens": "tokens.txt",
+    "data_dir": "espeak-ng-data",
+    "length_scale": 1.0,
+    "num_threads": 1,
+    "provider": "cpu",
+    "max_num_sentences": 1
+  },
+  "conversion_source_revision": "9db1af1871ed78cee9357c23898e5a7d8702d21a",
+  "upstream_library_revision": "8ed679c08e0976b236bd5d0dc4ec9ddd98b0da98",
+  "dependencies": [
+    {
+      "name": "sherpa-onnx",
+      "version": "1.13.8",
+      "license_expression": "Apache-2.0",
+      "license_files": [
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/sherpa_onnx-1.13.8.dist-info/licenses/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+        }
+      ]
+    },
+    {
+      "name": "sherpa-onnx-core",
+      "version": "1.13.8",
+      "license_expression": "Apache-2.0",
+      "license_files": []
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.3",
+      "license_expression": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+      "license_files": [
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/LICENSE.txt",
+          "sha256": "4860083caa0de2ac3292ca98bd074bd8f45d8b32624e37b1e70a240bff61e488"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/_core/include/numpy/libdivide/LICENSE.txt",
+          "sha256": "fbc539f47d0cf83bc61378080fb873d5c14630126cacbfe754035c3926daa5ec"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/_core/src/highway/LICENSE",
+          "sha256": "e340270d4f64384569a91d546acb5b094d69ce47f0c015db77abb74dc6f815af"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/_core/src/multiarray/dragon4_LICENSE.txt",
+          "sha256": "f7b14309e5f54e5022b26448eefd419988ada2aec01d3c1162d84a0ea8f21f2c"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/_core/src/npysort/x86-simd-sort/LICENSE.md",
+          "sha256": "211e7d737d6179a08f791ebb0a99897ce7cd2457410c542876d125576edfe910"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/_core/src/umath/svml/LICENSE",
+          "sha256": "c17011467b4fe6e20fbfbeda4df09e58c2bca5480a063e55735a4000a379aad9"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/fft/pocketfft/LICENSE.md",
+          "sha256": "a85ca13fdf90160b64a0698215868c13b74d835ad0a4e2ba44713b8c5058a056"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/linalg/lapack_lite/LICENSE.txt",
+          "sha256": "a14cc25e10d40a3aa705b7de2fb764a6535d8ee9b2db4e1724900585457dfd55"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/ma/LICENSE",
+          "sha256": "05f3b88351988ecfad10abe92c0c50e5875c6452d5009a0084cc291551ffcca6"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/random/LICENSE.md",
+          "sha256": "103166b62b80443afb9eb3488e052ea06be0cff566b908f199e561fde49af19f"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/random/src/distributions/LICENSE.md",
+          "sha256": "469778be8f33d54e1bcaab28c281cc472916d2d273f835e55bc487d30503face"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/random/src/mt19937/LICENSE.md",
+          "sha256": "0e111337b25494a773106695f0e799f642b8567aaacca4f116a74a8177179156"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/random/src/pcg64/LICENSE.md",
+          "sha256": "e7d4f4fb20358f314210a892ae17351e04993813646f697ec387385ca2a36918"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/random/src/philox/LICENSE.md",
+          "sha256": "6f5828a57223d4cc7f8ea505a2623e7b978b242752c1515e355f46ba2cec1800"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/random/src/sfc64/LICENSE.md",
+          "sha256": "9d4098846018319cd68e228ee6220361787f73bccbf00237a85e4fc9621b998f"
+        },
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/numpy-2.5.3.dist-info/licenses/numpy/random/src/splitmix64/LICENSE.md",
+          "sha256": "268b0ca06759d31ea3ca68dd35f20e877916e927b1c2a835e4592a3c4354b1f9"
+        }
+      ]
+    },
+    {
+      "name": "scipy",
+      "version": "1.18.1",
+      "license_expression": "BSD-3-Clause (bundled dependency notices in installed LICENSE.txt)",
+      "license_files": [
+        {
+          "path": "/workspace/VASA/.venv/lib/python3.12/site-packages/scipy-1.18.1.dist-info/LICENSE.txt",
+          "sha256": "17e7db9ffa4913121fa2df484633a362456a482da736c99db4711a98473770ea"
+        }
+      ]
+    }
+  ],
+  "licenses": {
+    "kitten_micro_weights": "Apache-2.0 per pinned HF model card; archive LICENSE is Apache-2.0",
+    "kitten_library_code": "Apache-2.0; not installed/needed",
+    "sherpa_onnx": "Apache-2.0",
+    "native_onnxruntime": "MIT, bundled by sherpa-onnx-core; consult native distribution third-party notices",
+    "espeak_ng_data": "GPL-3.0-or-later; retain source/license obligations",
+    "kitten_tts_2": "Different model family; Stellon Labs Community License. NOT used."
+  },
+  "streaming": "Sherpa callbacks occur only after Process completes one acoustic batch; not incremental decoder audio streaming. Cancellation can halt callback continuation but cannot preempt active native inference.",
+  "onnx_inspection": {
+    "initializer_dtypes": {
+      "FP32": 514,
+      "FP16": 17,
+      "INT64": 247,
+      "BOOL": 1,
+      "INT32": 1,
+      "UINT8": 148,
+      "INT8": 158
+    },
+    "dynamic_quantized_ops": {
+      "DynamicQuantizeLinear": 90,
+      "MatMulInteger": 100,
+      "ConvInteger": 74,
+      "DynamicQuantizeLSTM": 6
+    },
+    "method": "Direct standard-library ONNX protobuf field inspection; no inference or extra dependencies"
+  }
+}

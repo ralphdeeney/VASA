@@ -22,12 +22,11 @@ from uuid import UUID
 
 import numpy as np
 
-from scripts.evaluate_tts_streaming import CASES, EvaluationTTS
-from scripts.prepare_kokoro_int8 import verify_piper
+from scripts.evaluate_tts_streaming import CASES
 from vasa.contracts.models import AudioFrame, TenantContext
 from vasa.runtime.conversation import ConversationRuntime, _chunks, _Session, _SpeechBuffer
-from vasa.speech.models import NativeWorker
 from vasa.speech.recognition import SherpaSTT
+from vasa.speech.synthesis import PiperTTS
 
 
 def validate_scope(scope: str, cwd: Path, uid: int, isolated: bool, condition: str) -> None:
@@ -356,35 +355,28 @@ async def cancellation(provider: Any, phase: str) -> dict[str, Any]:
     }
 
 
-class BenchmarkPiper(EvaluationTTS):
-    """Existing native Piper generation with owned/drained work and no PCM event retention."""
-
-    def __init__(self, threads: int = 1) -> None:
-        verify_piper(Path(".local/tts-evaluation/models/piper-libritts"))
-        super().__init__("piper", threads=threads)
-        self.worker = NativeWorker("benchmark-piper")
-
-    async def synthesize(self, text: str) -> AsyncIterator[AudioFrame]:
-        pcm = await self.worker.run(lambda: self.generate(text))
-        for offset in range(0, len(pcm), 1920):
-            yield AudioFrame(
-                pcm[offset : offset + 1920].ljust(1920, b"\0"),
-                16000,
-                offset // 1920,
-                time.monotonic_ns(),
-            )
-
-    async def aclose(self) -> None:
-        await self.worker.aclose()
-        self.model = None
+def default_model_path(candidate: str) -> Path:
+    if candidate not in {"kokoro-int8", "kitten-micro", "piper"}:
+        raise ValueError("Unknown benchmark candidate")
+    return Path(".local/speech") / candidate
 
 
-def provider_for(candidate: str, model: Path, threads: int = 1) -> Any:
+def provider_for(
+    candidate: str, model: Path, threads: int = 1, *, disable_cache: bool = False
+) -> Any:
     if candidate == "kokoro-int8":
         from vasa.speech.kokoro import KokoroInt8TTS
 
-        return KokoroInt8TTS(model, num_threads=threads)
-    return BenchmarkPiper(threads)
+        return KokoroInt8TTS(
+            model, num_threads=threads, cache_bytes=0 if disable_cache else 2097152
+        )
+    if candidate == "kitten-micro":
+        from vasa.speech.kitten import KittenMicroTTS
+
+        return KittenMicroTTS(model, num_threads=threads, cache_bytes=0)
+    if candidate == "piper":
+        return PiperTTS(model, num_threads=threads)
+    raise ValueError("Unknown benchmark candidate")
 
 
 async def buffered_response(provider: Any, text: str) -> dict[str, Any]:
@@ -474,6 +466,9 @@ async def buffered_response(provider: Any, text: str) -> dict[str, Any]:
         "first_playable_seconds": sent[0][0],
         "synthesis_compute_seconds": wait,
         "provider_wait_seconds": wait,
+        "full_response_provider_completion_seconds": max(
+            event["complete_seconds"] for event in events
+        ),
         "compute_metric_note": "Provider await time includes native inference and any "
         "provider-side backpressure; runtime queue waits excluded",
         "paced_response_wall_seconds": wall,
@@ -505,7 +500,9 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
     sampler = RSSSampler()
     sampler.thread.start()
     load = time.perf_counter()
-    provider = provider_for(args.candidate, args.model, args.tts_threads)
+    provider = provider_for(
+        args.candidate, args.model, args.tts_threads, disable_cache=args.disable_cache
+    )
     load_seconds = time.perf_counter() - load
     warmup_seconds = None
     if args.warmup_generic:
@@ -564,7 +561,9 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
         gc.collect()
         for phase in ("before_first_audio", "playback"):
             # Separate once-loaded instance per cancellation trial, never per response/call.
-            trial = provider_for(args.candidate, args.model, args.tts_threads)
+            trial = provider_for(
+                args.candidate, args.model, args.tts_threads, disable_cache=args.disable_cache
+            )
             cancellations.append(await cancellation(trial, phase))
             del trial
             gc.collect()
@@ -580,11 +579,7 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
                 await close()
         sampler.stop.set()
         await asyncio.to_thread(sampler.thread.join, 5)
-    model_path = (
-        args.model
-        if args.candidate == "kokoro-int8"
-        else Path(".local/tts-evaluation/models/piper-libritts")
-    )
+    model_path = args.model
     files = {
         str(path.relative_to(model_path)): hashlib.sha256(path.read_bytes()).hexdigest()
         for path in model_path.rglob("*")
@@ -599,6 +594,7 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
         "threads_stt": args.stt_threads,
         "buffered_runtime": args.buffered,
         "generic_warmup_enabled": args.warmup_generic,
+        "shared_cache_disabled": args.disable_cache,
         "warmup_seconds": warmup_seconds,
         "model_load_seconds": load_seconds,
         "model_files_sha256": files,
@@ -613,6 +609,8 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
         "system": system_information(),
         "timing_policy": "All text available at t=0; real runtime bounded ahead-of-playback "
         "when --buffered, otherwise sequential chunks; 60ms paced output; no LLM wait simulated",
+        "chunking_policy": "Buffered mode uses the same runtime natural clauses and <=120 "
+        "character units for every candidate; native providers may split acoustic segments",
     }
 
 
@@ -623,18 +621,52 @@ def summarize(report: dict[str, Any]) -> dict[str, Any]:
         rows = [row for row in report["rows"] if row["case"] == case]
         values = sorted(row["first_playable_seconds"] for row in rows)
         output["cases"][case] = {
+            "sample_count": len(rows),
+            "percentile_note": "Linear interpolation; three runs do not establish a robust tail",
             "first_playable_max_seconds": max(values),
             "first_playable_p50_seconds": float(np.percentile(values, 50)),
             "first_playable_p95_seconds": float(np.percentile(values, 95)),
             "first_playable_samples_seconds": values,
             "rtf_max": max(row["real_time_factor"] for row in rows),
             "cpu_seconds_mean": sum(row["process_cpu_seconds"] for row in rows) / len(rows),
+            "cpu_utilization_percent_mean": sum(
+                row["process_cpu_utilization_percent"] for row in rows
+            )
+            / len(rows),
+            "audio_seconds_mean": sum(row["audio_seconds"] for row in rows) / len(rows),
             "peak_rss_mib": max(row["peak_rss_mib"] for row in rows),
             "max_chunk_starvation_seconds": max(
                 row["max_chunk_starvation_seconds"] for row in rows
             ),
+            "max_frame_starvation_seconds": max(
+                row["max_frame_starvation_seconds"] for row in rows
+            ),
         }
     output["cancellation"] = report["cancellation"]
+    stt: dict[str, Any] = {}
+    for key in ("stt_baseline", "stt_contender"):
+        complete = [row for row in report[key] if row["completed"]]
+        stt[key] = {
+            "completed_runs": len(complete),
+            "wall_seconds_mean": float(np.mean([row["wall_seconds"] for row in complete]))
+            if complete
+            else None,
+            "wer_mean": float(np.mean([row["word_error_rate"] for row in complete]))
+            if complete
+            else None,
+            "max_processing_deadline_overrun_seconds": max(
+                (row["max_frame_processing_deadline_overrun_seconds"] for row in complete),
+                default=None,
+            ),
+        }
+    baseline_wall = stt["stt_baseline"]["wall_seconds_mean"]
+    contender_wall = stt["stt_contender"]["wall_seconds_mean"]
+    stt["wall_time_degradation_ratio"] = (
+        contender_wall / baseline_wall - 1 if baseline_wall and contender_wall else None
+    )
+    stt["note"] = "Paced fixture wall includes audio duration; compare WER and frame deadlines "
+    "too. Incomplete shutdown runs are excluded; one fixture is limited evidence."
+    output["stt"] = stt
     output["selection"] = "Not automatic: actual VPS results and human voice review required"
     return output
 
@@ -643,20 +675,30 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scope", choices=("cloud-smoke", "vps"), required=True)
     parser.add_argument("--condition", choices=("A", "B", "C"), required=True)
-    parser.add_argument("--candidate", choices=("kokoro-int8", "piper"), required=True)
+    parser.add_argument(
+        "--candidate", choices=("kitten-micro", "kokoro-int8", "piper"), required=True
+    )
     parser.add_argument("--iterations", type=int, default=3)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--model", type=Path, default=Path(".local/speech/kokoro-int8"))
+    parser.add_argument("--model", type=Path, help="Defaults to .local/speech/<candidate>")
     parser.add_argument("--buffered", action="store_true")
     parser.add_argument("--tts-threads", type=int, choices=(1, 2), default=1)
     parser.add_argument("--stt-threads", type=int, choices=(1, 2), default=1)
     parser.add_argument("--warmup-generic", action="store_true")
+    parser.add_argument(
+        "--disable-cache",
+        action="store_true",
+        help="Measure unseen speech, including repeated texts",
+    )
     parser.add_argument("--stt-model", type=Path, default=Path(".local/speech/asr"))
     parser.add_argument("--fixtures", type=Path, default=Path(".local/speech/fixtures"))
     parser.add_argument("--cpus", type=int, nargs="+", default=[0, 1])
     parser.add_argument("--isolated-workload", action="store_true")
     parser.add_argument("--child", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
+    args.model = args.model or default_model_path(args.candidate)
+    if args.disable_cache and args.warmup_generic:
+        parser.error("--disable-cache cannot be combined with --warmup-generic")
     validate_scope(args.scope, Path.cwd(), os.getuid(), args.isolated_workload, args.condition)
     if not 1 <= args.iterations <= 10:
         parser.error("--iterations must be 1..10")
@@ -666,7 +708,9 @@ def main() -> None:
     args.output.mkdir(parents=True, exist_ok=True)
     if not args.child:
         subprocess.run(
-            [sys.executable, __file__, *sys.argv[1:], "--child"], timeout=1800, check=True
+            [sys.executable, "-m", "scripts.benchmark_kokoro_int8_vps", *sys.argv[1:], "--child"],
+            timeout=1800,
+            check=True,
         )
         return
     report = asyncio.run(child(args))

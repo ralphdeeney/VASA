@@ -1,5 +1,12 @@
 # Build plan
 
+2026-10-09 Kitten Micro candidate slice is integrated and verified locally.
+Pinned optional assets, trusted selection, preload/cancellation/framing and
+matched cloud A/B evaluation are complete (539 full checks; 54 measured
+responses/108 WAVs). Actual VPS A/B/C and human listening remain pending via
+docs/tts-evaluation/kitten-micro/REPRODUCE.md. Do not promote the default until
+those gates pass; preferred first-audio/gap targets are unmet in cloud results.
+
 2026-10-09 user-selected Kokoro-first slice: LJSpeech retired, Kokoro INT8
 default, Piper retained; callback delivery, intelligent chunks, independent
 thread settings, one-time model/generic warmup, bounded audio prefetch/cache

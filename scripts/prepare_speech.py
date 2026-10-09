@@ -108,6 +108,38 @@ def prepare_tts_assets(root: Path) -> None:
             extracted.rename(target)
 
 
+def prepare_kitten_assets(root: Path) -> None:
+    """Publish optional Micro assets atomically; never replace an invalid cache."""
+    from vasa.speech.kitten import (
+        KITTEN_ARCHIVE_ROOT,
+        KITTEN_ARCHIVE_SHA256,
+        KITTEN_ARCHIVE_URL,
+        verify_kitten_micro,
+    )
+
+    ensure_plain_directory(root)
+    root.mkdir(parents=True, exist_ok=True)
+    target = root / "kitten-micro"
+    ensure_plain_directory(target)
+    if target.exists():
+        verify_kitten_micro(target)
+        return
+    with tempfile.TemporaryDirectory(prefix="kitten-prepare-", dir=root) as temporary:
+        staging = Path(temporary)
+        cached = Path(".local/tts-evaluation/archives") / (KITTEN_ARCHIVE_ROOT + ".tar.bz2")
+        if cached.is_file() and not cached.is_symlink():
+            if sha256_file(cached) != KITTEN_ARCHIVE_SHA256:
+                raise RuntimeError("Pinned Kitten archive mismatch; preserve and inspect cache")
+            archive = cached
+        else:
+            archive = staging / "model.tar.bz2"
+            download(KITTEN_ARCHIVE_URL, archive, KITTEN_ARCHIVE_SHA256)
+        extract_archive(archive, staging / "extracted", expected_root=KITTEN_ARCHIVE_ROOT)
+        extracted = staging / "extracted" / KITTEN_ARCHIVE_ROOT
+        verify_kitten_micro(extracted)
+        extracted.rename(target)
+
+
 def manifest() -> dict[str, object]:
     from vasa.speech.kokoro import KOKORO_INT8_FILES
 
@@ -211,11 +243,19 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--directory", type=Path, default=Path(".local/speech"))
     parser.add_argument("--verify-only", action="store_true")
+    parser.add_argument("--kitten-micro", action="store_true", help="Include optional Micro 0.8")
     args = parser.parse_args()
     if args.verify_only:
         SpeechModels(args.directory).verify()
     else:
         prepare(args.directory)
+    if args.kitten_micro:
+        if args.verify_only:
+            from vasa.speech.kitten import verify_kitten_micro
+
+            verify_kitten_micro(args.directory / "kitten-micro")
+        else:
+            prepare_kitten_assets(args.directory)
     print("Verified CPU speech assets are ready.")
 
 

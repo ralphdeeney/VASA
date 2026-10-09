@@ -21,7 +21,9 @@ class Settings(BaseSettings):
     evolution_stream_key: SecretStr = SecretStr("")
     evolution_instance_key: SecretStr = SecretStr("")
     speech_model_root: Path = Path(".local/speech")
-    tts_provider: Literal["kokoro-int8", "piper"] = "kokoro-int8"
+    tts_provider: Literal["kitten-micro", "kokoro-int8", "piper"] = "kokoro-int8"
+    kitten_model_dir: Path = Path(".local/speech/kitten-micro")
+    kitten_num_threads: int = Field(default=1, ge=1, le=8)
     kokoro_model_dir: Path = Path(".local/speech/kokoro-int8")
     kokoro_num_threads: int = Field(default=1, ge=1, le=8)
     stt_num_threads: int = Field(default=1, ge=1, le=8)

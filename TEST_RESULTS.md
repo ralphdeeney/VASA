@@ -1,5 +1,16 @@
 # Test results
 
+2026-10-09 Kitten Micro: 539 complete unit/component/integration/native/eval
+checks passed, zero failures/errors/skips, 48.45s. Ruff/format and strict mypy
+(55 sources) pass. JUnit reports/kitten-micro-final.xml is copied into evaluation
+evidence. New coverage includes real Micro reuse/framing, cache restrictions,
+callback cancellation/bounds, corrupt/symlink assets, three-provider worker
+sharing and fresh benchmark child imports without project PYTHONPATH.
+Six sequential native cloud A/B cohorts produced 54 responses and 108 verified
+WAVs. Compose configuration and deployment script syntax passed; no deployment
+occurred. Actual VPS A/B/C and human listening remain pending. Receipt:
+docs/tts-evaluation/kitten-micro/verification.json.
+
 2026-10-09 Kokoro-first optimizations: 521 full unit/component/integration/native
 and eval checks passed, zero failures/errors/skips. Ruff/format and strict mypy
 passed; JUnit reports/kokoro-first-final.xml. Native Kokoro now drives the actual

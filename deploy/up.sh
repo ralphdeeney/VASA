@@ -21,6 +21,10 @@ compose=(docker compose --env-file .local/vps.env -f deploy/compose.yaml)
 "${compose[@]}" config --quiet
 "${compose[@]}" build
 "${compose[@]}" run --rm --no-deps vasa python scripts/prepare_speech.py
+if [[ $("${compose[@]}" --profile voice config --format json | \
+     uv run --frozen python -c 'import json,sys; print(json.load(sys.stdin)["services"]["voice"]["environment"]["VASA_TTS_PROVIDER"])') == "kitten-micro" ]]; then
+  "${compose[@]}" run --rm --no-deps vasa python scripts/prepare_speech.py --kitten-micro
+fi
 "${compose[@]}" run --rm --no-deps vasa python scripts/prepare_knowledge.py
 "${compose[@]}" up -d --wait --wait-timeout 120 postgres redis evolution
 "${compose[@]}" run --rm --no-deps vasa alembic upgrade head
