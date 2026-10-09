@@ -1,0 +1,208 @@
+{
+  "candidate": "sherpa-kokoro",
+  "threads_per_model": 2,
+  "contention": false,
+  "cpu_affinity": [
+    0,
+    1
+  ],
+  "load_seconds": 1.138198578999436,
+  "peak_rss_kib": 679108,
+  "rows": [
+    {
+      "first_playable_seconds": 1.8820880999992369,
+      "complete_seconds": 1.8821623399999226,
+      "audio_seconds": 3.42,
+      "rtf": 0.5503398654970534,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+          "start_seconds": 4.716999683296308e-06,
+          "ready_seconds": 1.8820688409978175,
+          "generation_seconds": 1.8820641239981342,
+          "process_cpu_seconds": 3.655978646000001,
+          "audio_seconds": 3.42
+        }
+      ],
+      "boundaries": [],
+      "total_playback_underrun_seconds": 0.0,
+      "cpu_seconds": 3.6560866770000002,
+      "case": "legacy",
+      "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+      "policy": "whole",
+      "iteration": 0,
+      "wav": "sherpa-kokoro-solo-legacy-whole.wav"
+    },
+    {
+      "first_playable_seconds": 2.269428195999353,
+      "complete_seconds": 2.2695018559970777,
+      "audio_seconds": 3.42,
+      "rtf": 0.6635970339172742,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+          "start_seconds": 4.317000275477767e-06,
+          "ready_seconds": 2.2694101099987165,
+          "generation_seconds": 2.269405792998441,
+          "process_cpu_seconds": 4.407939993000001,
+          "audio_seconds": 3.42
+        }
+      ],
+      "boundaries": [],
+      "total_playback_underrun_seconds": 0.0,
+      "cpu_seconds": 4.40804546,
+      "case": "legacy",
+      "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+      "policy": "whole",
+      "iteration": 1
+    },
+    {
+      "first_playable_seconds": 1.884668774997408,
+      "complete_seconds": 1.884741652997036,
+      "audio_seconds": 3.42,
+      "rtf": 0.5510940505839287,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+          "start_seconds": 4.587000148603693e-06,
+          "ready_seconds": 1.8846514789984212,
+          "generation_seconds": 1.8846468919982726,
+          "process_cpu_seconds": 3.664131611000002,
+          "audio_seconds": 3.42
+        }
+      ],
+      "boundaries": [],
+      "total_playback_underrun_seconds": 0.0,
+      "cpu_seconds": 3.6642334320000014,
+      "case": "legacy",
+      "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+      "policy": "whole",
+      "iteration": 2
+    },
+    {
+      "first_playable_seconds": 0.5616915469981905,
+      "complete_seconds": 1.8703488200007996,
+      "audio_seconds": 3.48,
+      "rtf": 0.5374565574714941,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Hello.",
+          "start_seconds": 1.5262998203979805e-05,
+          "ready_seconds": 0.5616759139993519,
+          "generation_seconds": 0.5616606510011479,
+          "process_cpu_seconds": 1.1187758319999972,
+          "audio_seconds": 0.72
+        },
+        {
+          "index": 1,
+          "text": "Your appointment is confirmed for tomorrow morning.",
+          "start_seconds": 0.5617076310008997,
+          "ready_seconds": 1.870275171000685,
+          "generation_seconds": 1.3085675399997854,
+          "process_cpu_seconds": 2.516441124,
+          "audio_seconds": 2.76
+        }
+      ],
+      "boundaries": [
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.0011000367307321612,
+          "right_100ms_rms": 0.026522632122365216,
+          "playback_underrun_seconds": 0.5885992570013332
+        }
+      ],
+      "total_playback_underrun_seconds": 0.5885992570013332,
+      "cpu_seconds": 3.635484422000001,
+      "case": "legacy",
+      "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+      "policy": "sentence",
+      "iteration": 0,
+      "wav": "sherpa-kokoro-solo-legacy-sentence.wav"
+    },
+    {
+      "first_playable_seconds": 0.5736457659986627,
+      "complete_seconds": 1.9584728049994737,
+      "audio_seconds": 3.48,
+      "rtf": 0.5627795416665154,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Hello.",
+          "start_seconds": 1.5824000001884997e-05,
+          "ready_seconds": 0.5736286510000355,
+          "generation_seconds": 0.5736128270000336,
+          "process_cpu_seconds": 1.1422654009999995,
+          "audio_seconds": 0.72
+        },
+        {
+          "index": 1,
+          "text": "Your appointment is confirmed for tomorrow morning.",
+          "start_seconds": 0.5736889699983294,
+          "ready_seconds": 1.9583979240014742,
+          "generation_seconds": 1.3847089540031448,
+          "process_cpu_seconds": 2.6557920189999997,
+          "audio_seconds": 2.76
+        }
+      ],
+      "boundaries": [
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.001089949198547076,
+          "right_100ms_rms": 0.026694155788040526,
+          "playback_underrun_seconds": 0.6647692730014387
+        }
+      ],
+      "total_playback_underrun_seconds": 0.6647692730014387,
+      "cpu_seconds": 3.798321512000001,
+      "case": "legacy",
+      "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+      "policy": "sentence",
+      "iteration": 1
+    },
+    {
+      "first_playable_seconds": 0.6612415159979719,
+      "complete_seconds": 2.2084581519993662,
+      "audio_seconds": 3.48,
+      "rtf": 0.6346144114940707,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Hello.",
+          "start_seconds": 1.48920007632114e-05,
+          "ready_seconds": 0.6612242910014174,
+          "generation_seconds": 0.6612093990006542,
+          "process_cpu_seconds": 1.3127584460000001,
+          "audio_seconds": 0.72
+        },
+        {
+          "index": 1,
+          "text": "Your appointment is confirmed for tomorrow morning.",
+          "start_seconds": 0.6612577810010407,
+          "ready_seconds": 2.208381148000626,
+          "generation_seconds": 1.5471233669995854,
+          "process_cpu_seconds": 2.9585169479999998,
+          "audio_seconds": 2.76
+        }
+      ],
+      "boundaries": [
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.0011102538606843479,
+          "right_100ms_rms": 0.0269320332997157,
+          "playback_underrun_seconds": 0.8271568569992087
+        }
+      ],
+      "total_playback_underrun_seconds": 0.8271568569992087,
+      "cpu_seconds": 4.271515280999999,
+      "case": "legacy",
+      "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+      "policy": "sentence",
+      "iteration": 2
+    }
+  ],
+  "stt_utterances": []
+}

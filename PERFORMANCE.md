@@ -1,5 +1,16 @@
 # Performance
 
+2026-10-09 isolated conversational TTS study is recorded in
+[docs/tts-evaluation/streaming/README.md](docs/tts-evaluation/streaming/README.md).
+Four candidates, three texts, two chunk policies and solo/real STT contention
+were measured as 144 responses on two-core affinity and quota. Official Kokoro
+full-sentence P95 under STT was 2.074–2.313s, with sentence-boundary starvation
+and approximately 1.8–2.1 GiB peak RSS. Piper's corresponding P95 was 0.228s,
+with no simulated starvation and 433 MiB combined peak. Eighteen one-thread
+responses were slower; six legacy-text repeats confirm earlier sherpa timings.
+These are cloud component measurements, not actual VPS or phone measurements.
+No production provider changes or human naturalness score are claimed.
+
 2026-10-09 concrete tools/storage: finite webhook/call-ending/retrieval deadlines,
 bounded response bodies, per-call message/tool limits and bounded pagination are
 verified. Eight concurrent SQL transcript writers preserve unique sequencing.

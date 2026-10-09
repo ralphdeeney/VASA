@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VASA isolated TTS listening review</title>
+<style>
+body{font:16px system-ui;max-width:900px;margin:3rem auto;padding:0 1rem;color:#173035}
+label{display:inline-block;margin:0 1rem 1rem 0}select{font:inherit;padding:.4rem}
+article{border-top:1px solid #ccd9dc;padding:1rem 0}audio{width:100%}
+p{line-height:1.55}small{color:#52696f}
+</style>
+<h1>Conversational TTS listening review</h1>
+<p>Download this directory and open this page locally. The samples use the same
+text at 16 kHz mono PCM16. Playback samples include measured generation gaps.
+No human listening preference has yet been recorded.</p>
+<label>Text <select id="case"><option value="short">Short acknowledgment</option>
+<option value="sentence">Complete sentence</option><option value="long">Long response</option></select></label>
+<label>Chunking <select id="policy"><option value="sentence">Sentence boundaries</option>
+<option value="whole">Whole response</option></select></label>
+<label>CPU load <select id="mode"><option value="solo">TTS alone</option>
+<option value="stt">TTS and STT</option></select></label>
+<p>Score each voice from 1 to 5 for naturalness, intelligibility, timing and
+boundary continuity. Listen for skipped words, rushed delivery, unnatural
+sentence endings, clicks and audible pauses. Review all three texts; a short
+acknowledgment alone does not establish conversational quality.</p>
+<div id="samples"></div>
+<script>
+const candidates=[['official-v10','Official Kokoro v1.0 — Heart'],
+['official-v11','Official Kokoro v1.1 — Maple'],
+['sherpa-kokoro','Sherpa Kokoro v1.1 FP32 — Maple'],
+['piper','Piper LibriTTS-R — speaker 0']];
+function update(){
+ const container=document.getElementById('samples');container.replaceChildren();
+ for(const [id,label] of candidates){
+  const path=`${id}-${document.getElementById('mode').value}-${document.getElementById('case').value}-${document.getElementById('policy').value}-playback.wav`;
+  const article=document.createElement('article'), title=document.createElement('h2');
+  title.textContent=label;const player=document.createElement('audio');
+  player.controls=true;player.preload='none';player.src=path;
+  const link=document.createElement('a');link.href=path;link.download=path;
+  link.textContent='Download this WAV';article.append(title,player,link);container.append(article);
+ }
+}
+for(const id of ['case','policy','mode'])document.getElementById(id).addEventListener('change',update);
+update();
+</script>
+</html>

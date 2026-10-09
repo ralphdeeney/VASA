@@ -1,5 +1,15 @@
 # Test results
 
+## Isolated Kokoro streaming evaluation — 2026-10-09
+
+Full scripts/check.sh passed 487 checks, no failures, errors or skips; Ruff,
+format and strict mypy passed. JUnit: reports/tts-streaming-final.xml. Three
+new evaluation harness checks cover resampling bounds, measured playback-gap
+rendering and ordered 60 ms TTSProvider frames. Native benchmark children
+completed sequentially; production code, dependency declarations and transport
+remain unchanged. Model/voice hashes, dependency lock and license notices are
+recorded in docs/tts-evaluation/streaming/.
+
 ## Whole-project integration — 2026-10-09
 
 `UV_CACHE_DIR=/workspace/.cache/uv UV_NO_SYNC=1 bash scripts/check.sh

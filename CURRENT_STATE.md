@@ -1,5 +1,14 @@
 # Current state
 
+2026-10-09 isolated TTS study: official Kokoro v1.0/v1.1, matching sherpa
+v1.1 FP32 and Piper were measured with two-CPU affinity/quota, sentence and
+whole-response policies, and actual paced STT contention. Official sentence
+P95 under STT was 2.074–2.313s; memory exceeded the current 1 GiB worker
+budget. Single-thread tuning was slower. Piper had no simulated starvation
+and sentence P95 0.228s under STT. Human naturalness review and actual VPS
+performance remain unverified. Production provider and transport are unchanged.
+Results, hashes and WAVs: docs/tts-evaluation/streaming/. Full checks: 487 pass.
+
 Current wave: 10 (integration and stabilization)
 Current slice: Tenant knowledge, durable runtime evidence, dashboard and deployment package integrated; live OpenAI acceptance deferred by user
 Completed slices: Wave 0 governance/tooling/contracts; Wave 1 tenant PostgreSQL/pgvector/Redis and isolation; Wave 2 verified pinned-source Evolution adapter, authenticated instance mapping/control and QR dashboard; Wave 3 real-call media acceptance; Wave 4 CPU VAD/STT/TTS, bounded native cancellation and streamed LLM adapters; Wave 5 conversation runtime, trusted inbound worker and native local-WebSocket integration

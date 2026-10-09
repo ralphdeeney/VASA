@@ -1,5 +1,13 @@
 # Decisions
 
+- 2026-10-09: Keep production LJSpeech unchanged during the requested isolated
+  Kokoro research. Study pinned official hexgrad/kokoro (the named Kokoro-TTS
+  repository returns 404), compare official v1.1 Maple with the matching sherpa
+  model, and distinguish official v1.0 Heart as a separate voice/model pair.
+  Treat generator output as whole-segment availability; record buffering gaps,
+  not merely average RTF. Do not select a production voice from CPU throughput
+  alone: human listening, actual VPS budget and real-call validation remain.
+
 - 2026-10-09 continuation: user authorized concrete tools followed by call and
   transcript storage while OpenAI stays deferred. Implement as independent
   components without enabling live worker tool output. Approved webhook actions
