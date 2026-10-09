@@ -201,10 +201,11 @@ WhatsApp connection dashboard; provider credentials never reach the browser.
 VASA uses Evolution Go Calls, an Evolution Foundation-based fork, for WhatsApp
 transport. The dependency source, notices and manager branding are retained;
 its license/activation conditions apply. CPU speech and conversation orchestration
-use this proven transport. Independent concrete tool handlers and tenant-owned
-call/transcript storage are prepared; see [their contracts and integration
-limits](docs/TOOL_PREPARATION.md). Live tool/runtime linking, knowledge retrieval
-and complete call acceptance remain pending.
+use this proven transport. Tenant-owned tool execution, call/transcript storage,
+CPU knowledge retrieval and the authenticated dashboard are integrated; see
+[their contracts and integration limits](docs/TOOL_PREPARATION.md). Live provider
+behavior, business action delivery and phone acceptance still require external
+gates.
 
 ### VPS deployment preparation
 

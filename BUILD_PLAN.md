@@ -9,12 +9,12 @@ The complete governing instructions are in docs/BUILD_HARNESS.md.
 | 2 | Verified Evolution client, instances/calls/media; mappings, registry, connect/QR UI | Verified transport; real answering/media confirmed by user |
 | 3 | Real caller audio in, prerecorded audio out, heard by caller | PASSED: 98 live inbound frames, 20 diagnostic outbound frames, human confirmed tones |
 | 4 | CPU speech, cancellation/barge-in, LLM adapters/context/fallback | Component/native verified; live provider credential pending |
-| 5 | Integrated conversation state machine | Component/native verified (318 combined checks); live OpenAI acceptance pending secure key |
-| 6 | Generic validated tools and tool evals | Blocked by Gate 5 |
-| 7 | Full tenant-owned call/message/tool/knowledge persistence | Blocked by Gate 6 |
-| 8 | Tenant-isolated CPU embeddings/RAG and Knowledge UI | Blocked by Gate 7 |
-| 9 | Minimal authenticated dashboard | Blocked by Gate 8 |
-| 10 | Combined tests/evals, profiling and repeated-call stabilization | Blocked by prior gates |
+| 5 | Integrated conversation state machine | Component/native verified; live OpenAI acceptance pending secure key |
+| 6 | Generic validated tools and tool evals | Implemented and component/eval verified; live business action pending |
+| 7 | Full tenant-owned call/message/tool/knowledge persistence | Implemented and SQL isolation/evidence verified |
+| 8 | Tenant-isolated CPU embeddings/RAG and Knowledge UI | Implemented; native retrieval 19/20 first-result eval |
+| 9 | Minimal authenticated dashboard | Implemented and API/UI contract verified |
+| 10 | Combined tests/evals, profiling and repeated-call stabilization | 476 checks pass; live provider/VPS/phone gates remain |
 
 Wave 1 establishes only the database models needed for tenancy; Wave 7 expands persistence. Wave 6 defines knowledge_search's contract, with functional knowledge retrieval verified after Wave 8. Thresholds must be documented before behavioral/performance gates; no invented passing results.
 
