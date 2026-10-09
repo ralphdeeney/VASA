@@ -1,5 +1,29 @@
 # Test results
 
+## Independent tool gateway preparation — 2026-10-09
+
+User deferred live OpenAI setup and requested other work. New independent
+gateway checks cover tenant isolation, denied permissions before handler work,
+strict input/output validation, snapshot isolation, nonfinite/oversized/cyclic
+payload rejection, finite deadlines, fail-fast capacity, cancellation cleanup,
+duplicate registration and sanitized exception/audit output. The same tool name
+resolves independently for two tenants with positive execution controls.
+
+Initial combined run: 340 passed, two audit-test capture failures because
+production disables propagation on the vasa logger. Tests now attach capture
+directly and restore logger state; production audit/privacy assertions remain.
+Aggregate text bounds were also tightened before JSON serialization.
+
+Final `UV_CACHE_DIR=/workspace/.cache/uv UV_NO_SYNC=1 bash scripts/check.sh
+--junitxml=reports/tool-gateway.xml -q`: 342 passed; zero failures/errors/skips.
+Current JUnit inspected. Ruff/format and strict mypy pass. The environment's
+restored dependencies/native assets were used without resync; dedicated vasa-dev
+PostgreSQL/Redis restarted and explicit Alembic migrations succeeded. One existing
+non-failing Starlette deprecation warning remains. No real provider, n8n action,
+knowledge retrieval, new phone call or capacity benchmark is claimed. Gateway is
+not wired into the voice runtime; live dialogue and dependent completion remain
+deferred.
+
 ## Before publication
 
 2026-10-08 combined command: `bash scripts/check.sh --junitxml=reports/current.xml -q`.

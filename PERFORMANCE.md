@@ -1,5 +1,10 @@
 # Performance
 
+2026-10-09 independent tool gateway: active execution has a configurable global
+limit (default four), saturation fails immediately, and payloads/registry entries
+are bounded. These are verified resource controls, not throughput or ten-call
+capacity measurements. No new performance benchmark is claimed.
+
 The user's real-media acceptance reports 98 live inbound frames and 20 diagnostic outbound frames with confirmed audibility. This establishes transport operation, not latency or concurrency. No real voice benchmarks or concurrency load tests have run. Approximately 10 CPU-only simultaneous calls remains a target, not a measured capability.
 
 The source adapter bounds HTTP/WS payloads, pre-handshake frames and network deadlines; diagnostics pace 60 ms PCM frames. The probe reports local state, timing and frame observations after a real call. Its component tests do not establish network latency, audibility, dropped upstream frames or performance under load. The source lacks remote timestamps, playback acknowledgment and drop counters, which must not be fabricated.

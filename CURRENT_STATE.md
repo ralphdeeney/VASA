@@ -1,14 +1,23 @@
 # Current state
 
 Current wave: 5 (Conversation runtime; Wave 4 CPU Voice Intelligence verified)
-Current slice: Wave 5 component/native verified; live OpenAI acceptance pending secure key
+Current slice: Independent generic tool gateway preparation; live OpenAI acceptance deferred by user
 Completed slices: Wave 0 governance/tooling/contracts; Wave 1 tenant PostgreSQL/pgvector/Redis and isolation; Wave 2 verified pinned-source Evolution adapter, authenticated instance mapping/control and QR dashboard; Wave 3 real-call media acceptance; Wave 4 CPU VAD/STT/TTS, bounded native cancellation and streamed LLM adapters; Wave 5 conversation runtime, trusted inbound worker and native local-WebSocket integration
-Active agents: none; requested independent build and verification complete, awaiting secure OpenAI binding
+Active agents: none; independent tool gateway component verified
 Blockers:
 - OpenAI is selected primary, but no secure usable binding is injected. The credential pasted in chat must be revoked/replaced through VASA_OPENAI_API_KEY in environment settings, saved/published. Do not store or use the exposed credential. Anthropic is optional. Live LLM acceptance awaits this prerequisite; independent checks continue.
 - Historical cloud SSH to vasa-builder@2.25.172.155:22 was refused before authentication; proxy CONNECT closed without SSH banner. No successful VPS connection or remote changes are claimed. This does not block independent development or negate the user's accepted real call.
 Failed checks: none outstanding. Native TTS callback polarity, repeated-cancel cache cleanup, delayed state callbacks and clipped initial speech regressions fixed and verified; no tests disabled or acceptance thresholds weakened.
-Next action: securely configure a replacement VASA_OPENAI_API_KEY, save/publish, then verify real OpenAI behavior and proceed to the next permitted graph gate. No need to repeat the passed diagnostic media call. Do not claim Wave 5 live dialogue acceptance or unlock dependent behavioral completion from scripted results.
+Next action: continue independent concrete-tool preparation against the frozen gateway contract; keep runtime linking/live model tool acceptance gated. Live OpenAI setup/acceptance is explicitly deferred by the user on 2026-10-09; return to it later. Gate 5 remains unpassed. No need to repeat the passed diagnostic media call. Do not claim Wave 5 live dialogue acceptance or unlock dependent behavioral completion from scripted results.
+
+2026-10-09 independent slice: tenant-bound ToolGateway with server permissions,
+strict input/output models, bounded JSON snapshots, fail-fast capacity,
+timeouts/cancellation cleanup and sanitized per-attempt outcome logging.
+24 new component checks; full verification passed 342 checks with no failures,
+errors or skips. Ruff/format/strict mypy pass; current JUnit inspected at
+reports/tool-gateway.xml. Restored native assets and dedicated vasa-dev DB/cache
+were used. No provider key or live API was used. Tool handlers, durable audits,
+provider tool streaming and voice runtime integration remain pending.
 
 Real-call Gate 3: PASSED on the user's explicit report on 2026-10-08. Evolution
 answered an actual inbound WhatsApp call; VASA received 98 live caller frames,

@@ -1,5 +1,11 @@
 # Eval results
 
+2026-10-09 independent tool gateway preparation: deterministic component
+checks exercise tenant-bound registry lookups, server-grant denial before handler
+execution, strict input/output schemas and failure cleanup. They do not evaluate
+live model tool selection, n8n actions or knowledge retrieval. No new live
+behavioral acceptance or graph gate is claimed; OpenAI setup is deferred by user.
+
 2026-10-08: 3 tenant-isolation evals passed. Two cover explicit tenant SQL agents and Redis call-state reads/deletes; one exercises authenticated foreign-instance API access denied with HTTP 404 before any upstream operation, with own-tenant positive controls. Real PostgreSQL/Redis and server-derived session contexts are used.
 
 Conversation, tool, knowledge, summary and latency evals have not yet run. Planned golden cases are not passing results. Local WebSocket and diagnostic probe tests are component checks, not real-call evidence.

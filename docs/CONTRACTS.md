@@ -73,3 +73,33 @@ Speech accuracy acceptance is an aggregate word error rate <=0.15 over at least
 three independent pinned English fixtures; native TTS must produce bounded
 nonempty valid speech frames. Native measurements and scripted model component
 evals are distinct from live LLM behavior and real-phone dialogue acceptance.
+
+## Independent tool gateway preparation — 2026-10-09
+
+The user deferred provider setup and authorized other development. This freezes
+an independent component only; Gate 5 remains unpassed and the voice runtime
+continues rejecting tool output. No Wave 6 integration or completion is implied.
+
+- `ToolGateway.register(ToolBinding)` is server-only configuration. Bindings
+  contain a trusted tenant UUID, existing `Tool` implementation, strict Pydantic
+  `ToolPayload` input/output models and a finite 0–30 second deadline (exclusive
+  of zero). Duplicate names per tenant and more than 1024 bindings are rejected.
+- `execute(context, name, arguments, allowed_tools=frozenset(...))` requires
+  authenticated server-derived TenantContext and server-loaded permission names.
+  Never accept registry entries or permission grants from the model or browser.
+  Unknown/foreign tools and missing grants share `denied`, before handler work.
+- Payloads are JSON snapshots bounded to 32 KiB, 2048 nodes and depth 16;
+  nonfinite numbers, coercion and unknown schema fields are rejected. Validate
+  both arguments and results. Schema field-specific bounds remain required.
+- Global active execution is bounded (default four); saturation fails `busy`
+  without a waiting queue. No automatic action retries. Async handlers must
+  honor cancellation, bound their own external I/O and avoid blocking work.
+  Timeouts/cancellation release capacity after handler cleanup; cancellation
+  cannot undo a business action already accepted by an external service.
+- Error messages contain fixed codes only. Each attempt logs one controlled
+  outcome event without arguments/results/exception messages. Durable tool
+  records and execution IDs remain Wave 7, not supplied by these logs.
+- `knowledge_search`, `custom_webhook`, `end_call`, provider tool streaming and
+  runtime continuation are not implemented by this gateway component. Webhook
+  destinations/credentials must come from trusted tenant configuration, with
+  explicit destination policy before enabling business actions.

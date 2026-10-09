@@ -1,5 +1,10 @@
 # Decisions
 
+- 2026-10-09: User explicitly defers configuring the replacement OpenAI key and
+  requests other work. Prepare the generic tool validation gateway independently,
+  without voice/runtime linking or advancing acceptance gates. Reuse the existing
+  Tool protocol and Pydantic dependency; no provider credentials are required.
+
 - 2026-10-08: Follow the user's full harness in docs/BUILD_HARNESS.md. Work in the current cloud environment, not a VPS.
 - Wave 0 uses FastAPI, SQLAlchemy async/asyncpg, Redis asyncio, Alembic, pytest, Ruff, strict mypy and a committed uv lockfile.
 - Shared contracts specify semantic boundaries only. Evolution wire details require upstream source verification; do not substitute ordinary messaging APIs for voice-call support.
