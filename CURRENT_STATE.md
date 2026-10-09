@@ -24,6 +24,9 @@ Fresh isolated DB upgrade/downgrade/re-upgrade and Alembic schema check passed.
 Eight real concurrent SQL writers preserved all messages and unique sequences.
 No live provider/n8n action/call, runtime transcript capture, model tool selection,
 summary accuracy or concurrency capacity is claimed. No key was used.
+Source c4c2c193440d37a9fe733bd15300f79a3625b1c9 is uploaded and passed both
+remote Verify runs: push 37863783680, PR 37863788777. The subsequent evidence-only
+documentation commit changes no implementation; its own CI is not inferred.
 
 2026-10-09 independent slice: tenant-bound ToolGateway with server permissions,
 strict input/output models, bounded JSON snapshots, fail-fast capacity,

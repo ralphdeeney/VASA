@@ -2,6 +2,12 @@
 
 ## Concrete tools and call storage — 2026-10-09
 
+Remote source verification: push run 37863783680 and PR run 37863788777 both
+passed for c4c2c193440d37a9fe733bd15300f79a3625b1c9 (gh run watch
+--exit-status). Fresh dependencies/native assets, real services, migrations and
+the full scripts/check.sh completed. The following CI-evidence documentation
+commit changes no implementation and does not inherit a claim about its own CI.
+
 Full `UV_CACHE_DIR=/workspace/.cache/uv UV_NO_SYNC=1 bash scripts/check.sh
 --junitxml=reports/concrete-tools-storage.xml -q`: 384 passed, zero failures,
 errors or skips. Current JUnit inspected; Ruff/format/strict mypy pass. One existing
