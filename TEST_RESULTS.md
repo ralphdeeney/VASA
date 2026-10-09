@@ -1,5 +1,15 @@
 # Test results
 
+## Whole-project integration — 2026-10-09
+
+`UV_CACHE_DIR=/workspace/.cache/uv UV_NO_SYNC=1 bash scripts/check.sh
+--junitxml=reports/v1-integration.xml -q` passed **476 checks**, zero failures,
+errors or skips. The run covered knowledge SQL isolation/quota/atomicity,
+dashboard/API contracts, upload admission, tool protocol/runtime, durable
+transcript finalization, worker supervision, native speech bounds and existing
+transport regressions. Ruff, format and strict mypy also passed. The report is
+at `reports/v1-integration.xml`; no provider key was used.
+
 ## Concrete tools and call storage — 2026-10-09
 
 Remote source verification: push run 37863783680 and PR run 37863788777 both

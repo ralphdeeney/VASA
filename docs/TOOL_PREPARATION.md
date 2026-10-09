@@ -43,7 +43,10 @@ This wiring is not enabled yet.
 KnowledgeSearch passes trusted context, query and top_k (one to five) to an
 injected KnowledgeRetriever. Matches carry tenant/source/chunk IDs, bounded text
 and a finite score; foreign-tenant results fail. Without a backend it fails
-unavailable. Embeddings, document extraction and vector retrieval remain pending.
+unavailable. The integrated KnowledgeService now extracts bounded TXT/PDF/DOCX
+documents, chunks them, embeds with the pinned CPU MiniLM model and performs
+tenant- and embedding-identity-filtered pgvector search. Its SQL quota and
+cancellation checks are covered in the full suite.
 
 ## Durable calls and transcripts
 
@@ -68,8 +71,9 @@ cancelled and unknown; late audit completion after call closure is permitted.
 
 Repositories flush but never commit. Integrators must commit audit start before
 external dispatch and completion/uncertainty separately. Do not hold a database
-lock or transaction during HTTP/media work. Connecting gateway execution IDs to
-these durable rows is a remaining integration task.
+lock or transaction during HTTP/media work. The voice worker now persists call
+messages and tool execution status through this repository, including lossless
+bounded segments for oversized tool output.
 
 Tenant/instance deletion cascades to histories; future retention/deletion flows
 must account for this. Caller identifiers/transcripts are sensitive tenant data.

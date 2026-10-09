@@ -153,3 +153,41 @@ continues rejecting tool output. No Wave 6 integration or completion is implied.
 - Migration and repositories are independent preparation; the live worker does
   not write transcripts until runtime acceptance/integration is completed. No
   knowledge tables, generated summaries or dashboard calls screen are claimed.
+
+## Final implementation freeze — 2026-10-09
+
+The user now authorizes finishing all remaining implementation tasks while the
+live provider credential stays deferred. Gates are acceptance records, not a
+reason to leave independent implementation unfinished. No scripted result counts
+as live acceptance. Parallel ownership follows the harness.
+
+- Root owns dependencies, migrations, storage models/repositories, configuration,
+  app router integration and product APIs. Dashboard owns dashboard/ only.
+  Knowledge specialist owns knowledge processing/embedding modules and its tests;
+  runtime specialist owns llm/, runtime/ and corresponding tests. Worker specialist
+  owns voice_worker.py, finalization module and its tests.
+- Product APIs: GET/PUT /api/agent fields name,business_name,greeting,
+  business_description,instructions,language,voice; GET/POST /api/knowledge
+  (POST JSON {name,text}); POST /api/knowledge/upload raw bytes with x-file-name;
+  DELETE /api/knowledge/{UUID}; GET /api/calls?limit=50&offset=0 and
+  GET /api/calls/{UUID} with messages/tool_calls. All mutations require CSRF;
+  all reads require authenticated trusted tenant context. No provider secrets.
+- Root supplies KnowledgeService(database) add_text(context,name,text),
+  add_document(context,name,bytes), list_sources(context), delete_source(context,id),
+  search(context,query,top_k)->list[KnowledgeMatch]. Root owns source/chunk schema.
+  Knowledge processor exports process_text(text)->list[str],
+  extract_document(name,bytes)->str, CPUEmbedder.embed(list[str])->list[list[float]],
+  dimension=384 and a versioned embedding identity. Bounded off-loop use required.
+- Agent defaults: English CPU voice ljspeech_en; trusted persisted instructions
+  and greeting load per tenant (first configured agent). No unsupported language
+  or customer-selectable model/provider controls.
+- Runtime adds optional on_message async callback for individual completed
+  user/assistant/tool events, separate from bounded model context. Optional
+  ToolExecutor.execute(context,name,arguments)->dict and finite max-tool rounds.
+  Text-only calls retain current behavior. Provider tool events have type tool_call,
+  id/name/arguments; advertise strict server-approved specs. Tool continuation must
+  preserve protocol validity and cancellation/tenant isolation. No tools by default.
+- Worker persists each transcript message via separate short DB transactions,
+  creates/finalizes durable calls and tool audit IDs, supplies KnowledgeService and
+  per-call EndCall. Existing answer/media transport remains unchanged. Summary
+  processing is bounded and separate from live audio; failure cannot strand calls.

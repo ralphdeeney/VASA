@@ -13,3 +13,7 @@ dist/
 *.egg-info/
 .local/
 reports/
+
+# Intermediate build scratch and test client artifacts
+work/
+:memory:.ses

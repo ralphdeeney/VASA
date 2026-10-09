@@ -5,18 +5,28 @@ that a caller heard a generated response. No conversation data is logged here.
 """
 
 import asyncio
+import copy
+import json
 import math
 import re
 import time
 from collections import deque
 from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol
 
 from vasa.contracts.models import AudioFrame, CallState, TenantContext
 from vasa.contracts.providers import LLMProvider, MediaConnection, STTProvider, TTSProvider
 from vasa.speech.vad import StreamingVAD
 
+
+class ToolExecutor(Protocol):
+    async def execute(
+        self, context: TenantContext, name: str, arguments: dict[str, Any]
+    ) -> dict[str, Any]: ...
+
+
+MessageCallback = Callable[[dict[str, Any]], Awaitable[None]]
 StateCallback = Callable[[CallState], Awaitable[None]]
 # Native WebRTC can first declare speech after quiet opening phonemes. Retain
 # 480 ms of acoustic context for streamed STT, independently of VAD's 120 ms
@@ -65,6 +75,8 @@ class RuntimeConfig:
     greeting: str = "Hello, how can I help?"
     max_call_seconds: float = 600
     max_turns: int = 50
+    max_tool_rounds: int = 4
+    max_tool_actions: int = 8
     max_history_messages: int = 32
     max_response_chars: int = 2000
     audio_queue_frames: int = 64
@@ -75,6 +87,8 @@ class RuntimeConfig:
     def __post_init__(self) -> None:
         integer_bounds = (
             (self.max_turns, 1, 1000),
+            (self.max_tool_rounds, 1, 8),
+            (self.max_tool_actions, 1, 16),
             (self.max_history_messages, 3, 64),
             (self.max_response_chars, 1, 2000),
             (self.audio_queue_frames, 1, 512),
@@ -110,7 +124,7 @@ class ConversationResult:
     interruptions: int = 0
     state_transitions: list[str] = field(default_factory=list)
     latencies_ms: dict[str, list[float]] = field(default_factory=dict)
-    messages: list[dict[str, str]] = field(default_factory=list)
+    messages: list[dict[str, Any]] = field(default_factory=list)
     error: str | None = None
 
 
@@ -122,8 +136,10 @@ class ConversationRuntime:
         llm: LLMProvider,
         *,
         config: RuntimeConfig | None = None,
+        tool_executor: ToolExecutor | None = None,
         vad_factory: Callable[[], StreamingVAD] = StreamingVAD,
     ) -> None:
+        self.tool_executor = tool_executor
         self.stt = stt
         self.tts = tts
         self.llm = llm
@@ -136,8 +152,9 @@ class ConversationRuntime:
         media: MediaConnection,
         *,
         on_state: StateCallback | None = None,
+        on_message: MessageCallback | None = None,
     ) -> ConversationResult:
-        return await _Session(self, context, media, on_state).run()
+        return await _Session(self, context, media, on_state, on_message).run()
 
 
 class _Session:
@@ -147,12 +164,16 @@ class _Session:
         context: TenantContext,
         media: MediaConnection,
         on_state: StateCallback | None,
+        on_message: MessageCallback | None = None,
     ) -> None:
         self.runtime = runtime
         self.config = runtime.config
         self.context = context
         self.media = media
         self.on_state = on_state
+        self.on_message = on_message
+        self.executed_ids: set[str] = set()
+        self.tool_actions = 0
         self.result = ConversationResult(
             messages=[
                 {"role": "system", "content": self.config.system_prompt},
@@ -237,27 +258,57 @@ class _Session:
 
     def append(self, role: str, text: str) -> dict[str, str]:
         message = {"role": role, "content": text}
+        previous = list(self.result.messages)
         self.result.messages.append(message)
-        maximum = self.config.max_history_messages
-        if len(self.result.messages) > maximum:
-            self.result.messages[1:] = self.result.messages[-(maximum - 1) :]
+        try:
+            self.trim_history()
+        except ConversationError:
+            self.result.messages = previous
+            raise
         return message
 
-    def snapshot(self) -> list[dict[str, str]]:
-        messages = [dict(message) for message in self.result.messages]
-        # A completed greeting is output history, but model APIs require a user-first context.
-        while len(messages) > 2:
-            size = sum(
-                len(item["content"].encode("utf-8")) + len(item["role"]) for item in messages
-            )
-            if messages[1]["role"] == "user" and size <= 32768:
-                break
+    def trim_history(self) -> None:
+        maximum = self.config.max_history_messages
+        if len(self.result.messages) > maximum:
+            while len(self.result.messages) > maximum:
+                next_user = next(
+                    (
+                        i
+                        for i in range(2, len(self.result.messages))
+                        if self.result.messages[i]["role"] == "user"
+                    ),
+                    None,
+                )
+                if next_user is None:
+                    raise ConversationError("response_limit")
+                del self.result.messages[1:next_user]
+
+    async def persist(self, message: dict[str, Any]) -> None:
+        if self.on_message is not None:
+            try:
+                async with asyncio.timeout(2):
+                    await self.on_message(copy.deepcopy(message))
+            except Exception:
+                raise ConversationError("state_callback_failed") from None
+
+    def snapshot(self) -> list[dict[str, Any]]:
+        messages = copy.deepcopy(self.result.messages)
+        # Drop greeting and complete old user turns, never split tool protocol groups.
+        while len(messages) > 1 and messages[1]["role"] != "user":
             del messages[1]
+        while sum(len(json.dumps(item).encode("utf-8")) for item in messages) > 32768:
+            next_user = next(
+                (i for i in range(2, len(messages)) if messages[i]["role"] == "user"), None
+            )
+            if next_user is None:
+                raise ConversationError("response_limit")
+            del messages[1:next_user]
         return messages
 
     async def run(self) -> ConversationResult:
         cancelled = False
         try:
+            await self.persist(self.result.messages[0])
             await self.state(CallState.CONNECTED)
             await self.state(CallState.LISTENING)
             reader = self.spawn(self.read(), None)
@@ -340,6 +391,7 @@ class _Session:
                             self.response_message["content"] += (
                                 " [Interrupted; transmitted audio playback is unconfirmed.]"
                             )
+                            self.spawn(self.persist(copy.deepcopy(self.response_message)), None)
                         self.response.cancel()
                         self.metric(
                             "barge_in_cancel_request", time.monotonic() - cancellation_started
@@ -402,6 +454,8 @@ class _Session:
         self.response_message = None
         for chunk in _chunks(self.config.greeting, final=True)[0]:
             await self.speak(chunk, generation, None)
+        if self.response_message is not None:
+            await self.persist(self.response_message)
         await self.state(CallState.LISTENING, generation)
 
     async def respond(self, generation: int, transcription: asyncio.Task[str]) -> None:
@@ -414,9 +468,12 @@ class _Session:
         if not text:
             await self.state(CallState.LISTENING, generation)
             return
-        self.append("user", text)
+        await self.persist(self.append("user", text))
         self.response_message = None
         await self.state(CallState.THINKING, generation)
+        if self.runtime.tool_executor is not None:
+            await self.respond_tools(generation)
+            return
         iterator = self.runtime.llm.respond(self.context, self.snapshot())
         pending = ""
         count = 0
@@ -471,6 +528,148 @@ class _Session:
             raise ConversationError("llm_failed") from None
         finally:
             await _close_iterator(iterator)
+            if self.response_message is not None:
+                await self.persist(self.response_message)
+
+    async def respond_tools(self, generation: int) -> None:
+        assert self.runtime.tool_executor is not None
+        for round_number in range(self.config.max_tool_rounds + 1):
+            iterator = self.runtime.llm.respond(self.context, self.snapshot())
+            calls: list[dict[str, Any]] = []
+            text = ""
+            pending = ""
+            llm_wait = 0.0
+            self.response_message = None
+            stream_finished = False
+            try:
+                while generation == self.generation:
+                    waited = time.monotonic()
+                    try:
+                        async with asyncio.timeout(self.config.llm_timeout_seconds - llm_wait):
+                            event = await anext(iterator)
+                    except StopAsyncIteration:
+                        break
+                    llm_wait += time.monotonic() - waited
+                    if generation != self.generation:
+                        return
+                    if event.get("type") == "text" and set(event) == {"type", "text"}:
+                        fragment = event["text"]
+                        if not isinstance(fragment, str) or "\x00" in fragment:
+                            raise ConversationError("invalid_response")
+                        text += fragment
+                        if len(text) > self.config.max_response_chars:
+                            raise ConversationError("response_limit")
+                        pending += fragment
+                        chunks, pending = _chunks(pending)
+                        for chunk in chunks:
+                            await self.speak(chunk, generation, self.speech_end)
+                    elif event.get("type") == "tool_call" and set(event) == {
+                        "type",
+                        "id",
+                        "name",
+                        "arguments",
+                    }:
+                        identifier, name, arguments = (
+                            event["id"],
+                            event["name"],
+                            event["arguments"],
+                        )
+                        if (
+                            not isinstance(identifier, str)
+                            or not 1 <= len(identifier) <= 128
+                            or identifier in self.executed_ids
+                            or any(c["id"] == identifier for c in calls)
+                            or not isinstance(name, str)
+                            or not 1 <= len(name) <= 64
+                            or not isinstance(arguments, dict)
+                            or len(json.dumps(arguments, allow_nan=False)) > 32768
+                        ):
+                            raise ConversationError("invalid_response")
+                        calls.append(event)
+                        if len(calls) > self.config.max_tool_actions:
+                            raise ConversationError("response_limit")
+                    else:
+                        raise ConversationError("invalid_response")
+                stream_finished = True
+            except TimeoutError:
+                raise ConversationError("llm_timeout") from None
+            except ConversationError:
+                raise
+            except Exception:
+                raise ConversationError("llm_failed") from None
+            finally:
+                await _close_iterator(iterator)
+                if not stream_finished and self.response_message is not None:
+                    await self.persist(self.response_message)
+            if calls:
+                if (
+                    round_number >= self.config.max_tool_rounds
+                    or self.tool_actions + len(calls) > self.config.max_tool_actions
+                ):
+                    raise ConversationError("response_limit")
+                # Commit the protocol request/results together after all actions complete.
+                if self.response_message is not None:
+                    await self.persist(self.response_message)
+                    self.result.messages.remove(self.response_message)
+                    self.response_message = None
+                request: dict[str, Any] = {
+                    "role": "assistant",
+                    "content": text,
+                    "tool_calls": [
+                        {
+                            "id": c["id"],
+                            "type": "function",
+                            "function": {
+                                "name": c["name"],
+                                "arguments": json.dumps(c["arguments"], allow_nan=False),
+                            },
+                        }
+                        for c in calls
+                    ],
+                }
+                completed_tools: list[dict[str, Any]] = []
+                for call in calls:
+                    self.executed_ids.add(call["id"])
+                    self.tool_actions += 1
+                    try:
+                        async with asyncio.timeout(30):
+                            result = await self.runtime.tool_executor.execute(
+                                self.context, call["name"], call["arguments"]
+                            )
+                    except asyncio.CancelledError:
+                        raise
+                    except Exception:
+                        result = {"status": "unknown", "code": "outcome_unknown"}
+                    if not isinstance(result, dict):
+                        raise ConversationError("invalid_response")
+                    content = json.dumps(result, allow_nan=False)
+                    if len(content.encode()) > 32768:
+                        raise ConversationError("response_limit")
+                    message = {"role": "tool", "tool_call_id": call["id"], "content": content}
+                    completed_tools.append(message)
+                    await self.persist(message)
+                if generation != self.generation:
+                    return
+                previous = list(self.result.messages)
+                self.result.messages.extend([request, *completed_tools])
+                try:
+                    self.trim_history()
+                    self.snapshot()
+                except ConversationError:
+                    self.result.messages = previous
+                    raise
+                continue
+            if not text.strip():
+                raise ConversationError("invalid_response")
+            try:
+                for chunk in _chunks(pending, final=True)[0]:
+                    await self.speak(chunk, generation, self.speech_end)
+            finally:
+                if self.response_message is not None:
+                    await self.persist(self.response_message)
+            self.result.completed_turns += 1
+            await self.state(CallState.LISTENING, generation)
+            return
 
     async def speak(self, text: str, generation: int, speech_end: float | None) -> None:
         if generation != self.generation:

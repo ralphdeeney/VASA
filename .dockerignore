@@ -10,6 +10,7 @@
 !scripts/
 !scripts/evolution_status.py
 !scripts/prepare_speech.py
+!scripts/prepare_knowledge.py
 !docker/
 !docker/vasa.Dockerfile
 !.local/

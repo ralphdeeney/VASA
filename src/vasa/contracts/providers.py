@@ -45,7 +45,7 @@ class TTSProvider(Protocol):
 
 class LLMProvider(Protocol):
     def respond(
-        self, context: TenantContext, messages: list[dict[str, str]]
+        self, context: TenantContext, messages: list[dict[str, Any]]
     ) -> AsyncIterator[dict[str, Any]]: ...
 
 

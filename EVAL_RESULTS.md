@@ -1,5 +1,11 @@
 # Eval results
 
+2026-10-09 integration: the pinned CPU embedding evaluator scored 19/20
+independent paraphrase queries with the expected passage first (0.95), above
+the declared 0.90 threshold. Tenant SQL isolation, identity filtering and
+quota-race checks passed. These are local retrieval and policy evaluations;
+they do not establish live model answer quality or a phone conversation.
+
 2026-10-09 concrete tools: three deterministic policy checks are marked evals:
 webhook ownership/action/URL and business-field injection denial before network,
 current-call ownership/identifier injection denial before hangup, and knowledge

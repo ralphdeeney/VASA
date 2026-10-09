@@ -6,6 +6,7 @@ from sqlalchemy.pool import NullPool
 
 from vasa.config import Settings
 from vasa.control import models as control_models  # noqa: F401
+from vasa.knowledge import models as knowledge_models  # noqa: F401
 from vasa.storage import calls as call_models  # noqa: F401
 from vasa.storage.models import Base
 

@@ -37,8 +37,21 @@ def text_chunks(text: str) -> list[str]:
 
 
 class SherpaTTS:
-    def __init__(self, model_dir: Path, *, num_threads: int = 2, max_concurrency: int = 2) -> None:
-        if not 1 <= num_threads <= 8 or not 1 <= max_concurrency <= 10:
+    def __init__(
+        self,
+        model_dir: Path,
+        *,
+        num_threads: int = 2,
+        max_concurrency: int = 2,
+        max_streams: int = 10,
+    ) -> None:
+        if (
+            not 1 <= num_threads <= 8
+            or not 1 <= max_concurrency <= 10
+            or isinstance(max_streams, bool)
+            or not isinstance(max_streams, int)
+            or not 1 <= max_streams <= 10
+        ):
             raise ValueError("Invalid CPU speech worker limits")
         verify_tts(model_dir)
         native = importlib.import_module("sherpa_onnx")
@@ -58,6 +71,9 @@ class SherpaTTS:
         self._model = native.OfflineTts(config)
         self._resample = importlib.import_module("scipy.signal").resample_poly
         self._worker = NativeWorker("vasa-tts")
+        # Limit retained playback PCM to ten streams with chunks <=30 seconds.
+        # Native admission ends when inference completes, independently of playback.
+        self._streams = asyncio.Semaphore(max_streams)
         self._slots = asyncio.Semaphore(max_concurrency)
         self._closed = False
 
@@ -66,7 +82,7 @@ class SherpaTTS:
         if self._closed:
             raise RuntimeError("Speech provider is closed")
         sequence = 0
-        async with self._slots:
+        async with self._streams:
             if self._closed:
                 raise RuntimeError("Speech provider is closed")
             for chunk in chunks:
@@ -96,7 +112,13 @@ class SherpaTTS:
                         )
                     return bytes(np.clip(samples * 32768, -32768, 32767).astype("<i2").tobytes())
 
-                pcm = await self._worker.run(generate, on_cancel=canceled.set)
+                async with self._slots:
+                    if self._closed:
+                        raise RuntimeError("Speech provider is closed")
+                    # NativeWorker retains this slot until inference has stopped,
+                    # including repeated cancellation. Slow playback owns only
+                    # its separate bounded stream/PCM-buffer admission.
+                    pcm = await self._worker.run(generate, on_cancel=canceled.set)
                 for offset in range(0, len(pcm), 1920):
                     yield AudioFrame(
                         pcm[offset : offset + 1920].ljust(1920, b"\0"),

@@ -165,6 +165,17 @@ class ToolGateway:
                     output = await binding.tool.execute(context, validated.model_dump(mode="json"))
             except TimeoutError:
                 raise ToolError("timeout") from None
+            except ToolError as error:
+                if error.code in {
+                    "denied",
+                    "invalid_input",
+                    "invalid_output",
+                    "busy",
+                    "timeout",
+                    "unavailable",
+                }:
+                    raise
+                raise ToolError("unavailable") from None
             except Exception:
                 raise ToolError("unavailable") from None
             result = _snapshot(output, "invalid_output")

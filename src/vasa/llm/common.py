@@ -1,3 +1,6 @@
+import copy
+import json
+import re
 from typing import Any
 from urllib.parse import urlsplit
 from uuid import UUID
@@ -35,8 +38,8 @@ class LLMError(Exception):
 
 
 def validate_context(
-    context: TenantContext, messages: list[dict[str, str]]
-) -> list[dict[str, str]]:
+    context: TenantContext, messages: list[dict[str, Any]], *, allow_tools: bool = False
+) -> list[dict[str, Any]]:
     """Snapshot caller-owned data; never retain conversational state on a shared provider."""
     if (
         not isinstance(context, TenantContext)
@@ -46,7 +49,9 @@ def validate_context(
         or not 1 <= len(messages) <= MAX_MESSAGES
     ):
         raise LLMError("invalid_context")
-    copied: list[dict[str, str]] = []
+    if allow_tools:
+        return validate_tool_context(messages)
+    copied: list[dict[str, Any]] = []
     size = 0
     for index, message in enumerate(messages):
         if not isinstance(message, dict) or set(message) != {"role", "content"}:
@@ -147,3 +152,121 @@ class TextBudget:
         if self.characters > MAX_TEXT_CHARS:
             raise LLMError("output_limit")
         return {"type": "text", "text": text}
+
+
+def tool_specs(tools: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+    if tools is None:
+        return []
+    try:
+        snapshot = json.loads(json.dumps(tools, allow_nan=False))
+        if (
+            not isinstance(snapshot, list)
+            or len(snapshot) > 16
+            or len(json.dumps(snapshot)) > 32768
+        ):
+            raise ValueError
+        names: set[str] = set()
+        for item in snapshot:
+            if (
+                not isinstance(item, dict)
+                or set(item) != {"name", "description", "parameters"}
+                or not isinstance(item["name"], str)
+                or not re.fullmatch(r"[a-zA-Z0-9_-]{1,64}", item["name"])
+                or item["name"] in names
+                or not isinstance(item["description"], str)
+                or len(item["description"]) > 1024
+                or not isinstance(item["parameters"], dict)
+                or item["parameters"].get("type") != "object"
+            ):
+                raise ValueError
+            names.add(item["name"])
+        return snapshot
+    except (ValueError, TypeError):
+        raise ValueError("invalid tool specifications") from None
+
+
+def validate_tool_context(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    try:
+        encoded = json.dumps(messages, allow_nan=False)
+        if len(encoded.encode()) > MAX_CONTEXT_BYTES:
+            raise ValueError
+        pending: set[str] = set()
+        seen: set[str] = set()
+        first = True
+        for index, message in enumerate(messages):
+            role = message.get("role")
+            content = message.get("content")
+            if not isinstance(content, str) or "\x00" in content:
+                raise ValueError
+            if (
+                role == "system"
+                and index == 0
+                and set(message) == {"role", "content"}
+                and content.strip()
+            ):
+                continue
+            if first:
+                if role != "user":
+                    raise ValueError
+                first = False
+            if role == "tool":
+                if (
+                    set(message) != {"role", "content", "tool_call_id"}
+                    or message["tool_call_id"] not in pending
+                ):
+                    raise ValueError
+                pending.remove(message["tool_call_id"])
+            elif pending:
+                raise ValueError
+            elif role == "assistant" and "tool_calls" in message:
+                if (
+                    set(message) != {"role", "content", "tool_calls"}
+                    or not 1 <= len(message["tool_calls"]) <= 16
+                ):
+                    raise ValueError
+                for call in message["tool_calls"]:
+                    if set(call) != {"id", "type", "function"} or call["type"] != "function":
+                        raise ValueError
+                    identifier, function = call["id"], call["function"]
+                    if (
+                        not isinstance(identifier, str)
+                        or not 1 <= len(identifier) <= 128
+                        or identifier in seen
+                        or set(function) != {"name", "arguments"}
+                        or not isinstance(function["name"], str)
+                        or not isinstance(json.loads(function["arguments"]), dict)
+                    ):
+                        raise ValueError
+                    seen.add(identifier)
+                    pending.add(identifier)
+            elif (
+                role not in {"user", "assistant"}
+                or set(message) != {"role", "content"}
+                or not content.strip()
+            ):
+                raise ValueError
+        if first or pending or messages[-1]["role"] not in {"user", "tool"}:
+            raise ValueError
+        return copy.deepcopy(messages)
+    except (TypeError, ValueError, KeyError, AttributeError):
+        raise LLMError("invalid_context") from None
+
+
+def tool_event(
+    identifier: str, name: str, raw_arguments: str, approved: set[str]
+) -> dict[str, Any]:
+    try:
+        arguments = json.loads(
+            raw_arguments, parse_constant=lambda _: (_ for _ in ()).throw(ValueError())
+        )
+        if (
+            not isinstance(identifier, str)
+            or not 1 <= len(identifier) <= 128
+            or name not in approved
+            or not isinstance(arguments, dict)
+            or len(raw_arguments.encode()) > 32768
+        ):
+            raise ValueError
+        return {"type": "tool_call", "id": identifier, "name": name, "arguments": arguments}
+    except (ValueError, TypeError):
+        raise LLMError("invalid_response") from None

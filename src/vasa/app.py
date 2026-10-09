@@ -11,9 +11,11 @@ from redis.backoff import NoBackoff
 from sqlalchemy import text
 
 from vasa.config import Settings
+from vasa.control.product import router as product_router
 from vasa.control.routes import router as control_router
 from vasa.dashboard.router import router as dashboard_router
 from vasa.evolution.client import EvolutionCalls
+from vasa.knowledge.service import KnowledgeService
 from vasa.logging import configure_logging
 from vasa.request_limits import ControlBodyLimit
 from vasa.storage.cache import CallRegistry
@@ -31,6 +33,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             timeout_seconds=configuration.dependency_timeout_seconds,
         )
         cache: Redis | None = None
+        knowledge_service: KnowledgeService | None = None
         evolution: EvolutionCalls | None = None
         try:
             cache = Redis.from_url(
@@ -46,6 +49,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             application.state.redis = cache
             application.state.call_registry = CallRegistry(cache)
             application.state.settings = configuration
+            knowledge_service = KnowledgeService(database)
+            application.state.knowledge = knowledge_service
             keys = (
                 configuration.evolution_admin_key.get_secret_value(),
                 configuration.evolution_stream_key.get_secret_value(),
@@ -58,17 +63,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         finally:
             try:
                 try:
-                    if evolution is not None:
-                        await evolution.aclose()
+                    if knowledge_service is not None:
+                        await knowledge_service.aclose()
                 finally:
-                    if cache is not None:
-                        await cache.aclose()
+                    try:
+                        if evolution is not None:
+                            await evolution.aclose()
+                    finally:
+                        if cache is not None:
+                            await cache.aclose()
             finally:
                 await database.aclose()
 
     app = FastAPI(title="VASA", version="0.1.0", lifespan=lifespan)
     app.add_middleware(ControlBodyLimit)
     app.include_router(control_router)
+    app.include_router(product_router)
     app.include_router(dashboard_router)
 
     @app.exception_handler(RequestValidationError)

@@ -45,6 +45,18 @@ must not be presented as real provider/phone timings. Remote queued output,
 dropped frames and playback cannot be observed with the current source API.
 Ten simultaneous CPU calls remain unmeasured; worker admission is bounded to two.
 
+## Integrated native load guard — 2026-10-09
+
+The controlled synthetic load harness ran three rounds of ten utterances with
+mixed STT/TTS cancellation. Native generation admission is bounded while paced
+playback streams remain independently bounded. Across 30 utterances, P95 TTS
+first audio improved from 10.555s before the scheduling fix to 1.083s after it;
+synthetic fixture-end to first audio improved from 11.476s to 1.798s. Peak RSS
+was 294840 KiB, cancellation completed within 588 ms and cleanup within 31 ms,
+with no residual tasks or native worker threads. This is a local synthetic
+component measurement: it does not establish live provider, WhatsApp delivery,
+audibility or ten-call phone capacity.
+
 Production single-process native smoke with Docker limits 512 MiB/one CPU:
 STT/TTS initialization and short TTS speech succeeded as UID 1000/read-only root;
 maximum observed process RSS 269164 KiB. This excludes simultaneous calls and

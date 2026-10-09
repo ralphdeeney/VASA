@@ -120,7 +120,9 @@ class CustomWebhook:
         if action is None:
             raise ToolError("denied")
         try:
-            payload = action.input_model.model_validate(inputs.payload).model_dump(mode="json")
+            payload = action.input_model.model_validate(inputs.payload).model_dump(
+                mode="json", exclude_unset=True
+            )
         except ValidationError:
             raise ToolError("invalid_input") from None
         headers = {"Accept": "application/json", "Accept-Encoding": "identity"}
@@ -152,7 +154,9 @@ class CustomWebhook:
                     # Nonfinite values are rejected by the shared JSON snapshot validator.
                     result = _snapshot(json.loads(body), "invalid_output")
                     try:
-                        result = action.output_model.model_validate(result).model_dump(mode="json")
+                        result = action.output_model.model_validate(result).model_dump(
+                            mode="json", exclude_unset=True
+                        )
                     except ValidationError:
                         raise ToolError("invalid_output") from None
                     return {"result": result}

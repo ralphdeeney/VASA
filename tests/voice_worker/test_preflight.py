@@ -142,7 +142,7 @@ class PreflightRig:
                 rig.closed.append("transport")
 
         class Provider:
-            def __init__(self, api_key: str, *, model: str) -> None:
+            def __init__(self, api_key: str, *, model: str, tools: Any = None) -> None:
                 self.name = "openai" if "openai" in api_key else "anthropic"
                 rig.created.append(self.name)
                 rig.providers.append(self.name)
@@ -162,11 +162,18 @@ class PreflightRig:
                 rig.closed.append(self.name)
 
         class Runtime:
-            def __init__(self, *providers: object, config: RuntimeConfig) -> None:
-                pass
+            def __init__(self, *providers: object, config: RuntimeConfig, **options: Any) -> None:
+                self.stt, self.tts, self.llm = providers
+                self.config = config
+                self.vad_factory = lambda: None
 
             async def run(
-                self, context: TenantContext, media: object, *, on_state: Any
+                self,
+                context: TenantContext,
+                media: object,
+                *,
+                on_state: Any,
+                on_message: Any = None,
             ) -> ConversationResult:
                 rig.contexts.append(context)
                 try:
@@ -181,6 +188,26 @@ class PreflightRig:
         ) -> tuple[TenantContext, str]:
             return rig.context, rig.external
 
+        async def agent_config(
+            database: object, context: object, config: RuntimeConfig, **options: Any
+        ) -> RuntimeConfig:
+            return config
+
+        class Persistence:
+            call_id = uuid4()
+
+            @classmethod
+            async def create(cls, *args: Any) -> "Persistence":
+                return cls()
+
+            async def on_message(self, message: Any) -> None:
+                pass
+
+            async def finalize(self, error: str | None) -> None:
+                pass
+
+        monkeypatch.setattr(worker, "persisted_config", agent_config)
+        monkeypatch.setattr(worker, "DurableCall", Persistence)
         monkeypatch.setattr(worker, "Settings", lambda: rig.settings)
         monkeypatch.setattr(worker, "SpeechModels", Models)
         monkeypatch.setattr(worker, "Database", FakeDatabase)
@@ -357,3 +384,46 @@ def test_cli_reports_fixed_error_without_exception_details(
     assert output.out == ""
     assert "Voice worker unavailable" in output.err
     assert PRIVATE_DETAIL not in output.err and "Traceback" not in output.err
+
+
+async def test_all_mode_shares_native_models_and_derives_each_call_context(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    rig = PreflightRig(monkeypatch)
+    contexts = [rig.context, TenantContext(uuid4(), uuid4())]
+    mappings = [(contexts[0], uuid4(), "owned-a"), (contexts[1], uuid4(), "owned-b")]
+
+    async def all_mappings(database: object) -> list[tuple[TenantContext, UUID, str]]:
+        return mappings
+
+    async def status(self: object, external: str) -> ConnectionStatus:
+        return ConnectionStatus(True, True, "Paired")
+
+    async def events(self: object, external: str) -> AsyncIterator[IncomingCall]:
+        yield IncomingCall(external, "same-call-id", "private-caller")
+        await asyncio.Event().wait()
+
+    async def delete(self: object, context: TenantContext, call_id: UUID) -> None:
+        assert context in contexts
+        rig.deleted.append(call_id)
+
+    monkeypatch.setattr(worker, "resolve_all", all_mappings)
+    monkeypatch.setattr(worker.EvolutionCalls, "status", status)
+    monkeypatch.setattr(worker.EvolutionCalls, "events", events)
+    monkeypatch.setattr(worker.CallRegistry, "delete", delete)
+    task = asyncio.create_task(worker.run_all(RuntimeConfig()))
+    try:
+        for _ in range(100):
+            if len(rig.contexts) == 2:
+                break
+            if task.done():
+                await task
+            await asyncio.sleep(0.01)
+        assert set(rig.contexts) == set(contexts)
+        assert rig.created.count("stt") == rig.created.count("tts") == 1
+        assert rig.created.count("openai") == 2
+    finally:
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+    assert rig.runtime_finished == 2 and len(rig.deleted) == 2
+    assert sorted(rig.closed) == sorted(rig.created)

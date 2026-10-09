@@ -152,3 +152,17 @@ p { line-height: 1.55; }
   #account-email { max-width: 180px; overflow-wrap: anywhere; }
   .login-card { padding: 28px; }
 }
+textarea { font: inherit; width: 100%; padding: 10px 12px; background: #fff; border: 1px solid #b9c9bc; border-radius: 8px; color: #18352c; resize: vertical; }
+textarea:focus-visible { outline: 3px solid #a26b00; outline-offset: 3px; }
+.workspace-nav { display: flex; flex-wrap: wrap; gap: 24px; margin: 24px 0; }
+.workspace-nav a { padding: 8px 0; text-underline-offset: 5px; }
+.product-section { margin: 24px 0; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.form-grid .wide { grid-column: 1 / -1; }
+.source-list { list-style: none; padding: 0; }
+.source-list li { display: flex; justify-content: space-between; align-items: center; gap: 16px; border-top: 1px solid var(--border); padding: 16px 0; }
+.source-list span, .transcript li, .preserve-lines { overflow-wrap: anywhere; white-space: pre-wrap; }
+.transcript { padding-left: 24px; line-height: 1.6; }
+.transcript li { margin: 12px 0; }
+#call-detail { border-top: 1px solid var(--border); padding-top: 24px; }
+@media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } .source-list li { align-items: flex-start; } }

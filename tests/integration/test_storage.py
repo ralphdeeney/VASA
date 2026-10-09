@@ -49,6 +49,12 @@ async def test_migrated_schema_and_real_pgvector_distance(
         ("id", "uuid", "NO"),
         ("tenant_id", "uuid", "NO"),
         ("name", "character varying", "NO"),
+        ("business_name", "character varying", "NO"),
+        ("greeting", "character varying", "NO"),
+        ("business_description", "character varying", "NO"),
+        ("instructions", "character varying", "NO"),
+        ("language", "character varying", "NO"),
+        ("voice", "character varying", "NO"),
     }
     distance = await db_session.scalar(text("SELECT '[1,2,3]'::vector <-> '[1,2,5]'::vector"))
     assert distance == pytest.approx(2.0), "pgvector must execute an actual distance operation"

@@ -101,7 +101,7 @@ services:
     env_file:
       - path: ../.local/llm.env
         required: false
-    environment:
+    environment: &vasa-environment
       VASA_ENVIRONMENT: production
       VASA_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?required}:${POSTGRES_PASSWORD:?required}@postgres:5432/${POSTGRES_DB:?required}
       VASA_REDIS_URL: redis://:${REDIS_PASSWORD:?required}@redis:6379/0
@@ -138,6 +138,34 @@ services:
     security_opt: ["no-new-privileges:true"]
     mem_limit: 512m
     cpus: 1
+    restart: unless-stopped
+
+  voice:
+    image: vasa-app:pinned
+    profiles: ["voice"]
+    user: "1000:1000"
+    command: ["python", "-m", "vasa.voice_worker", "--all"]
+    env_file:
+      - path: ../.local/llm.env
+        required: false
+    environment:
+      <<: *vasa-environment
+      VASA_MAX_ACTIVE_CALLS: ${VASA_MAX_ACTIVE_CALLS:-2}
+    volumes:
+      - vasa-diagnostics:/opt/vasa/.local:ro
+    depends_on:
+      vasa:
+        condition: service_healthy
+    # Worker has no HTTP server. Process supervision and call admission are separate.
+    healthcheck:
+      disable: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1g
+    cpus: 4
     restart: unless-stopped
 
 volumes:

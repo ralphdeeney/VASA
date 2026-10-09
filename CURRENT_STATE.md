@@ -1,14 +1,24 @@
 # Current state
 
-Current wave: 5 (Conversation runtime; Wave 4 CPU Voice Intelligence verified)
-Current slice: Independent concrete tools and call/transcript storage verified; live OpenAI acceptance deferred by user
+Current wave: 10 (integration and stabilization)
+Current slice: Tenant knowledge, durable runtime evidence, dashboard and deployment package integrated; live OpenAI acceptance deferred by user
 Completed slices: Wave 0 governance/tooling/contracts; Wave 1 tenant PostgreSQL/pgvector/Redis and isolation; Wave 2 verified pinned-source Evolution adapter, authenticated instance mapping/control and QR dashboard; Wave 3 real-call media acceptance; Wave 4 CPU VAD/STT/TTS, bounded native cancellation and streamed LLM adapters; Wave 5 conversation runtime, trusted inbound worker and native local-WebSocket integration
-Active agents: none; concrete-tool and storage verification complete
+Active agents: none; integrated implementation is complete and locally verified
 Blockers:
 - OpenAI is selected primary, but no secure usable binding is injected. The credential pasted in chat must be revoked/replaced through VASA_OPENAI_API_KEY in environment settings, saved/published. Do not store or use the exposed credential. Anthropic is optional. Live LLM acceptance awaits this prerequisite; independent checks continue.
 - Historical cloud SSH to vasa-builder@2.25.172.155:22 was refused before authentication; proxy CONNECT closed without SSH banner. No successful VPS connection or remote changes are claimed. This does not block independent development or negate the user's accepted real call.
 Failed checks: none outstanding. Native TTS callback polarity, repeated-cancel cache cleanup, delayed state callbacks and clipped initial speech regressions fixed and verified; no tests disabled or acceptance thresholds weakened.
-Next action: prepare tenant-isolated knowledge source/chunk storage and CPU retrieval independently; retain the live dialogue/tool/runtime integration gates. Live OpenAI setup/acceptance is explicitly deferred by the user on 2026-10-09; return to it later. Gate 5 remains unpassed. No need to repeat the passed diagnostic media call. Do not claim Wave 5 live dialogue acceptance or unlock dependent behavioral completion from scripted results.
+Next action: configure the deferred provider key when the operator is ready, then perform live dialogue, real tool, VPS and phone-capacity gates. No need to repeat the passed diagnostic media call.
+
+2026-10-09 whole-project continuation: tenant-isolated knowledge ingestion now supports
+bounded TXT/PDF/DOCX extraction, pinned CPU MiniLM embeddings and pgvector search;
+the dashboard exposes agent, knowledge and call history controls; runtime tool calls,
+durable transcript chunks, summaries and dynamic worker supervision are integrated.
+The full verification run passed 476 checks with zero failures, errors or skips;
+Ruff, formatting and strict mypy passed. A production image built successfully as
+UID 1000 with a read-only root. The controlled native load report records P95 TTS
+first audio 10.555s -> 1.083s and no residual tasks; this is not a phone-capacity
+claim. The replacement OpenAI key remains intentionally unconfigured by user choice.
 
 2026-10-09 continuation: prepared tenant-bound custom_webhook with approved
 HTTPS actions and strict business schemas, call-bound end_call with current

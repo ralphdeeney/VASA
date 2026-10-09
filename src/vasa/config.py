@@ -26,3 +26,5 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
     anthropic_model: str = "claude-sonnet-4-6"
     llm_primary: Literal["openai", "anthropic"] = "openai"
+    webhook_config_path: Path | None = None
+    max_active_calls: int = Field(default=2, ge=1, le=10)
