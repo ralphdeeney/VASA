@@ -1,0 +1,17 @@
+{
+  "status": "pending-actual-vps-measurements",
+  "suitable_on_target_vps": null,
+  "kokoro_vs_piper_vps_latency": null,
+  "kokoro_vs_piper_vps_memory": null,
+  "kokoro_vs_piper_vps_cpu": null,
+  "human_voice_quality_review": "unrun",
+  "recommended_production_action": "Keep current LJSpeech default; evaluate Piper and Kokoro only after actual VPS evidence and listening",
+  "targets": {
+    "first_playable_under_stt_preferred_seconds": 0.9,
+    "real_time_factor_less_than": 1,
+    "major_starvation": false,
+    "stable_memory": true,
+    "stt_degradation": false,
+    "acceptable_cancellation": true
+  }
+}

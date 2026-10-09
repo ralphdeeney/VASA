@@ -1,5 +1,17 @@
 # Wave contracts
 
+## Kokoro INT8 candidate freeze — 2026-10-09
+
+TTSProvider, AudioFrame and Evolution transport are unchanged. A separate
+`KokoroInt8TTS(model_dir: Path, num_threads=1, max_streams=10)` exposes
+`synthesize(text)` and `aclose()`, preloads one verified sherpa CPU model, and
+emits mono PCM16/16000Hz/1920-byte frames. Admission, generated PCM and
+playback queues remain bounded; cancellation discards old output immediately
+while native cleanup retains its worker until inference stops. Defaults remain
+LJSpeech. The orchestrator owns config/worker selection and the VPS harness;
+the voice specialist owns only `src/vasa/speech/kokoro.py` and its provider
+tests. No production switch or unrelated VPS changes are authorized.
+
 Wave 0 freezes TenantContext, AudioFrame, CallSession, CallState and semantic provider Protocols in src/vasa/contracts/. No wire-format claim is made. AudioFrame is normalized mono PCM16; wire adapters must decode/encode the upstream codec before supplying frames.
 
 Wave 1 contract (orchestrator approval required to change):

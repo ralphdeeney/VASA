@@ -1,5 +1,15 @@
 # Current state
 
+2026-10-09 Kokoro INT8 candidate: optional environment selection is integrated,
+default LJSpeech and WhatsApp transport unchanged. One verified model is shared
+at worker setup, num_threads=1, bounded native admission/PCM and immediate
+consumer cancellation with separately tracked non-preemptible native cleanup.
+Full checks: 512 pass. SSH to the confirmed VPS was refused; user requested
+skip and manual execution. Actual VPS A/B/C and voice-quality review remain
+pending. Cloud single-pass STT contention: Kokoro sentence 4.637s/RTF1.432,
+Piper 0.270s/RTF0.113; Kokoro long gap 5.857s and native cancel drain 3.011s.
+Manual commands/results: docs/tts-evaluation/kokoro-int8-vps/.
+
 2026-10-09 isolated TTS study: official Kokoro v1.0/v1.1, matching sherpa
 v1.1 FP32 and Piper were measured with two-CPU affinity/quota, sentence and
 whole-response policies, and actual paced STT contention. Official sentence
@@ -17,7 +27,10 @@ Blockers:
 - OpenAI is selected primary, but no secure usable binding is injected. The credential pasted in chat must be revoked/replaced through VASA_OPENAI_API_KEY in environment settings, saved/published. Do not store or use the exposed credential. Anthropic is optional. Live LLM acceptance awaits this prerequisite; independent checks continue.
 - Historical cloud SSH to vasa-builder@2.25.172.155:22 was refused before authentication; proxy CONNECT closed without SSH banner. No successful VPS connection or remote changes are claimed. This does not block independent development or negate the user's accepted real call.
 Failed checks: none outstanding. Native TTS callback polarity, repeated-cancel cache cleanup, delayed state callbacks and clipped initial speech regressions fixed and verified; no tests disabled or acceptance thresholds weakened.
-Next action: configure the deferred provider key when the operator is ready, then perform live dialogue, real tool, VPS and phone-capacity gates. No need to repeat the passed diagnostic media call.
+Next action: operator runs the prepared Kokoro INT8/Piper VPS A/B/C commands;
+keep production default unchanged. Configure the deferred provider key when
+ready, then perform live dialogue, real tool and phone-capacity gates. No need
+to repeat the passed diagnostic media call.
 
 2026-10-09 whole-project continuation: tenant-isolated knowledge ingestion now supports
 bounded TXT/PDF/DOCX extraction, pinned CPU MiniLM embeddings and pgvector search;

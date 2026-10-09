@@ -1,5 +1,15 @@
 # Test results
 
+2026-10-09 Kokoro INT8 optional-provider integration: full existing unit,
+component, integration, native speech and eval collection passed 512 checks,
+zero failures/errors/skips. Ruff/format and strict mypy passed (54 source
+files). JUnit: reports/kokoro-int8-final.xml. New checks cover single preload,
+worker selection/model sharing, frame conversion, bounded admission, repeated
+cancellation/cleanup, corrupt assets, and benchmark scope/timing semantics.
+Actual native Kokoro/Piper cloud smoke A/B processes exited zero and wrote
+24 WAVs plus raw measurements. Actual VPS A/B/C remain unrun by user-approved
+manual execution; no production switch/deployment or human voice score claimed.
+
 ## Isolated Kokoro streaming evaluation — 2026-10-09
 
 Full scripts/check.sh passed 487 checks, no failures, errors or skips; Ruff,

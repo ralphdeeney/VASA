@@ -32,6 +32,7 @@ from vasa.llm import AnthropicProvider, FallbackProvider, OpenAIProvider
 from vasa.runtime import ConversationRuntime, RuntimeConfig
 from vasa.runtime_finalization import AuditedExecutor, DurableCall
 from vasa.speech import SherpaSTT, SherpaTTS, SpeechModels
+from vasa.speech.kokoro import KokoroInt8TTS
 from vasa.storage.cache import CallRegistry
 from vasa.storage.database import Database
 from vasa.storage.models import Agent
@@ -419,7 +420,7 @@ async def run(
         from vasa.tools.webhooks_config import load_webhooks
 
         stt: SherpaSTT | None = None
-        tts: SherpaTTS | None = None
+        tts: SherpaTTS | KokoroInt8TTS | None = None
         knowledge = KnowledgeService(database)
         resources.push_async_callback(knowledge.aclose)
         registry = CallRegistry(cache)
@@ -527,7 +528,14 @@ async def run(
                     if stt is None or tts is None:
                         stt = await asyncio.to_thread(SherpaSTT, models.stt_dir)
                         resources.push_async_callback(stt.aclose)
-                        tts = await asyncio.to_thread(SherpaTTS, models.tts_dir)
+                        if settings.tts_provider == "kokoro-int8":
+                            tts = await asyncio.to_thread(
+                                KokoroInt8TTS,
+                                settings.kokoro_model_dir,
+                                num_threads=settings.kokoro_num_threads,
+                            )
+                        else:
+                            tts = await asyncio.to_thread(SherpaTTS, models.tts_dir)
                         resources.push_async_callback(tts.aclose)
                     runtime = ConversationRuntime(stt, tts, llm, config=saved_config)
                     target = WorkerTarget(

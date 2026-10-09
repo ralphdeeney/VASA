@@ -1,5 +1,16 @@
 # Performance
 
+2026-10-09 Kokoro INT8 opt-in integration/cloud smoke: one native thread,
+two-core affinity, short/sentence/four-sentence texts, sequential paced chunks,
+alone and with actual two-thread STT. Sentence first audio/RTF with STT:
+Kokoro 4.637s/1.432, Piper 0.270s/0.113; peak sentence RSS 488.6/317.1 MiB.
+Solo sentence CPU seconds 4.196/0.233. Long max gaps 5.857/0.409s. Kokoro
+consumer cancellation <0.1ms but native drain up to 3.011s; STT fixture WER
+unchanged while max deadline overrun rose to 108ms (Piper 11ms). These are
+single-observation cloud smoke figures, not percentiles, actual VPS, or phone
+capacity. VPS A/B/C remain pending manual execution due refused SSH. See
+docs/tts-evaluation/kokoro-int8-vps/ for evidence, samples and commands.
+
 2026-10-09 isolated conversational TTS study is recorded in
 [docs/tts-evaluation/streaming/README.md](docs/tts-evaluation/streaming/README.md).
 Four candidates, three texts, two chunk policies and solo/real STT contention

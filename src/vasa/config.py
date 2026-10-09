@@ -21,6 +21,9 @@ class Settings(BaseSettings):
     evolution_stream_key: SecretStr = SecretStr("")
     evolution_instance_key: SecretStr = SecretStr("")
     speech_model_root: Path = Path(".local/speech")
+    tts_provider: Literal["ljspeech", "kokoro-int8"] = "ljspeech"
+    kokoro_model_dir: Path = Path(".local/tts-evaluation/models/kokoro-int8")
+    kokoro_num_threads: int = Field(default=1, ge=1, le=8)
     openai_api_key: SecretStr = SecretStr("")
     anthropic_api_key: SecretStr = SecretStr("")
     openai_model: str = "gpt-4o-mini"

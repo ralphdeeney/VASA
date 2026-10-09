@@ -1,5 +1,13 @@
 # Decisions
 
+2026-10-09 add Kokoro INT8 as an opt-in provider only, preserving contracts,
+production default and transport. Preload once, default one native thread,
+retain single-worker ownership while canceled inference finishes. Barge-in
+stops the consumer immediately but cannot preempt a Kokoro acoustic segment.
+The user accepted skipping refused VPS SSH and will benchmark manually.
+Cloud smoke misses latency/RTF goals and exhibits major starvation; keep
+LJSpeech until actual VPS evidence and audible acceptance justify a switch.
+
 - 2026-10-09: Keep production LJSpeech unchanged during the requested isolated
   Kokoro research. Study pinned official hexgrad/kokoro (the named Kokoro-TTS
   repository returns 404), compare official v1.1 Maple with the matching sherpa

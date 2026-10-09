@@ -1,0 +1,19 @@
+{
+  "suite": {
+    "tests": 512,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "ruff": "passed",
+  "format": "passed",
+  "strict_mypy": "passed",
+  "actual_vps_run": false,
+  "playable_wav_files": 24,
+  "native_cloud_conditions": [
+    "kokoro-int8/A",
+    "kokoro-int8/B",
+    "piper/A",
+    "piper/B"
+  ]
+}
