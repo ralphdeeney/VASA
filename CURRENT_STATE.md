@@ -1,5 +1,19 @@
 # Current state
 
+2026-10-09 user explicitly selected Kokoro and retired LJSpeech. Kokoro INT8
+is now the code/Compose default; Piper remains selectable. Active source/API/
+dashboard/model preparation no longer select or download LJSpeech. Migration
+0006 moves legacy default voices to Maple while preserving tenant identities.
+Worker preloads once and warms three generic-only cache phrases; STT/TTS
+default to one thread. Callback queue8, playback queue16, pending text2,
+120-character meaningful chunks and a bounded generic-only cache are integrated.
+Full checks: 521 pass, static/type checks pass; native Kokoro local-WebSocket
+pipeline passed. Cloud buffered STT1: cached ack0.6ms, uncached sentence4.071s,
+long gap4.127s. TTS2 sentence3.800s costs ~57% more combined CPU seconds.
+Actual VPS activation/benchmark and audible quality review remain pending;
+user requested manual server execution after SSH refusal. New evidence:
+docs/tts-evaluation/kokoro-int8-vps/optimized/. Earlier records below are historical.
+
 2026-10-09 Kokoro INT8 candidate: optional environment selection is integrated,
 default LJSpeech and WhatsApp transport unchanged. One verified model is shared
 at worker setup, num_threads=1, bounded native admission/PCM and immediate
@@ -28,7 +42,7 @@ Blockers:
 - Historical cloud SSH to vasa-builder@2.25.172.155:22 was refused before authentication; proxy CONNECT closed without SSH banner. No successful VPS connection or remote changes are claimed. This does not block independent development or negate the user's accepted real call.
 Failed checks: none outstanding. Native TTS callback polarity, repeated-cancel cache cleanup, delayed state callbacks and clipped initial speech regressions fixed and verified; no tests disabled or acceptance thresholds weakened.
 Next action: operator runs the prepared Kokoro INT8/Piper VPS A/B/C commands;
-keep production default unchanged. Configure the deferred provider key when
+use the Kokoro-first prepared code/settings and migration 0006. Configure the deferred provider key when
 ready, then perform live dialogue, real tool and phone-capacity gates. No need
 to repeat the passed diagnostic media call.
 

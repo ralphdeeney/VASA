@@ -33,7 +33,7 @@ class AgentInput(BaseModel):
     business_description: str = Field(default="", max_length=2000)
     instructions: str = Field(default="Never invent business facts.", max_length=2000)
     language: Literal["en"] = "en"
-    voice: Literal["ljspeech_en"] = "ljspeech_en"
+    voice: Literal["kokoro_af_maple"] = "kokoro_af_maple"
 
     @field_validator("name", "business_name", "greeting", "business_description", "instructions")
     @classmethod

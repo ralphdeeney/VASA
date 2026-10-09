@@ -57,7 +57,37 @@ async def test_fresh_migrations_upgrade_downgrade_and_schema_agreement(
 
         await migrate("upgrade", "head")
         await migrate("check")
-        # Empty isolated DB only: no existing project history is downgraded.
+        # Exercise existing legacy rows through the provider migration, not
+        # just fresh column creation. Preserve identifiers and other voices.
+        await migrate("downgrade", "0005")
+        isolated_url = original.set(drivername="postgresql", database=database_name)
+        isolated = await asyncpg.connect(
+            isolated_url.render_as_string(hide_password=False), timeout=3
+        )
+        tenant, legacy, custom = uuid4(), uuid4(), uuid4()
+        try:
+            await isolated.execute("INSERT INTO tenants(id, name) VALUES($1, 'Fixture')", tenant)
+            await isolated.execute(
+                "INSERT INTO agents(id, tenant_id, name, voice) VALUES"
+                "($1, $3, 'Legacy', 'ljspeech_en'), ($2, $3, 'Custom', 'custom_voice')",
+                legacy,
+                custom,
+                tenant,
+            )
+            await migrate("upgrade", "head")
+            rows = await isolated.fetch("SELECT id, tenant_id, voice FROM agents ORDER BY name")
+            assert {(row["id"], row["tenant_id"], row["voice"]) for row in rows} == {
+                (legacy, tenant, "kokoro_af_maple"),
+                (custom, tenant, "custom_voice"),
+            }
+            default = await isolated.fetchval(
+                "SELECT column_default FROM information_schema.columns "
+                "WHERE table_name = 'agents' AND column_name = 'voice'"
+            )
+            assert "kokoro_af_maple" in default
+        finally:
+            await isolated.close()
+        # Temporary UUID-named DB only: no existing project history is downgraded.
         await migrate("downgrade", "0003")
         await migrate("upgrade", "head")
         await migrate("check")

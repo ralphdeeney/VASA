@@ -1,0 +1,61 @@
+{
+  "scope": "cloud-smoke",
+  "candidate": "piper",
+  "condition": "B",
+  "model_load_seconds": 0.6493542329990305,
+  "cases": {
+    "short": {
+      "first_playable_max_seconds": 0.1011835949975648,
+      "first_playable_p50_seconds": 0.1011835949975648,
+      "first_playable_p95_seconds": 0.1011835949975648,
+      "first_playable_samples_seconds": [
+        0.1011835949975648
+      ],
+      "rtf_max": 0.09857507844286624,
+      "cpu_seconds_mean": 0.15779177700000036,
+      "peak_rss_mib": 284.17578125,
+      "max_chunk_starvation_seconds": 0
+    },
+    "sentence": {
+      "first_playable_max_seconds": 0.21649880900076823,
+      "first_playable_p50_seconds": 0.21649880900076823,
+      "first_playable_p95_seconds": 0.21649880900076823,
+      "first_playable_samples_seconds": [
+        0.21649880900076823
+      ],
+      "rtf_max": 0.09017765874887118,
+      "cpu_seconds_mean": 0.33082476800000027,
+      "peak_rss_mib": 312.55078125,
+      "max_chunk_starvation_seconds": 0
+    },
+    "long": {
+      "first_playable_max_seconds": 0.11918170099670533,
+      "first_playable_p50_seconds": 0.11918170099670533,
+      "first_playable_p95_seconds": 0.11918170099670533,
+      "first_playable_samples_seconds": [
+        0.11918170099670533
+      ],
+      "rtf_max": 0.08991691775172676,
+      "cpu_seconds_mean": 1.5800430860000003,
+      "peak_rss_mib": 343.05078125,
+      "max_chunk_starvation_seconds": 0.00027014700521199586
+    }
+  },
+  "cancellation": [
+    {
+      "phase": "before_first_audio",
+      "consumer_cancellation_seconds": 0.11304799099889351,
+      "native_cleanup_drain_seconds": 0.0077697809974779375,
+      "frames_after_cancel": 0,
+      "frames_before_cancel": 0
+    },
+    {
+      "phase": "playback",
+      "consumer_cancellation_seconds": 0.00010513600136619061,
+      "native_cleanup_drain_seconds": 0.00804777199664386,
+      "frames_after_cancel": 0,
+      "frames_before_cancel": 1
+    }
+  ],
+  "selection": "Not automatic: actual VPS results and human voice review required"
+}

@@ -9,7 +9,10 @@ from vasa.config import Settings
 
 def test_default_and_environment_candidate_selection(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("VASA_TTS_PROVIDER", raising=False)
-    assert Settings(_env_file=None).tts_provider == "ljspeech"
+    assert Settings(_env_file=None).tts_provider == "kokoro-int8"
+    monkeypatch.setenv("VASA_TTS_PROVIDER", "ljspeech")
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None)
     monkeypatch.setenv("VASA_TTS_PROVIDER", "kokoro-int8")
     candidate = Settings(_env_file=None)
     assert candidate.tts_provider == "kokoro-int8"

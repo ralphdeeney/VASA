@@ -1,5 +1,11 @@
 # Build plan
 
+2026-10-09 user-selected Kokoro-first slice: LJSpeech retired, Kokoro INT8
+default, Piper retained; callback delivery, intelligent chunks, independent
+thread settings, one-time model/generic warmup, bounded audio prefetch/cache
+implemented. Full521 checks pass. Actual VPS benchmarking/deployment is the
+operator's pending manual step, and audible quality remains unverified.
+
 The complete governing instructions are in docs/BUILD_HARNESS.md.
 
 | Wave | Scope | Progress |

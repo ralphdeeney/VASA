@@ -1,5 +1,22 @@
 # Wave contracts
 
+## Kokoro-first optimization freeze — 2026-10-09
+
+User explicitly supersedes the LJSpeech default: Kokoro INT8 becomes the worker
+default, Piper remains selectable. TTSProvider, AudioFrame and Evolution wire
+contracts stay unchanged. Model initialization remains worker-owned and shared;
+TTS/STT thread counts default to one and are independently configurable.
+Kokoro provider may deliver real callback PCM through bounded 60 ms framing,
+with cancellation-safe tracked native ownership. Callbacks remain limited by
+upstream segment inference: no invented sub-segment streaming claim. A bounded
+LRU stores only predefined server-owned reusable phrases; arbitrary generated
+or customer/tenant text must not enter a shared cross-tenant cache.
+Runtime adds bounded ahead-of-playback audio production and intelligent text
+boundaries without losing generation guards, tool ordering, transcript limits,
+or cancellation cleanup. Voice specialist owns kokoro.py/provider tests; runtime
+specialist owns conversation.py/runtime tests. Root owns retirement of LJSpeech,
+config/assets/deployment/migration integration and final checks.
+
 ## Kokoro INT8 candidate freeze — 2026-10-09
 
 TTSProvider, AudioFrame and Evolution transport are unchanged. A separate

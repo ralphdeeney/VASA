@@ -1,13 +1,15 @@
 """Opt-in, pinned Kokoro INT8; cancellation detaches native cleanup from playback."""
 
 import asyncio
+import concurrent.futures
 import hashlib
 import importlib
 import math
 import re
 import threading
 import time
-from collections.abc import AsyncIterator
+from collections import OrderedDict
+from collections.abc import AsyncIterator, Callable, Collection
 from pathlib import Path
 
 import numpy as np
@@ -50,37 +52,82 @@ def verify_kokoro_int8(directory: Path) -> None:
 
 
 def kokoro_chunks(text: str) -> list[str]:
-    # Keep short utterances intact: tiny fragments hurt Kokoro prosody and can
-    # make first-audio numbers misleading. Clauses help only on long sentences.
-    text_chunks(text)
+    text_chunks(text)  # Validate before splitting, including pathological inputs.
     chunks: list[str] = []
     for sentence in re.split(r"(?<=[.!?])\s+", text.strip()):
-        if len(sentence) <= 160:
-            chunks.extend(chunk for chunk in text_chunks(sentence) if chunk)
-            continue
-        clauses = re.split(r"(?<=[;,])\s+", sentence)
-        current = ""
-        meaningful: list[str] = []
+        sentence_start = len(chunks)
+        clauses = re.split(r"(?<=[;,])\s+", sentence) if len(sentence) > 120 else [sentence]
+        meaningful_clauses: list[str] = []
+        prefix = ""
         for clause in clauses:
-            current = (current + " " + clause).strip()
-            if len(current.split()) >= 5:
-                meaningful.append(current)
-                current = ""
-        if current:
-            if meaningful:
-                meaningful[-1] += " " + current
+            prefix = (prefix + " " + clause).strip()
+            if len(prefix.split()) >= 5:
+                meaningful_clauses.append(prefix)
+                prefix = ""
+        if prefix:
+            if meaningful_clauses:
+                meaningful_clauses[-1] += " " + prefix
             else:
-                meaningful.append(current)
-        for clause in meaningful:
-            chunks.extend(chunk for chunk in text_chunks(clause) if chunk)
+                meaningful_clauses.append(prefix)
+        for clause in meaningful_clauses:
+            words = re.findall(r"\S+", clause)
+            current = ""
+            for word in words:
+                for offset in range(0, len(word), 120):
+                    part = word[offset : offset + 120]
+                    if current and len(current) + len(part) + 1 > 120:
+                        chunks.append(current)
+                        current = ""
+                    current = (current + " " + part).strip()
+            if current:
+                if (
+                    len(current.split()) < 5
+                    and len(chunks) > sentence_start
+                    and len(chunks[-1]) + len(current) + 1 <= 120
+                ):
+                    chunks[-1] += " " + current
+                else:
+                    chunks.append(current)
     return chunks
 
 
+GENERIC_CACHE_PHRASES = frozenset({"Certainly, I can help.", "One moment, please.", "Thank you."})
+
+
 class KokoroInt8TTS:
-    def __init__(self, model_dir: Path, *, num_threads: int = 1, max_streams: int = 10) -> None:
+    def __init__(
+        self,
+        model_dir: Path,
+        *,
+        num_threads: int = 1,
+        max_streams: int = 10,
+        queue_frames: int = 8,
+        cache_bytes: int = 2 * 1024 * 1024,
+        cache_phrases: Collection[str] | None = None,
+    ) -> None:
         for limit, maximum in ((num_threads, 8), (max_streams, 10)):
             if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= maximum:
                 raise ValueError("Invalid CPU speech worker limits")
+        if (
+            isinstance(queue_frames, bool)
+            or not isinstance(queue_frames, int)
+            or not 1 <= queue_frames <= 64
+        ):
+            raise ValueError("Invalid output queue limit")
+        if (
+            isinstance(cache_bytes, bool)
+            or not isinstance(cache_bytes, int)
+            or not 0 <= cache_bytes <= 8 * 1024 * 1024
+        ):
+            raise ValueError("Invalid cache byte limit")
+        phrases = GENERIC_CACHE_PHRASES if cache_phrases is None else frozenset(cache_phrases)
+        if not phrases <= GENERIC_CACHE_PHRASES:
+            raise ValueError("Only server-owned generic acknowledgement phrases may be cached")
+        self._queue_frames = queue_frames
+        self._cache_limit = cache_bytes
+        self._cache_phrases = phrases
+        self._cache: OrderedDict[str, bytes] = OrderedDict()
+        self._cache_size = 0
         started = time.monotonic()
         verify_kokoro_int8(model_dir)
         native = importlib.import_module("sherpa_onnx")
@@ -110,19 +157,8 @@ class KokoroInt8TTS:
         self._closed = False
         self._close_task: asyncio.Task[None] | None = None
 
-    def _generate(self, text: str, stop: threading.Event) -> bytes:
-        if stop.is_set():
-            return b""
-
-        def callback(_: NDArray[np.float32], __: float) -> int:
-            return int(not stop.is_set())
-
-        audio = self._model.generate(text, sid=0, speed=1.0, callback=callback)
-        # Kokoro calls back after full segment synthesis. Never retain canceled PCM.
-        if stop.is_set():
-            return b""
-        samples = np.asarray(audio.samples, dtype=np.float32)
-        rate = int(audio.sample_rate)
+    def _pcm(self, samples: NDArray[np.float32], rate: int) -> bytes:
+        samples = np.asarray(samples, dtype=np.float32)
         if (
             samples.ndim != 1
             or rate not in {16000, 22050, 24000, 44100, 48000}
@@ -137,9 +173,81 @@ class KokoroInt8TTS:
             )
         return bytes(np.clip(samples * 32768, -32768, 32767).astype("<i2").tobytes())
 
-    async def _owned_generate(self, text: str, stop: threading.Event) -> bytes:
+    def _generate(self, text: str, stop: threading.Event, emit: Callable[[bytes], bool]) -> bytes:
+        carry = bytearray()
+        retained = bytearray()
+        callback_seen = False
+        retain = text in self._cache_phrases and self._cache_limit > 0
+
+        def consume(pcm: bytes) -> bool:
+            nonlocal retain
+            if retain:
+                if len(retained) + len(pcm) <= self._cache_limit:
+                    retained.extend(pcm)
+                else:
+                    retained.clear()
+                    retain = False
+            carry.extend(pcm)
+            while len(carry) >= 1920:
+                frame = bytes(carry[:1920])
+                del carry[:1920]
+                if not emit(frame):
+                    return False
+            return not stop.is_set()
+
+        def callback(samples: NDArray[np.float32], _: float) -> int:
+            nonlocal callback_seen
+            callback_seen = True
+            if stop.is_set():
+                return 0
+            # Sherpa 1.13.8 Kokoro invokes this after a complete acoustic
+            # segment. Queue it immediately; the returned waveform duplicates it.
+            return int(consume(self._pcm(samples, int(getattr(self._model, "sample_rate", 24000)))))
+
+        if stop.is_set():
+            return b""
+        audio = self._model.generate(text, sid=0, speed=1.0, callback=callback)
+        if stop.is_set():
+            return b""
+        if not callback_seen:
+            consume(self._pcm(audio.samples, int(audio.sample_rate)))
+        if carry and not stop.is_set():
+            emit(bytes(carry).ljust(1920, b"\0"))
+        return bytes(retained) if retain and not stop.is_set() else b""
+
+    async def _owned_generate(
+        self, text: str, stop: threading.Event, queue: asyncio.Queue[bytes]
+    ) -> bytes:
+        loop = asyncio.get_running_loop()
+
+        def emit(frame: bytes) -> bool:
+            if stop.is_set():
+                return False
+            future = asyncio.run_coroutine_threadsafe(queue.put(frame), loop)
+            while True:
+                try:
+                    future.result(timeout=0.05)
+                    return not stop.is_set()
+                except concurrent.futures.TimeoutError:
+                    if stop.is_set():
+                        future.cancel()
+                        return False
+
         try:
-            return await self._worker.run(lambda: self._generate(text, stop), on_cancel=stop.set)
+            result = await self._worker.run(
+                lambda: self._generate(text, stop, emit), on_cancel=stop.set
+            )
+            if result and not stop.is_set() and not self._closed:
+                previous = self._cache.pop(text, b"")
+                self._cache_size -= len(previous)
+                while self._cache and (
+                    self._cache_size + len(result) > self._cache_limit or len(self._cache) >= 32
+                ):
+                    _, old = self._cache.popitem(last=False)
+                    self._cache_size -= len(old)
+                self._cache[text] = result
+                self._cache_size += len(result)
+            return result
         finally:
             self._slot.release()
             self._stops.discard(stop)
@@ -147,7 +255,7 @@ class KokoroInt8TTS:
     def _finished(self, task: asyncio.Task[bytes]) -> None:
         self._pending.discard(task)
         if not task.cancelled():
-            task.exception()  # Detached cancellation must not leak native exceptions.
+            task.exception()
 
     async def synthesize(self, text: str) -> AsyncIterator[AudioFrame]:
         chunks = kokoro_chunks(text)
@@ -156,33 +264,66 @@ class KokoroInt8TTS:
         sequence = 0
         async with self._streams:
             for chunk in chunks:
+                cached = self._cache.get(chunk)
+                if cached is not None:
+                    self._cache.move_to_end(chunk)
+                    for offset in range(0, len(cached), 1920):
+                        await asyncio.sleep(0)
+                        if self._closed:
+                            raise RuntimeError("Speech provider is closed")
+                        yield AudioFrame(
+                            cached[offset : offset + 1920].ljust(1920, b"\0"),
+                            16000,
+                            sequence,
+                            time.monotonic_ns(),
+                        )
+                        sequence += 1
+                    continue
                 await self._slot.acquire()
                 if self._closed:
                     self._slot.release()
                     raise RuntimeError("Speech provider is closed")
                 stop = threading.Event()
+                queue: asyncio.Queue[bytes] = asyncio.Queue(self._queue_frames)
                 self._stops.add(stop)
-                task = asyncio.create_task(self._owned_generate(chunk, stop))
+                task = asyncio.create_task(self._owned_generate(chunk, stop, queue))
                 self._pending.add(task)
                 task.add_done_callback(self._finished)
+                getter: asyncio.Task[bytes] | None = None
                 try:
-                    pcm = await asyncio.shield(task)
-                except asyncio.CancelledError:
+                    while not task.done() or not queue.empty():
+                        if queue.empty():
+                            getter = asyncio.create_task(queue.get())
+                            done, _ = await asyncio.wait(
+                                {getter, task}, return_when=asyncio.FIRST_COMPLETED
+                            )
+                            if getter not in done:
+                                getter.cancel()
+                                await asyncio.gather(getter, return_exceptions=True)
+                                getter = None
+                                continue
+                            pcm = getter.result()
+                            getter = None
+                        else:
+                            pcm = queue.get_nowait()
+                        if self._closed:
+                            raise RuntimeError("Speech provider is closed")
+                        yield AudioFrame(pcm, 16000, sequence, time.monotonic_ns())
+                        sequence += 1
+                    await asyncio.shield(task)
+                finally:
+                    # Async-generator close and barge-in both stop blocked queue
+                    # producers immediately. Native task retains its slot until done.
                     stop.set()
-                    # The consumer exits now; one tracked native task owns admission
-                    # until the non-preemptible segment finishes. No executor backlog.
-                    raise
-                for offset in range(0, len(pcm), 1920):
-                    await asyncio.sleep(0)
-                    if self._closed:
-                        raise RuntimeError("Speech provider is closed")
-                    yield AudioFrame(
-                        pcm[offset : offset + 1920].ljust(1920, b"\0"),
-                        16000,
-                        sequence,
-                        time.monotonic_ns(),
-                    )
-                    sequence += 1
+                    if getter is not None:
+                        getter.cancel()
+                        await asyncio.gather(getter, return_exceptions=True)
+
+    async def warmup(self) -> None:
+        """Precompute only server-owned acknowledgements, through normal admission."""
+        for phrase in sorted(self._cache_phrases):
+            async for _ in self.synthesize(phrase):
+                pass
 
     async def _close(self) -> None:
         for stop in self._stops:
@@ -191,6 +332,8 @@ class KokoroInt8TTS:
             await asyncio.gather(*self._pending, return_exceptions=True)
         await self._worker.aclose()
         self._model = None
+        self._cache.clear()
+        self._cache_size = 0
 
     async def aclose(self) -> None:
         self._closed = True

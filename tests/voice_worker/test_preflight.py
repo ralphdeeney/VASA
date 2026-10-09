@@ -24,6 +24,7 @@ class PreflightRig:
     def __init__(self, monkeypatch: pytest.MonkeyPatch) -> None:
         self.settings = Settings(
             _env_file=None,
+            tts_provider="piper",
             openai_api_key="component-only-openai",
             anthropic_api_key="",
             evolution_admin_key="component-admin",
@@ -154,7 +155,8 @@ class PreflightRig:
                 rig.closed.append(self.name)
 
         class Speech:
-            def __init__(self, path: Path) -> None:
+            def __init__(self, path: Path, *, num_threads: int = 1) -> None:
+                assert num_threads == 1
                 self.name = path.name
                 rig.created.append(self.name)
 
@@ -386,7 +388,7 @@ def test_cli_reports_fixed_error_without_exception_details(
     assert PRIVATE_DETAIL not in output.err and "Traceback" not in output.err
 
 
-@pytest.mark.parametrize("tts_provider", ["ljspeech", "kokoro-int8"])
+@pytest.mark.parametrize("tts_provider", ["piper", "kokoro-int8"])
 async def test_all_mode_shares_native_models_and_derives_each_call_context(
     monkeypatch: pytest.MonkeyPatch,
     tts_provider: str,
@@ -403,6 +405,9 @@ async def test_all_mode_shares_native_models_and_derives_each_call_context(
 
             async def aclose(self) -> None:
                 rig.closed.append("kokoro-int8")
+
+            async def warmup(self) -> None:
+                assert not rig.contexts  # Startup completes before any call is admitted.
 
         monkeypatch.setattr(worker, "KokoroInt8TTS", Kokoro)
     contexts = [rig.context, TenantContext(uuid4(), uuid4())]
@@ -437,7 +442,7 @@ async def test_all_mode_shares_native_models_and_derives_each_call_context(
         assert set(rig.contexts) == set(contexts)
         expected_tts = "kokoro-int8" if tts_provider == "kokoro-int8" else "tts"
         assert rig.created.count("stt") == rig.created.count(expected_tts) == 1
-        assert rig.created.count("tts") == (1 if tts_provider == "ljspeech" else 0)
+        assert rig.created.count("tts") == (1 if tts_provider == "piper" else 0)
         assert rig.created.count("openai") == 2
     finally:
         task.cancel()

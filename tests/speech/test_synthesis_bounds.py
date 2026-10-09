@@ -13,7 +13,7 @@ from vasa.speech import SherpaTTS
 
 @pytest.mark.speech_native
 async def test_stalled_playback_does_not_hold_native_slots_and_streams_stay_bounded() -> None:
-    tts = SherpaTTS(Path(".local/speech/tts"), max_concurrency=2, max_streams=3)
+    tts = SherpaTTS(Path(".local/speech/piper"), max_concurrency=2, max_streams=3)
     outputs = [
         cast(
             AsyncGenerator[AudioFrame, None],

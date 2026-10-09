@@ -1,5 +1,13 @@
 # Architecture
 
+Kokoro INT8 is the primary CPU TTS provider, with Piper available by trusted
+server configuration. LJSpeech is retired from the active deployment. A shared
+preloaded model emits native callback PCM into bounded queues; the runtime
+reads ahead two text chunks and buffers sixteen frames before paced playback.
+Only fixed generic acknowledgements are shared-cache eligible. Native callbacks
+deliver complete acoustic segments; cancellation stops forwarding immediately
+while tracking non-preemptible inference. STT/TTS each default to one thread.
+
 The CPU-first voice path is WhatsApp → Evolution Go Calls → media gateway → VAD → streaming STT → conversation state → OpenAI/Anthropic → optional generic Tool Gateway → CPU TTS → media gateway → Evolution → WhatsApp.
 
 FastAPI hosts control APIs. PostgreSQL/pgvector owns durable tenant data. Redis holds ephemeral bounded call state. Tenant identity must originate from authenticated server-side sessions. No client can select a tenant by submitting a header or body value. Every tenant repository requires TenantContext.

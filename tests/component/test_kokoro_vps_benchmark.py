@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from scripts.benchmark_kokoro_int8_vps import (
+    buffered_response,
     cancellation,
     response,
     segments,
@@ -63,3 +64,20 @@ async def test_cancellation_distinguishes_consumer_stop_from_native_cleanup() ->
     report = await cancellation(Provider(), "playback")
     assert report["frames_after_cancel"] == 0
     assert report["native_cleanup_drain_seconds"] >= 0.01
+
+
+@pytest.mark.asyncio
+async def test_real_runtime_starts_next_synthesis_before_previous_audio_finishes() -> None:
+    class Provider:
+        async def synthesize(self, text: str):
+            count = 20 if text == "Hello." else 1
+            for sequence in range(count):
+                yield AudioFrame(struct.pack("<h", 100) * 960, 16000, sequence, 0)
+
+    report = await buffered_response(Provider(), "Hello. Goodbye.")
+    first, second = report["chunks"]
+    assert second["start_seconds"] < first["playback_end_seconds"]
+    assert second["playback_first_seconds"] >= first["playback_end_seconds"] - 0.005
+    assert report["audio_seconds"] == 1.26
+    assert len(report["pcm"]) == 21 * 1920
+    assert report["max_chunk_starvation_seconds"] < 0.1

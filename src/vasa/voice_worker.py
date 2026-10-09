@@ -82,7 +82,7 @@ async def persisted_config(
         )
         if agent is None:
             return config
-        if agent.language != "en" or agent.voice != "ljspeech_en":
+        if agent.language != "en" or agent.voice != "kokoro_af_maple":
             raise ValueError("unsupported persisted speech configuration")
         prompt = (
             "You are a business voice assistant. Keep responses concise. "
@@ -526,7 +526,9 @@ async def run(
                             allow_tools=True,
                         )
                     if stt is None or tts is None:
-                        stt = await asyncio.to_thread(SherpaSTT, models.stt_dir)
+                        stt = await asyncio.to_thread(
+                            SherpaSTT, models.stt_dir, num_threads=settings.stt_num_threads
+                        )
                         resources.push_async_callback(stt.aclose)
                         if settings.tts_provider == "kokoro-int8":
                             tts = await asyncio.to_thread(
@@ -534,9 +536,13 @@ async def run(
                                 settings.kokoro_model_dir,
                                 num_threads=settings.kokoro_num_threads,
                             )
+                            # Warm only the provider's fixed server-owned generic phrases.
+                            # No tenant greeting, business text or caller input is cached.
+                            resources.push_async_callback(tts.aclose)
+                            await tts.warmup()
                         else:
-                            tts = await asyncio.to_thread(SherpaTTS, models.tts_dir)
-                        resources.push_async_callback(tts.aclose)
+                            tts = await asyncio.to_thread(SherpaTTS, models.tts_dir, num_threads=1)
+                            resources.push_async_callback(tts.aclose)
                     runtime = ConversationRuntime(stt, tts, llm, config=saved_config)
                     target = WorkerTarget(
                         context, owned_instance, external_id, runtime, webhook, target_resources

@@ -1,5 +1,16 @@
 # Performance
 
+2026-10-09 Kokoro-first buffered cloud measurements (one sample/text/profile):
+TTS1/STT1 generic prewarmed ack0.6ms, unseen business sentence4.071s/RTF1.257,
+four-sentence maximum gap4.127s, combined peakRSS508.8MiB. TTS2/STT1 sentence
+3.800s/RTF1.173, gap3.453s, peakRSS511.3MiB; combined sentenceCPU7.034s versus
+4.475s with one TTS thread. Generic warmup5.642/5.097s, separately measured.
+Piper TTS1/STT1 buffered sentence0.217s, long gap<1ms. New RTF includes provider
+callback backpressure; latency/gaps use actual runtime local pacing. Cached
+generic performance is not unseen synthesis performance. These are cloud,
+not VPS, measurements; keep one thread initially and repeat server tuning.
+See docs/tts-evaluation/kokoro-int8-vps/optimized/ for all records/WAVs.
+
 2026-10-09 Kokoro INT8 opt-in integration/cloud smoke: one native thread,
 two-core affinity, short/sentence/four-sentence texts, sequential paced chunks,
 alone and with actual two-thread STT. Sentence first audio/RTF with STT:

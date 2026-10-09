@@ -1,0 +1,14 @@
+{
+  "suite": {
+    "tests": 521,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 0
+  },
+  "lint_format_strict_typing": "passed",
+  "native_kokoro_local_websocket_pipeline": "passed",
+  "isolated_voice_migration_checks": "passed",
+  "compose_configuration": "valid",
+  "playable_wav_files": 18,
+  "actual_vps": "unrun"
+}

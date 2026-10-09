@@ -18,12 +18,14 @@ import wave
 from collections.abc import AsyncIterator
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 import numpy as np
 
 from scripts.evaluate_tts_streaming import CASES, EvaluationTTS
 from scripts.prepare_kokoro_int8 import verify_piper
-from vasa.contracts.models import AudioFrame
+from vasa.contracts.models import AudioFrame, TenantContext
+from vasa.runtime.conversation import ConversationRuntime, _chunks, _Session, _SpeechBuffer
 from vasa.speech.models import NativeWorker
 from vasa.speech.recognition import SherpaSTT
 
@@ -165,8 +167,9 @@ def current_rss_mib() -> float:
 class STTLoad:
     """Real paced native STT; only fully completed fixture runs count as evidence."""
 
-    def __init__(self, model: Path, fixture: Path) -> None:
+    def __init__(self, model: Path, fixture: Path, num_threads: int = 2) -> None:
         self.model, self.fixture = model, fixture
+        self.num_threads = num_threads
         self.stop = threading.Event()
         self.ready = threading.Event()
         self.results: list[dict[str, Any]] = []
@@ -181,7 +184,7 @@ class STTLoad:
             self.ready.set()
 
     async def loop(self) -> None:
-        provider = SherpaSTT(self.model, num_threads=2)
+        provider = SherpaSTT(self.model, num_threads=self.num_threads)
         with wave.open(str(self.fixture / "0.wav")) as source:
             if source.getframerate() != 16000 or source.getnchannels() != 1:
                 raise ValueError("STT fixture must be mono 16kHz")
@@ -356,9 +359,9 @@ async def cancellation(provider: Any, phase: str) -> dict[str, Any]:
 class BenchmarkPiper(EvaluationTTS):
     """Existing native Piper generation with owned/drained work and no PCM event retention."""
 
-    def __init__(self) -> None:
+    def __init__(self, threads: int = 1) -> None:
         verify_piper(Path(".local/tts-evaluation/models/piper-libritts"))
-        super().__init__("piper", threads=1)
+        super().__init__("piper", threads=threads)
         self.worker = NativeWorker("benchmark-piper")
 
     async def synthesize(self, text: str) -> AsyncIterator[AudioFrame]:
@@ -376,12 +379,118 @@ class BenchmarkPiper(EvaluationTTS):
         self.model = None
 
 
-def provider_for(candidate: str, model: Path) -> Any:
+def provider_for(candidate: str, model: Path, threads: int = 1) -> Any:
     if candidate == "kokoro-int8":
         from vasa.speech.kokoro import KokoroInt8TTS
 
-        return KokoroInt8TTS(model, num_threads=1)
-    return BenchmarkPiper()
+        return KokoroInt8TTS(model, num_threads=threads)
+    return BenchmarkPiper(threads)
+
+
+async def buffered_response(provider: Any, text: str) -> dict[str, Any]:
+    """Measure the actual bounded runtime producer/player, using recorded PCM media sends."""
+    start, cpu = time.monotonic(), time.process_time()
+    rss_before = current_rss_mib()
+    events: list[dict[str, Any]] = []
+    sent: list[tuple[float, AudioFrame]] = []
+
+    class TracedProvider:
+        async def synthesize(self, chunk: str) -> AsyncIterator[AudioFrame]:
+            event = {
+                "text": chunk,
+                "start_seconds": time.monotonic() - start,
+                "first_frame_seconds": None,
+                "provider_wait_seconds": 0.0,
+                "frames": 0,
+            }
+            events.append(event)
+            iterator = provider.synthesize(chunk).__aiter__()
+            try:
+                while True:
+                    before = time.monotonic()
+                    try:
+                        frame = await anext(iterator)
+                    except StopAsyncIteration:
+                        event["provider_wait_seconds"] += time.monotonic() - before
+                        break
+                    event["provider_wait_seconds"] += time.monotonic() - before
+                    if event["first_frame_seconds"] is None:
+                        event["first_frame_seconds"] = time.monotonic() - start
+                    event["frames"] += 1
+                    yield frame
+            finally:
+                await iterator.aclose()
+                event["complete_seconds"] = time.monotonic() - start
+
+    class Media:
+        async def send(self, frame: AudioFrame) -> None:
+            sent.append((time.monotonic() - start, frame))
+
+    runtime = ConversationRuntime(None, TracedProvider(), None, vad_factory=lambda: None)
+    session = _Session(runtime, TenantContext(UUID(int=1), UUID(int=2)), Media(), None)
+    buffer = _SpeechBuffer(session, 0)
+    try:
+        for chunk in _chunks(text, final=True)[0]:
+            await buffer.enqueue(chunk, None)
+        await buffer.finish()
+        await asyncio.sleep(0.06)  # Finish the final frame's playback interval.
+    finally:
+        await buffer.aclose()
+    wall = time.monotonic() - start
+    audio = b"".join(frame.pcm for _, frame in sent)
+    playback = bytearray()
+    gaps = []
+    previous_end = None
+    for when, frame in sent:
+        if previous_end is not None:
+            gap = max(0, when - previous_end)
+            gaps.append(gap)
+            playback.extend(b"\0\0" * round(gap * 16000))
+        playback.extend(frame.pcm)
+        previous_end = when + 0.06
+    index = 0
+    prior_end = None
+    for event in events:
+        frames = event["frames"]
+        first_send = sent[index][0]
+        final_end = sent[index + frames - 1][0] + 0.06
+        event.update(
+            {
+                "playback_first_seconds": first_send,
+                "playback_end_seconds": final_end,
+                "audio_seconds": frames * 0.06,
+                "starvation_before_seconds": max(0, first_send - prior_end)
+                if prior_end is not None
+                else 0,
+            }
+        )
+        prior_end = final_end
+        index += frames
+    wait = sum(event["provider_wait_seconds"] for event in events)
+    duration = len(audio) / 32000
+    cpu_seconds = time.process_time() - cpu
+    return {
+        "text": text,
+        "first_playable_seconds": sent[0][0],
+        "synthesis_compute_seconds": wait,
+        "provider_wait_seconds": wait,
+        "compute_metric_note": "Provider await time includes native inference and any "
+        "provider-side backpressure; runtime queue waits excluded",
+        "paced_response_wall_seconds": wall,
+        "real_time_factor": wait / duration,
+        "audio_seconds": duration,
+        "process_cpu_seconds": cpu_seconds,
+        "process_cpu_utilization_percent": 100 * cpu_seconds / wall,
+        "peak_rss_mib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024,
+        "rss_before_mib": rss_before,
+        "rss_after_mib": current_rss_mib(),
+        "chunks": events,
+        "max_chunk_starvation_seconds": max(event["starvation_before_seconds"] for event in events),
+        "max_frame_starvation_seconds": max(gaps, default=0),
+        "total_frame_starvation_seconds": sum(gaps),
+        "pcm": audio,
+        "playback_pcm": bytes(playback),
+    }
 
 
 def save_wav(path: Path, pcm: bytes) -> None:
@@ -396,12 +505,20 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
     sampler = RSSSampler()
     sampler.thread.start()
     load = time.perf_counter()
-    provider = provider_for(args.candidate, args.model)
+    provider = provider_for(args.candidate, args.model, args.tts_threads)
     load_seconds = time.perf_counter() - load
+    warmup_seconds = None
+    if args.warmup_generic:
+        warmup = getattr(provider, "warmup", None)
+        if warmup is None:
+            raise ValueError("--warmup-generic requires Kokoro generic-cache support")
+        warmup_start = time.perf_counter()
+        await warmup()
+        warmup_seconds = time.perf_counter() - warmup_start
     contender = None
     baseline: list[dict[str, Any]] = []
     if args.condition != "A":
-        baseline_load = STTLoad(args.stt_model, args.fixtures)
+        baseline_load = STTLoad(args.stt_model, args.fixtures, args.stt_threads)
         baseline_load.thread.start()
         if not await asyncio.to_thread(baseline_load.ready.wait, 60) or baseline_load.error:
             raise RuntimeError(f"STT baseline failed: {baseline_load.error}")
@@ -413,7 +530,7 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
         baseline_load.stop.set()
         await asyncio.to_thread(baseline_load.thread.join, 60)
         baseline = baseline_load.results
-        contender = STTLoad(args.stt_model, args.fixtures)
+        contender = STTLoad(args.stt_model, args.fixtures, args.stt_threads)
         contender.thread.start()
         if not await asyncio.to_thread(contender.ready.wait, 60) or contender.error:
             raise RuntimeError(f"STT contender failed: {contender.error}")
@@ -422,7 +539,9 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
     try:
         for iteration in range(args.iterations):
             for case in ("short", "sentence", "long"):
-                row = await response(provider, CASES[case])
+                cached = CASES[case] in getattr(provider, "_cache", {})
+                measure = buffered_response if args.buffered else response
+                row = await measure(provider, CASES[case])
                 for name, suffix in (("pcm", ""), ("playback_pcm", "-playback")):
                     data = row.pop(name)
                     filename = f"{args.candidate}-{args.condition}-{case}-{iteration}{suffix}.wav"
@@ -433,6 +552,7 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
                         "case": case,
                         "iteration": iteration,
                         "first_worker_response": iteration == 0 and case == "short",
+                        "cached_acknowledgement": cached,
                     }
                 )
                 rows.append(row)
@@ -444,7 +564,7 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
         gc.collect()
         for phase in ("before_first_audio", "playback"):
             # Separate once-loaded instance per cancellation trial, never per response/call.
-            trial = provider_for(args.candidate, args.model)
+            trial = provider_for(args.candidate, args.model, args.tts_threads)
             cancellations.append(await cancellation(trial, phase))
             del trial
             gc.collect()
@@ -475,8 +595,11 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
         "actual_vps": args.scope == "vps",
         "candidate": args.candidate,
         "condition": args.condition,
-        "threads_tts": 1,
-        "threads_stt": 2,
+        "threads_tts": args.tts_threads,
+        "threads_stt": args.stt_threads,
+        "buffered_runtime": args.buffered,
+        "generic_warmup_enabled": args.warmup_generic,
+        "warmup_seconds": warmup_seconds,
         "model_load_seconds": load_seconds,
         "model_files_sha256": files,
         "rows": rows,
@@ -488,8 +611,8 @@ async def child(args: argparse.Namespace) -> dict[str, Any]:
         "containers_before": containers_before,
         "containers_after": container_snapshot(required=args.condition == "C"),
         "system": system_information(),
-        "timing_policy": "All text available at t=0; sequential chunks, paced 60ms playback; "
-        "compute time excludes playback sleeps; first response is cold",
+        "timing_policy": "All text available at t=0; real runtime bounded ahead-of-playback "
+        "when --buffered, otherwise sequential chunks; 60ms paced output; no LLM wait simulated",
     }
 
 
@@ -523,9 +646,11 @@ def main() -> None:
     parser.add_argument("--candidate", choices=("kokoro-int8", "piper"), required=True)
     parser.add_argument("--iterations", type=int, default=3)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument(
-        "--model", type=Path, default=Path(".local/tts-evaluation/models/kokoro-int8")
-    )
+    parser.add_argument("--model", type=Path, default=Path(".local/speech/kokoro-int8"))
+    parser.add_argument("--buffered", action="store_true")
+    parser.add_argument("--tts-threads", type=int, choices=(1, 2), default=1)
+    parser.add_argument("--stt-threads", type=int, choices=(1, 2), default=1)
+    parser.add_argument("--warmup-generic", action="store_true")
     parser.add_argument("--stt-model", type=Path, default=Path(".local/speech/asr"))
     parser.add_argument("--fixtures", type=Path, default=Path(".local/speech/fixtures"))
     parser.add_argument("--cpus", type=int, nargs="+", default=[0, 1])

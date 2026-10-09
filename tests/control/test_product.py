@@ -31,6 +31,15 @@ async def test_agent_configuration_authentication_csrf_and_tenant_isolation(
     saved = a.put("/api/agent", json=body, headers={"x-csrf-token": token_a})
     assert saved.status_code == 200
     assert saved.json()["name"] == "A voice"
+    assert saved.json()["voice"] == "kokoro_af_maple"
+    assert (
+        a.put(
+            "/api/agent",
+            json={**body, "voice": "ljspeech_en"},
+            headers={"x-csrf-token": token_a},
+        ).status_code
+        == 422
+    )
     assert saved.headers["cache-control"] == "no-store"
     assert b.get("/api/agent").json()["name"] == "Assistant"
     assert (

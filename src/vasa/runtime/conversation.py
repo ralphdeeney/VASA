@@ -33,6 +33,117 @@ StateCallback = Callable[[CallState], Awaitable[None]]
 # segmentation preroll. The pinned real fixture starts VAD at 420 ms; a 120 ms
 # capture preroll clipped its first word even though full-fixture STT recognized it.
 _STREAM_PREROLL_FRAMES = 8
+_PLAYBACK_AHEAD_FRAMES = 16
+_PENDING_SPEECH_CHUNKS = 2
+
+
+@dataclass(slots=True)
+class _SpeechFrame:
+    frame: AudioFrame
+    first: bool
+    started: float
+    speech_end: float | None
+
+
+@dataclass(slots=True)
+class _SpeechComplete:
+    text: str
+
+
+class _SpeechBuffer:
+    """Call-local bounded synthesis ahead of paced playback, never speculative tools."""
+
+    def __init__(self, session: "_Session", generation: int) -> None:
+        self.session = session
+        self.generation = generation
+        self.texts: asyncio.Queue[tuple[str, float | None] | None] = asyncio.Queue(
+            maxsize=_PENDING_SPEECH_CHUNKS
+        )
+        self.audio: asyncio.Queue[_SpeechFrame | _SpeechComplete | ConversationError | None] = (
+            asyncio.Queue(maxsize=_PLAYBACK_AHEAD_FRAMES)
+        )
+        self.producer = asyncio.create_task(self.produce(), name="vasa-conversation")
+        self.player = asyncio.create_task(self.play(), name="vasa-conversation")
+        self.finished = False
+
+    async def enqueue(self, text: str, speech_end: float | None) -> None:
+        await self.put((text, speech_end))
+
+    async def put(self, value: tuple[str, float | None] | None) -> None:
+        put = asyncio.create_task(self.texts.put(value))
+        try:
+            done, _ = await asyncio.wait((put, self.player), return_when=asyncio.FIRST_COMPLETED)
+            if self.player in done:
+                await self.player
+                if value is not None:
+                    raise ConversationError("tts_failed")
+            await put
+        finally:
+            if not put.done():
+                put.cancel()
+            await asyncio.gather(put, return_exceptions=True)
+
+    async def finish(self) -> None:
+        if not self.finished:
+            self.finished = True
+            await self.put(None)
+        await self.player
+
+    async def aclose(self) -> None:
+        self.producer.cancel()
+        self.player.cancel()
+        await asyncio.gather(self.producer, self.player, return_exceptions=True)
+
+    async def produce(self) -> None:
+        try:
+            while (item := await self.texts.get()) is not None:
+                text, speech_end = item
+                iterator = self.session.runtime.tts.synthesize(text)
+                started = time.monotonic()
+                frames = 0
+                try:
+                    async with asyncio.timeout(self.session.config.tts_timeout_seconds):
+                        async for frame in iterator:
+                            if self.generation != self.session.generation:
+                                return
+                            if (
+                                frame.sample_rate != 16000
+                                or frame.channels != 1
+                                or len(frame.pcm) != 1920
+                            ):
+                                raise ConversationError("invalid_audio")
+                            await self.audio.put(
+                                _SpeechFrame(frame, frames == 0, started, speech_end)
+                            )
+                            frames += 1
+                        if not frames:
+                            raise ConversationError("tts_failed")
+                        await self.audio.put(_SpeechComplete(text))
+                finally:
+                    await _close_iterator(iterator)
+            await self.audio.put(None)
+        except asyncio.CancelledError:
+            raise
+        except TimeoutError:
+            await self.audio.put(ConversationError("tts_timeout"))
+        except ConversationError as error:
+            await self.audio.put(error)
+        except Exception:
+            await self.audio.put(ConversationError("tts_failed"))
+
+    async def play(self) -> None:
+        while (item := await self.audio.get()) is not None:
+            if self.generation != self.session.generation:
+                return
+            if isinstance(item, ConversationError):
+                raise item
+            if isinstance(item, _SpeechComplete):
+                if self.session.response_message is None:
+                    self.session.response_message = self.session.append("assistant", item.text)
+                else:
+                    self.session.response_message["content"] += " " + item.text
+                continue
+            await self.session.send_speech_frame(item, self.generation)
 
 
 class ConversationError(Exception):
@@ -452,8 +563,13 @@ class _Session:
 
     async def greet(self, generation: int) -> None:
         self.response_message = None
-        for chunk in _chunks(self.config.greeting, final=True)[0]:
-            await self.speak(chunk, generation, None)
+        speech = _SpeechBuffer(self, generation)
+        try:
+            for chunk in _chunks(self.config.greeting, final=True)[0]:
+                await speech.enqueue(chunk, None)
+            await speech.finish()
+        finally:
+            await speech.aclose()
         if self.response_message is not None:
             await self.persist(self.response_message)
         await self.state(CallState.LISTENING, generation)
@@ -481,6 +597,7 @@ class _Session:
         llm_started = time.monotonic()
         first = True
         first_audio = True
+        speech = _SpeechBuffer(self, generation)
         try:
             while generation == self.generation:
                 waited = time.monotonic()
@@ -510,13 +627,14 @@ class _Session:
                 pending += fragment
                 chunks, pending = _chunks(pending)
                 for chunk in chunks:
-                    await self.speak(chunk, generation, self.speech_end if first_audio else None)
+                    await speech.enqueue(chunk, self.speech_end if first_audio else None)
                     first_audio = False
             for chunk in _chunks(pending, final=True)[0]:
-                await self.speak(chunk, generation, self.speech_end if first_audio else None)
+                await speech.enqueue(chunk, self.speech_end if first_audio else None)
                 first_audio = False
             if first_audio:
                 raise ConversationError("invalid_response")
+            await speech.finish()
             if generation == self.generation:
                 self.result.completed_turns += 1
                 await self.state(CallState.LISTENING, generation)
@@ -528,8 +646,15 @@ class _Session:
             raise ConversationError("llm_failed") from None
         finally:
             await _close_iterator(iterator)
-            if self.response_message is not None:
-                await self.persist(self.response_message)
+            try:
+                # Retain already accepted, valid output on LLM failure. Barge-in
+                # cancels immediately instead of draining obsolete queued audio.
+                if generation == self.generation and not _is_cancelling():
+                    await speech.finish()
+            finally:
+                await speech.aclose()
+                if self.response_message is not None:
+                    await self.persist(self.response_message)
 
     async def respond_tools(self, generation: int) -> None:
         assert self.runtime.tool_executor is not None
@@ -541,6 +666,7 @@ class _Session:
             llm_wait = 0.0
             self.response_message = None
             stream_finished = False
+            speech = _SpeechBuffer(self, generation)
             try:
                 while generation == self.generation:
                     waited = time.monotonic()
@@ -562,7 +688,7 @@ class _Session:
                         pending += fragment
                         chunks, pending = _chunks(pending)
                         for chunk in chunks:
-                            await self.speak(chunk, generation, self.speech_end)
+                            await speech.enqueue(chunk, self.speech_end)
                     elif event.get("type") == "tool_call" and set(event) == {
                         "type",
                         "id",
@@ -590,6 +716,11 @@ class _Session:
                             raise ConversationError("response_limit")
                     else:
                         raise ConversationError("invalid_response")
+                if not calls:
+                    for chunk in _chunks(pending, final=True)[0]:
+                        await speech.enqueue(chunk, self.speech_end)
+                # Never start business actions while earlier queued speech is pending.
+                await speech.finish()
                 stream_finished = True
             except TimeoutError:
                 raise ConversationError("llm_timeout") from None
@@ -599,8 +730,13 @@ class _Session:
                 raise ConversationError("llm_failed") from None
             finally:
                 await _close_iterator(iterator)
-                if not stream_finished and self.response_message is not None:
-                    await self.persist(self.response_message)
+                try:
+                    if generation == self.generation and not _is_cancelling():
+                        await speech.finish()
+                finally:
+                    await speech.aclose()
+                    if not stream_finished and self.response_message is not None:
+                        await self.persist(self.response_message)
             if calls:
                 if (
                     round_number >= self.config.max_tool_rounds
@@ -661,12 +797,8 @@ class _Session:
                 continue
             if not text.strip():
                 raise ConversationError("invalid_response")
-            try:
-                for chunk in _chunks(pending, final=True)[0]:
-                    await self.speak(chunk, generation, self.speech_end)
-            finally:
-                if self.response_message is not None:
-                    await self.persist(self.response_message)
+            if self.response_message is not None:
+                await self.persist(self.response_message)
             self.result.completed_turns += 1
             await self.state(CallState.LISTENING, generation)
             return
@@ -674,65 +806,43 @@ class _Session:
     async def speak(self, text: str, generation: int, speech_end: float | None) -> None:
         if generation != self.generation:
             return
-        iterator = self.runtime.tts.synthesize(text)
-        started = time.monotonic()
-        first = True
-        frames = 0
+        speech = _SpeechBuffer(self, generation)
         try:
-            async with asyncio.timeout(self.config.tts_timeout_seconds):
-                async for frame in iterator:
-                    if generation != self.generation:
-                        return
-                    if frame.sample_rate != 16000 or frame.channels != 1 or len(frame.pcm) != 1920:
-                        raise ConversationError("invalid_audio")
-                    delay = self.next_send - time.monotonic()
-                    if delay > 0:
-                        await asyncio.sleep(delay)
-                    if generation != self.generation:
-                        return
-                    if first:
-                        await self.state(CallState.SPEAKING, generation)
-                    if generation != self.generation:
-                        return
-                    send_started = time.monotonic()
-                    try:
-                        async with asyncio.timeout(5):
-                            await self.media.send(
-                                AudioFrame(
-                                    pcm=frame.pcm,
-                                    sample_rate=16000,
-                                    sequence=self.result.sent_frames,
-                                    timestamp_ns=time.monotonic_ns(),
-                                )
-                            )
-                    except Exception:
-                        raise ConversationError("media_failed") from None
-                    # Pace send starts, without adding network write time to every frame.
-                    self.next_send = send_started + 0.06
-                    self.result.sent_frames += 1
-                    frames += 1
-                    if first:
-                        self.metric("tts_time_to_first_audio", time.monotonic() - started)
-                        if speech_end is not None:
-                            self.metric(
-                                "end_of_speech_to_first_audio", time.monotonic() - speech_end
-                            )
-                        first = False
-            if not frames:
-                raise ConversationError("tts_failed")
-            if generation == self.generation:
-                if self.response_message is None:
-                    self.response_message = self.append("assistant", text)
-                else:
-                    self.response_message["content"] += " " + text
-        except TimeoutError:
-            raise ConversationError("tts_timeout") from None
-        except ConversationError:
-            raise
-        except Exception:
-            raise ConversationError("tts_failed") from None
+            await speech.enqueue(text, speech_end)
+            await speech.finish()
         finally:
-            await _close_iterator(iterator)
+            await speech.aclose()
+
+    async def send_speech_frame(self, item: _SpeechFrame, generation: int) -> None:
+        delay = self.next_send - time.monotonic()
+        if delay > 0:
+            await asyncio.sleep(delay)
+        if generation != self.generation:
+            return
+        if item.first:
+            await self.state(CallState.SPEAKING, generation)
+        if generation != self.generation:
+            return
+        send_started = time.monotonic()
+        try:
+            async with asyncio.timeout(5):
+                await self.media.send(
+                    AudioFrame(
+                        pcm=item.frame.pcm,
+                        sample_rate=16000,
+                        sequence=self.result.sent_frames,
+                        timestamp_ns=time.monotonic_ns(),
+                    )
+                )
+        except Exception:
+            raise ConversationError("media_failed") from None
+        # Pace send starts, without adding network write time to every frame.
+        self.next_send = send_started + 0.06
+        self.result.sent_frames += 1
+        if item.first:
+            self.metric("tts_time_to_first_audio", time.monotonic() - item.started)
+            if item.speech_end is not None:
+                self.metric("end_of_speech_to_first_audio", time.monotonic() - item.speech_end)
 
 
 async def _close_iterator(iterator: object) -> None:
@@ -745,17 +855,32 @@ async def _close_iterator(iterator: object) -> None:
             pass
 
 
+def _is_cancelling() -> bool:
+    task = asyncio.current_task()
+    return task is not None and bool(task.cancelling())
+
+
 def _chunks(text: str, *, final: bool = False) -> tuple[list[str], str]:
-    """Emit complete sentences or <=200-character word chunks, retaining a short tail."""
+    """Emit natural sentences/clauses, with a hard 120-character bounded fallback."""
     chunks: list[str] = []
     while text:
-        sentence = re.search(r"[.!?](?:\s|$)", text[:200])
-        if sentence is not None:
+        sentence = re.search(r"[.!?](?:\s|$)", text[:120])
+        clause = next(
+            (
+                match
+                for match in re.finditer(r"[,;:](?:\s|$)", text[:120])
+                if len(text[: match.start()].split()) >= 5
+            ),
+            None,
+        )
+        if clause is not None and (sentence is None or clause.start() < sentence.start()):
+            boundary = clause.start() + 1
+        elif sentence is not None:
             boundary = sentence.start() + 1
-        elif len(text) >= 200:
-            boundary = text.rfind(" ", 0, 201)
+        elif len(text) >= 120:
+            boundary = text.rfind(" ", 0, 121)
             if boundary <= 0:
-                boundary = 200
+                boundary = 120
         elif final:
             boundary = len(text)
         else:

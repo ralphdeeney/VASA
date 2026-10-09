@@ -32,19 +32,26 @@ FIXTURE_FILES = {
     "8k.wav": "f6f3c8b33e2534cdc154fe773ad2750f1f6a2ca5096179cdf037ae782456613e",
     "trans.txt": "b9ac44e7b794abb1a2d5faf0005e98a665971e7ac2ed15435832cc34edaa9100",
 }
-TTS_ARCHIVE_ROOT = "vits-piper-en_US-ljspeech-medium-int8"
+TTS_ARCHIVE_ROOT = "vits-piper-en_US-libritts_r-medium"
 TTS_URL = (
     "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/"
     + TTS_ARCHIVE_ROOT
     + ".tar.bz2"
 )
-TTS_ARCHIVE_SHA256 = "24dc3bd77dd48c291e52c297878d3437c9492f245d823d7f6a06c4bbb67f4b6b"
+TTS_ARCHIVE_SHA256 = "10dc268f3e371696d721486123e2705a9fc1faa113491979fde4d88dba1f1b1c"
+KOKORO_ARCHIVE_ROOT = "kokoro-int8-multi-lang-v1_1"
+KOKORO_ARCHIVE_SHA256 = "a1e94694776049035c4f2c6529f003aaece993c76aae9a78995831c3c4dcafc6"
+KOKORO_URL = (
+    "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/"
+    + KOKORO_ARCHIVE_ROOT
+    + ".tar.bz2"
+)
 TTS_FILES = {
-    "en_US-ljspeech-medium.onnx": (
-        "206a8403baad4df7642156918a6ebe205798290d82f24d0d0119d7afa8a2738e"
+    "en_US-libritts_r-medium.onnx": (
+        "8cce84cee4060bc3c2194bf95d33253c48dc8ff15e197b3b7a00b334ee0017f4"
     ),
-    "tokens.txt": "ef3a7e4a8d1af0c9d4dc45aaae1a6242ebe24a7ed6f3d025a49eb29682784c6d",
-    "MODEL_CARD": "fbee1529c89d36b3fe76d7e9f3f832dce17f44900a52d76a9bda735654766b4d",
+    "tokens.txt": "620e1aecf1a68fea3ba5850d137b0138fa2037c9b372dad13b95a2a215d0849a",
+    "MODEL_CARD": "0ccde6927e5bb4d743f4ea39618a9387ba18cca3351220a8a9cfdbc68b30fcb9",
 }
 ESPEAK_TREE_SHA256 = "e9c56f8c7cc79f16b1a2dc482074ed777e5b881da2a215a6f99630284dc4b3b8"
 T = TypeVar("T")
@@ -91,15 +98,22 @@ class SpeechModels:
 
     @property
     def tts_dir(self) -> Path:
-        return self.root / "tts"
+        return self.root / "piper"
+
+    @property
+    def kokoro_dir(self) -> Path:
+        return self.root / "kokoro-int8"
 
     @property
     def fixture_dir(self) -> Path:
         return self.root / "fixtures"
 
     def verify(self) -> None:
+        from vasa.speech.kokoro import verify_kokoro_int8
+
         verify_files(self.stt_dir, ASR_FILES)
         verify_tts(self.tts_dir)
+        verify_kokoro_int8(self.kokoro_dir)
         verify_files(self.fixture_dir, FIXTURE_FILES)
 
 

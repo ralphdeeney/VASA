@@ -35,5 +35,5 @@ class Agent(Base):
     )
     language: Mapped[str] = mapped_column(String(10), default="en", server_default="en")
     voice: Mapped[str] = mapped_column(
-        String(40), default="ljspeech_en", server_default="ljspeech_en"
+        String(40), default="kokoro_af_maple", server_default="kokoro_af_maple"
     )

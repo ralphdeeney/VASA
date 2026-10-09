@@ -1,5 +1,17 @@
 # Test results
 
+2026-10-09 Kokoro-first optimizations: 521 full unit/component/integration/native
+and eval checks passed, zero failures/errors/skips. Ruff/format and strict mypy
+passed; JUnit reports/kokoro-first-final.xml. Native Kokoro now drives the actual
+local-WebSocket speech pipeline test with the unchanged Evolution adapter.
+New checks cover callback-before-return/no duplicates, carry framing, bounded
+callback/playback backpressure, cache restrictions, natural chunks, read-ahead,
+barge-in cleanup and no leaked speech tasks. An isolated UUID-named PostgreSQL
+database verified migration0006 legacy-row conversion, default voice and custom
+voice preservation, downgrade/re-upgrade and schema agreement. Compose config
+validated. Three sequential cloud buffered native cohorts produced 18 WAVs;
+actual VPS/human quality/phone-capacity checks are not inferred.
+
 2026-10-09 Kokoro INT8 optional-provider integration: full existing unit,
 component, integration, native speech and eval collection passed 512 checks,
 zero failures/errors/skips. Ruff/format and strict mypy passed (54 source

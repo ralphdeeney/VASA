@@ -14,7 +14,7 @@ from typing import Any
 from scripts.benchmark_speech import load_fixture, percentile_summary
 from vasa.contracts.models import AudioFrame
 from vasa.contracts.providers import STTProvider, TTSProvider
-from vasa.speech import SherpaSTT, SherpaTTS, SpeechModels
+from vasa.speech import KokoroInt8TTS, SherpaSTT, SpeechModels
 from vasa.speech.vad import StreamingVAD
 
 POLICY: dict[str, int | float] = {
@@ -110,8 +110,9 @@ async def benchmark(directory: Path, rounds: int = 3) -> dict[str, Any]:
     threads_before = {t.ident for t in threading.enumerate()}
     tasks_before = set(asyncio.all_tasks())
     rss_before = rss_kib()
-    stt = SherpaSTT(models.stt_dir, num_threads=2, max_streams=10)
-    tts = SherpaTTS(models.tts_dir, num_threads=2, max_concurrency=2)
+    stt = SherpaSTT(models.stt_dir, num_threads=1, max_streams=10)
+    tts = KokoroInt8TTS(models.kokoro_dir, num_threads=1)
+    await tts.warmup()
     lag: list[float] = []
     rss_samples: list[int] = [rss_before, rss_kib()]
     stopping = asyncio.Event()

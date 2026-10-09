@@ -36,12 +36,12 @@ def text_chunks(text: str) -> list[str]:
     return chunks
 
 
-class SherpaTTS:
+class PiperTTS:
     def __init__(
         self,
         model_dir: Path,
         *,
-        num_threads: int = 2,
+        num_threads: int = 1,
         max_concurrency: int = 2,
         max_streams: int = 10,
     ) -> None:
@@ -56,7 +56,7 @@ class SherpaTTS:
         verify_tts(model_dir)
         native = importlib.import_module("sherpa_onnx")
         vits = native.OfflineTtsVitsModelConfig(
-            model=str(model_dir / "en_US-ljspeech-medium.onnx"),
+            model=str(model_dir / "en_US-libritts_r-medium.onnx"),
             tokens=str(model_dir / "tokens.txt"),
             data_dir=str(model_dir / "espeak-ng-data"),
             # Stable business-word articulation; random prosody made otherwise
@@ -132,3 +132,7 @@ class SherpaTTS:
         self._closed = True
         await self._worker.aclose()
         self._model = None
+
+
+# Compatibility for existing native harness imports; this now synthesizes Piper.
+SherpaTTS = PiperTTS

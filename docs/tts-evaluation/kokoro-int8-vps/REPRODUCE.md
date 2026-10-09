@@ -1,5 +1,10 @@
 # Manual VPS benchmark
 
+> These are the original condition setup instructions. Kokoro is now the code
+> default and LJSpeech is retired. For current buffered settings, output paths,
+> migration and cache warmup, follow [optimized reproduction](optimized/README.md).
+> The older optional-provider section below documents commit `8ca9f9e`.
+
 SSH from this cloud was refused before authentication. The operator confirmed
 the address and requested manual execution. These commands benchmark an
 isolated candidate; they do not deploy it or change production configuration.

@@ -18,8 +18,8 @@ from typing import Any, cast
 import numpy as np
 
 from vasa.contracts.models import AudioFrame
-from vasa.speech import SherpaSTT, SherpaTTS, SpeechModels
-from vasa.speech.models import ASR_COMMIT, TTS_ARCHIVE_SHA256
+from vasa.speech import KokoroInt8TTS, SherpaSTT, SpeechModels
+from vasa.speech.models import ASR_COMMIT, KOKORO_ARCHIVE_SHA256
 
 TTS_TEXT = "Hello. Your appointment is confirmed for tomorrow morning."
 WER_THRESHOLD = 0.15
@@ -92,12 +92,12 @@ async def benchmark(directory: Path, iterations: int, num_threads: int) -> dict[
     started = time.perf_counter()
     stt = SherpaSTT(models.stt_dir, num_threads=num_threads)
     stt_cold = time.perf_counter() - started
-    tts: SherpaTTS | None = None
+    tts: KokoroInt8TTS | None = None
     stt_samples: list[dict[str, Any]] = []
     tts_samples: list[dict[str, Any]] = []
     try:
         started = time.perf_counter()
-        tts = SherpaTTS(models.tts_dir, num_threads=num_threads)
+        tts = KokoroInt8TTS(models.kokoro_dir, num_threads=num_threads)
         tts_cold = time.perf_counter() - started
         for iteration in range(iterations):
             for name, (pcm, original_rate) in fixtures.items():
@@ -181,15 +181,14 @@ async def benchmark(directory: Path, iterations: int, num_threads: int) -> dict[
         },
         "models": {
             "asr_commit": ASR_COMMIT,
-            "tts_archive_sha256": TTS_ARCHIVE_SHA256,
-            "tts_noise_scale": 0.0,
-            "tts_noise_scale_w": 0.0,
+            "tts_provider": "kokoro-int8",
+            "tts_archive_sha256": KOKORO_ARCHIVE_SHA256,
         },
         "measurement_policy": {
             "cold_load": "First constructor in this process; OS file cache was not flushed",
             "stt": "Transcribe includes model warmup/final tail; WAV decode/resampling excluded",
             "tts": (
-                "Includes synthesis, 22050-to-16000 resampling and PCM framing; playback unpaced"
+                "Includes synthesis, native-to-16000 resampling and PCM framing; playback unpaced"
             ),
             "percentile_method": "linear interpolation",
             "os_file_cache_flushed": False,
@@ -225,7 +224,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--directory", type=Path, default=Path(".local/speech"))
     parser.add_argument("--iterations", type=int, default=5)
-    parser.add_argument("--num-threads", type=int, default=2)
+    parser.add_argument("--num-threads", type=int, default=1)
     parser.add_argument("--output", type=Path, default=Path("reports/speech-benchmark.json"))
     args = parser.parse_args()
     report = asyncio.run(benchmark(args.directory, args.iterations, args.num_threads))

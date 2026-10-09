@@ -1,5 +1,13 @@
 # VPS deployment and activation through SSH
 
+Current speech package: Kokoro INT8 is the default; Piper is optional through
+`VASA_TTS_PROVIDER=piper`. `prepare_speech.py` prepares both pinned models in
+the existing speech volume and no longer prepares LJSpeech. Apply migration
+0006 before starting the current voice worker. STT/TTS default to one native
+thread, and the prepared voice container has a two-CPU limit. See
+[optimized evaluation and manual commands](tts-evaluation/kokoro-int8-vps/optimized/README.md).
+These are prepared deployment changes; no live VPS activation is claimed.
+
 This package is prepared for the existing `vasa-builder` rootless Docker user
 at `2.25.172.155`, under `/opt/vasa`. No VPS connection or changes have been made
 by Codex. The user confirmed the address/port and SSH availability externally;

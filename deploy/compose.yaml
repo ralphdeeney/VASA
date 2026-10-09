@@ -151,6 +151,10 @@ services:
     environment:
       <<: *vasa-environment
       VASA_MAX_ACTIVE_CALLS: ${VASA_MAX_ACTIVE_CALLS:-2}
+      VASA_TTS_PROVIDER: ${VASA_TTS_PROVIDER:-kokoro-int8}
+      VASA_KOKORO_MODEL_DIR: /opt/vasa/.local/speech/kokoro-int8
+      VASA_KOKORO_NUM_THREADS: ${VASA_KOKORO_NUM_THREADS:-1}
+      VASA_STT_NUM_THREADS: ${VASA_STT_NUM_THREADS:-1}
     volumes:
       - vasa-diagnostics:/opt/vasa/.local:ro
     depends_on:
@@ -165,7 +169,7 @@ services:
     cap_drop: ["ALL"]
     security_opt: ["no-new-privileges:true"]
     mem_limit: 1g
-    cpus: 4
+    cpus: 2
     restart: unless-stopped
 
 volumes:

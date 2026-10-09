@@ -363,7 +363,7 @@ panel("agent-retry").addEventListener("click", loadAgent);
 panel("agent-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   if (agentBusy || !panel("agent-form").reportValidity()) return;
-  const data = { language: "en", voice: "ljspeech_en" };
+  const data = { language: "en", voice: "kokoro_af_maple" };
   for (const [key, id] of Object.entries(agentFields)) data[key] = panel(id).value.trim();
   if (!data.name || [data.name, data.business_name, data.business_description, data.instructions].reduce((total, value) => total + value.length, 0) > 3600) {
     panel("agent-error").textContent = "Enter an assistant name and keep the names, business description, and instructions within 3,600 characters combined.";

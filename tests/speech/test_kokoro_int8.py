@@ -14,7 +14,11 @@ from vasa.speech import kokoro
 
 
 def fake_provider(
-    monkeypatch: pytest.MonkeyPatch, generate: Callable[..., Any], *, streams: int = 2
+    monkeypatch: pytest.MonkeyPatch,
+    generate: Callable[..., Any],
+    *,
+    streams: int = 2,
+    **options: Any,
 ) -> tuple[kokoro.KokoroInt8TTS, list[dict[str, Any]]]:
     original_import = kokoro.importlib.import_module
     configs: list[dict[str, Any]] = []
@@ -27,7 +31,7 @@ def fake_provider(
         OfflineTtsKokoroModelConfig=lambda **kw: kw,
         OfflineTtsModelConfig=model_config,
         OfflineTtsConfig=lambda **kw: kw,
-        OfflineTts=lambda _: SimpleNamespace(generate=generate),
+        OfflineTts=lambda _: SimpleNamespace(generate=generate, sample_rate=16000),
     )
     monkeypatch.setattr(kokoro, "verify_kokoro_int8", lambda _: None)
     monkeypatch.setattr(
@@ -35,7 +39,7 @@ def fake_provider(
         "import_module",
         lambda name: native if name == "sherpa_onnx" else original_import(name),
     )
-    return kokoro.KokoroInt8TTS(Path("unused"), max_streams=streams), configs
+    return kokoro.KokoroInt8TTS(Path("unused"), max_streams=streams, **options), configs
 
 
 async def test_frame_format_chunk_order_and_model_reuse(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -159,6 +163,18 @@ def test_short_acknowledgement_stays_whole_and_long_clauses_are_meaningful() -> 
     assert " ".join(chunks) == sentence
 
 
+def test_long_sentence_does_not_emit_a_tiny_introductory_clause() -> None:
+    sentence = (
+        "Yes, please tell me which day works best for your appointment, "
+        "and whether you prefer the morning or afternoon, "
+        "so that our team can find an available time and confirm the details with you."
+    )
+    chunks = kokoro.kokoro_chunks(sentence)
+    assert chunks[0].startswith("Yes, please tell me")
+    assert all(len(chunk.split()) >= 5 and len(chunk) <= 120 for chunk in chunks)
+    assert " ".join(chunks) == sentence
+
+
 def test_corrupt_assets_and_phonemizer_fail_closed(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -196,3 +212,98 @@ async def test_invalid_native_output_fails(
             await anext(provider.synthesize("Hello."))
     finally:
         await provider.aclose()
+
+
+async def test_callback_audio_is_playable_before_generate_returns_without_duplication(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    release = threading.Event()
+
+    def generate(_: str, **kwargs: Any) -> SimpleNamespace:
+        assert kwargs["callback"](np.full(480, 0.1, np.float32), 0.5) == 1
+        assert kwargs["callback"](np.full(480, 0.2, np.float32), 1.0) == 1
+        assert release.wait(2)
+        return SimpleNamespace(sample_rate=16000, samples=np.full(960, 0.9, np.float32))
+
+    provider, _ = fake_provider(monkeypatch, generate)
+    output = cast(AsyncGenerator[AudioFrame, None], provider.synthesize("Hello."))
+    try:
+        first = await asyncio.wait_for(anext(output), 1)
+        assert len(first.pcm) == 1920
+        assert np.frombuffer(first.pcm, dtype="<i2")[0] == 3276
+        assert np.frombuffer(first.pcm, dtype="<i2")[480] == 6553
+        assert provider._slot.locked()
+        release.set()
+        assert [frame async for frame in output] == []
+    finally:
+        release.set()
+        await output.aclose()
+        await provider.aclose()
+
+
+async def test_callback_backpressure_is_bounded_and_close_unblocks_producer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    finished = threading.Event()
+    accepted: list[int] = []
+
+    def generate(_: str, **kwargs: Any) -> SimpleNamespace:
+        for _ in range(100):
+            value = kwargs["callback"](np.ones(960, np.float32), 0.5)
+            accepted.append(value)
+            if value == 0:
+                break
+        finished.set()
+        return SimpleNamespace(sample_rate=16000, samples=np.ones(960, np.float32))
+
+    provider, _ = fake_provider(monkeypatch, generate, queue_frames=2)
+    output = cast(AsyncGenerator[AudioFrame, None], provider.synthesize("Certainly, I can help."))
+    try:
+        await anext(output)
+        await asyncio.sleep(0.1)
+        assert not finished.is_set() and len(accepted) <= 3
+        await asyncio.wait_for(output.aclose(), 0.2)
+        await asyncio.wait_for(provider.aclose(), 1)
+        assert finished.is_set() and accepted[-1] == 0
+        assert provider._cache_size == 0
+    finally:
+        await output.aclose()
+        await provider.aclose()
+
+
+async def test_cache_is_generic_only_bounded_and_avoids_native_work(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    texts: list[str] = []
+
+    def generate(text: str, **_: Any) -> SimpleNamespace:
+        texts.append(text)
+        return SimpleNamespace(sample_rate=16000, samples=np.ones(960, np.float32))
+
+    provider, _ = fake_provider(monkeypatch, generate, cache_bytes=1920)
+    try:
+        for text in [
+            "Thank you.",
+            "Thank you.",
+            "Private booking 124.",
+            "Private booking 124.",
+            "One moment, please.",
+        ]:
+            async for _ in provider.synthesize(text):
+                pass
+        assert texts.count("Thank you.") == 1
+        assert texts.count("Private booking 124.") == 2
+        assert list(provider._cache) == ["One moment, please."]
+        assert provider._cache_size == 1920
+        async for _ in provider.synthesize("Thank you."):
+            pass
+        assert texts.count("Thank you.") == 2
+    finally:
+        await provider.aclose()
+
+
+def test_custom_business_text_cannot_be_added_to_shared_cache() -> None:
+    with pytest.raises(ValueError, match="server-owned"):
+        kokoro.KokoroInt8TTS(
+            Path("missing"), cache_phrases=["Your account balance is ten dollars."]
+        )

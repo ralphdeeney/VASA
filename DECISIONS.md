@@ -1,5 +1,16 @@
 # Decisions
 
+2026-10-09 explicit user instruction supersedes the earlier LJSpeech-default
+decision: Kokoro INT8 becomes primary and LJSpeech is retired from active
+configuration, preparation, worker and agent voice settings. Retain Piper as
+a selectable alternative and keep historical artifacts. Use actual native
+callbacks through bounded queues, acknowledging complete-segment callback
+granularity. Bound text/playback prefetch and cache only three static generic
+phrases to avoid tenant/customer data in shared memory caches. One native
+thread per STT/TTS remains the starting profile: two TTS threads improve the
+cloud sentence slightly at greater CPU cost. The provider choice is the user's
+explicit preference, not a claim that the <900ms unseen-speech target passes.
+
 2026-10-09 add Kokoro INT8 as an opt-in provider only, preserving contracts,
 production default and transport. Preload once, default one native thread,
 retain single-worker ownership while canceled inference finishes. Barge-in

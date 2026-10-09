@@ -14,6 +14,9 @@ from vasa.speech.models import (
     ASR_FILES,
     ESPEAK_TREE_SHA256,
     FIXTURE_FILES,
+    KOKORO_ARCHIVE_ROOT,
+    KOKORO_ARCHIVE_SHA256,
+    KOKORO_URL,
     TTS_ARCHIVE_ROOT,
     TTS_ARCHIVE_SHA256,
     TTS_FILES,
@@ -41,7 +44,9 @@ def download(url: str, destination: Path, expected: str) -> None:
         raise RuntimeError("Speech artifact checksum mismatch")
 
 
-def extract_archive(archive: Path, destination: Path) -> None:
+def extract_archive(
+    archive: Path, destination: Path, *, expected_root: str = TTS_ARCHIVE_ROOT
+) -> None:
     total = 0
     count = 0
     names: set[str] = set()
@@ -54,7 +59,7 @@ def extract_archive(archive: Path, destination: Path) -> None:
                 or path.is_absolute()
                 or ".." in path.parts
                 or not path.parts
-                or path.parts[0] != TTS_ARCHIVE_ROOT
+                or path.parts[0] != expected_root
                 or len(member.name) > 512
                 or member.name in names
                 or not (member.isfile() or member.isdir())
@@ -76,12 +81,75 @@ def extract_archive(archive: Path, destination: Path) -> None:
                     shutil.copyfileobj(content, output)
 
 
+def prepare_tts_assets(root: Path) -> None:
+    from vasa.speech.kokoro import verify_kokoro_int8
+    from vasa.speech.models import verify_tts
+
+    for group, archive_root, url, expected, verify in [
+        ("piper", TTS_ARCHIVE_ROOT, TTS_URL, TTS_ARCHIVE_SHA256, verify_tts),
+        ("kokoro-int8", KOKORO_ARCHIVE_ROOT, KOKORO_URL, KOKORO_ARCHIVE_SHA256, verify_kokoro_int8),
+    ]:
+        target = root / group
+        ensure_plain_directory(target)
+        if target.exists():
+            verify(target)
+            continue
+        with tempfile.TemporaryDirectory(prefix="tts-prepare-", dir=root) as temporary:
+            staging = Path(temporary)
+            cached = Path(".local/tts-evaluation/archives") / (archive_root + ".tar.bz2")
+            if cached.is_file() and not cached.is_symlink() and sha256_file(cached) == expected:
+                archive = cached
+            else:
+                archive = staging / "model.tar.bz2"
+                download(url, archive, expected)
+            extract_archive(archive, staging / "extracted", expected_root=archive_root)
+            extracted = staging / "extracted" / archive_root
+            verify(extracted)
+            extracted.rename(target)
+
+
+def manifest() -> dict[str, object]:
+    from vasa.speech.kokoro import KOKORO_INT8_FILES
+
+    return {
+        "default_provider": "kokoro-int8",
+        "asr": {
+            "source": ASR_BASE,
+            "commit": ASR_COMMIT,
+            "sha256": ASR_FILES,
+            "license": "Apache-2.0 model; LibriSpeech public-domain recordings",
+        },
+        "tts": {
+            "provider": "piper",
+            "source": TTS_URL,
+            "archive_sha256": TTS_ARCHIVE_SHA256,
+            "sha256": TTS_FILES,
+            "espeak_tree_sha256": ESPEAK_TREE_SHA256,
+            "model_card": "piper/MODEL_CARD",
+            "dataset_license": "LibriTTS-R CC BY 4.0; see model card",
+            "phonemizer_license": "espeak-ng GPL-3.0-or-later",
+        },
+        "kokoro-int8": {
+            "source": KOKORO_URL,
+            "archive_sha256": KOKORO_ARCHIVE_SHA256,
+            "sha256": KOKORO_INT8_FILES,
+            "espeak_tree_sha256": ESPEAK_TREE_SHA256,
+            "license": "Apache-2.0 model; eSpeak phonemizer GPL-3.0-or-later",
+        },
+        "fixtures": {
+            "source": ASR_BASE + "test_wavs/",
+            "sha256": FIXTURE_FILES,
+            "license": "LibriSpeech recordings from public-domain audiobooks",
+        },
+    }
+
+
 def prepare(root: Path) -> SpeechModels:
     ensure_plain_directory(root)
     models = SpeechModels(root)
     if root.exists():
         # Validate every component before downloading or mutating any cache file.
-        for component in ("asr", "fixtures", "tts"):
+        for component in ("asr", "fixtures", "piper", "kokoro-int8"):
             ensure_plain_directory(root / component)
         # Add newly pinned components without overwriting any existing asset.
         # Corrupted existing assets remain a hard failure, never silently repaired.
@@ -100,11 +168,10 @@ def prepare(root: Path) -> SpeechModels:
                         staged = Path(temp) / name
                         download(ASR_BASE + prefix + name, staged, digest)
                         staged.rename(path)
+        prepare_tts_assets(root)
         models.verify()
         metadata_path = root / "manifest.json"
-        metadata = json.loads(metadata_path.read_text())
-        metadata["asr"]["sha256"] = ASR_FILES
-        metadata["fixtures"]["sha256"] = FIXTURE_FILES
+        metadata = manifest()
         with tempfile.NamedTemporaryFile("w", dir=root, delete=False) as output:
             json.dump(metadata, output, indent=2)
             output.write("\n")
@@ -122,34 +189,8 @@ def prepare(root: Path) -> SpeechModels:
             directory.mkdir()
             for name, digest in files.items():
                 download(ASR_BASE + prefix + name, directory / name, digest)
-        archive = Path(temporary) / "tts.tar.bz2"
-        download(TTS_URL, archive, TTS_ARCHIVE_SHA256)
-        extract_archive(archive, Path(temporary) / "extracted")
-        shutil.move(str(Path(temporary) / "extracted" / TTS_ARCHIVE_ROOT), staging / "tts")
-        manifest = {
-            "asr": {
-                "source": ASR_BASE,
-                "commit": ASR_COMMIT,
-                "sha256": ASR_FILES,
-                "license": "Apache-2.0 model; LibriSpeech public-domain recordings",
-            },
-            "tts": {
-                "source": TTS_URL,
-                "release_asset_id": 276487081,
-                "archive_sha256": TTS_ARCHIVE_SHA256,
-                "sha256": TTS_FILES,
-                "espeak_tree_sha256": ESPEAK_TREE_SHA256,
-                "model_card": "tts/MODEL_CARD",
-                "dataset_license": "public domain",
-                "phonemizer_license": "espeak-ng GPL-3.0-or-later; bundled upstream data",
-            },
-            "fixtures": {
-                "source": ASR_BASE + "test_wavs/",
-                "sha256": FIXTURE_FILES,
-                "license": "LibriSpeech recordings from public-domain audiobooks",
-            },
-        }
-        (staging / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+        prepare_tts_assets(staging)
+        (staging / "manifest.json").write_text(json.dumps(manifest(), indent=2) + "\n")
         SpeechModels(staging).verify()
         staging.rename(root)  # same-filesystem atomic publication of a complete verified cache
     return models

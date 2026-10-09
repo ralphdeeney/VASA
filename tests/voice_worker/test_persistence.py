@@ -140,7 +140,7 @@ async def test_persisted_prompt_greeting_and_explicit_operator_overrides(
                 greeting="Welcome to the clinic",
                 instructions="Do not offer medical advice",
                 language="en",
-                voice="ljspeech_en",
+                voice="kokoro_af_maple",
             )
         )
     config = await persisted_config(h.database, context, RuntimeConfig())

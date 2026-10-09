@@ -18,7 +18,7 @@ from websockets.asyncio.server import ServerConnection, serve
 from vasa.contracts.models import AudioFrame, CallState, TenantContext
 from vasa.evolution import EvolutionCalls
 from vasa.runtime import ConversationRuntime, RuntimeConfig
-from vasa.speech import SherpaSTT, SherpaTTS, SpeechModels
+from vasa.speech import KokoroInt8TTS, SherpaSTT, SpeechModels
 from vasa.speech.models import FIXTURE_FILES
 from vasa.speech.vad import StreamingVAD
 
@@ -70,8 +70,8 @@ async def test_actual_native_speech_pipeline_returns_generated_audio_through_loc
     models = SpeechModels(Path(os.environ.get("VASA_SPEECH_MODEL_ROOT", ".local/speech")))
     await asyncio.to_thread(models.verify)
     inbound = first_real_utterance(models)
-    stt = await asyncio.to_thread(SherpaSTT, models.stt_dir)
-    tts = await asyncio.to_thread(SherpaTTS, models.tts_dir)
+    stt = await asyncio.to_thread(SherpaSTT, models.stt_dir, num_threads=1)
+    tts = await asyncio.to_thread(KokoroInt8TTS, models.kokoro_dir, num_threads=1)
     llm = ScriptedAcknowledgement()
     context = TenantContext(uuid4(), uuid4())
     completed = asyncio.Event()

@@ -1,5 +1,10 @@
 # Kokoro INT8 candidate: VPS run pending
 
+> Historical baseline at commit `8ca9f9e`. The operator subsequently retired
+> LJSpeech and made Kokoro the code default. See [the optimized implementation
+> and current measurements](optimized/README.md). The measurements below remain
+> their original cloud observations; no live VPS switch is implied.
+
 Kokoro INT8 is integrated as an **optional** provider. Production remains on
 LJSpeech Medium; the TTSProvider interface and WhatsApp transport are unchanged.
 No production model was switched and no server deployment was performed.
