@@ -1,5 +1,10 @@
 # Performance
 
+2026-10-09 concrete tools/storage: finite webhook/call-ending/retrieval deadlines,
+bounded response bodies, per-call message/tool limits and bounded pagination are
+verified. Eight concurrent SQL transcript writers preserve unique sequencing.
+This is a correctness check, not a throughput or ten-active-voice-call benchmark.
+
 2026-10-09 independent tool gateway: active execution has a configurable global
 limit (default four), saturation fails immediately, and payloads/registry entries
 are bounded. These are verified resource controls, not throughput or ten-call

@@ -19,10 +19,12 @@ The complete governing instructions are in docs/BUILD_HARNESS.md.
 Wave 1 establishes only the database models needed for tenancy; Wave 7 expands persistence. Wave 6 defines knowledge_search's contract, with functional knowledge retrieval verified after Wave 8. Thresholds must be documented before behavioral/performance gates; no invented passing results.
 
 2026-10-09 user steering: defer secure OpenAI binding/live acceptance and continue
-independent tasks. Generic gateway preparation is now implemented separately;
-the voice runtime still rejects tool output. Gate 5, Wave 6 integration, concrete
-tools and live behavioral acceptance remain pending. Do not count component
-preparation as passed graph gates.
+independent tasks. Gateway, approved webhook/current-call-ending handlers,
+knowledge contract and call/message/tool metadata storage are independently
+prepared and verified. The voice runtime still rejects tool output. Gate 5,
+runtime integration, functional knowledge retrieval, complete Wave 7 knowledge
+storage and live behavioral acceptance remain pending. Component preparation
+does not count as passed graph gates.
 
 Current Wave 2 deployment preparation: isolated rootless VPS package and
 activation tunnel procedure implemented and cloud component-verified. Actual

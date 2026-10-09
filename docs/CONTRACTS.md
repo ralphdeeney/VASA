@@ -103,3 +103,53 @@ continues rejecting tool output. No Wave 6 integration or completion is implied.
   runtime continuation are not implemented by this gateway component. Webhook
   destinations/credentials must come from trusted tenant configuration, with
   explicit destination policy before enabling business actions.
+
+## Concrete tool preparation freeze — 2026-10-09
+
+- `CustomWebhook` is bound to one trusted tenant and a bounded server-owned map
+  of action names to exact HTTPS URLs. The model supplies only action and JSON
+  payload. Each destination origin must be explicitly approved by server policy;
+  URL credentials/query/fragments, IP literals, local/reserved hostnames and
+  redirects are rejected. Credentials are server-only bearer tokens. Deployment
+  egress must constrain approved DNS hosts and destinations; this component does
+  not replace DNS/proxy enforcement or promise DNS rebinding protection.
+- A webhook sends one POST without retries, streams at most 32 KiB of JSON and
+  rejects error statuses, compression and non-object/malformed output. Cancellation
+  releases response/client resources but cannot undo a submitted external action.
+  Every approved action also supplies strict input/output ToolPayload models;
+  business fields are validated before sending and before returning results.
+  Requests wrap validated fields as payload and supply a trusted tenant_id.
+  Workflow-specific permissions remain server configuration, not model decisions.
+- `EndCall` captures authenticated context, current CallSession, registry and
+  Evolution client on the server. It accepts no call/tenant/instance identifier.
+  Check current registry identity/state before the existing verified hangup;
+  successful acknowledgment sets a local end-request event for future integration.
+  One object per call, one successful request, no automatic retries after timeout.
+- `KnowledgeSearch` defines query/top_k and bounded tenant-tagged match contracts
+  against an injected KnowledgeRetriever. It has no built-in retrieval backend.
+  Missing backend fails unavailable; cross-tenant results fail before returning.
+  Real embeddings/vector retrieval and knowledge acceptance remain Wave 8.
+- All three implement the existing Tool protocol and validate even if called
+  directly. Gateway permissions remain mandatory at the integration boundary.
+  No tool is enabled in the voice worker by this preparation.
+
+## Call persistence preparation freeze — 2026-10-09
+
+- New `calls`, `call_messages`, `tool_calls` tables store every tenant-owned row
+  with tenant_id. Composite ownership FKs prevent attaching messages/tool records
+  to foreign calls or calls to foreign WhatsApp instances. No audio blobs.
+- `CallRepository(session, trusted_context)` owns tenant-filtered create/get/list,
+  append_message/messages, finalize and start_tool/finish_tool/tool_calls. Methods
+  flush but never commit. Foreign/unknown parents return None before writes.
+- Message sequence is allocated under the call row lock, unique per call and
+  bounded to 1000 messages; content <=16384 characters. Roles are customer, agent,
+  tool, system. Ended/error calls refuse additional messages/tools. Lists are
+  bounded/paginated; every query includes trusted tenant context.
+- Calls capture start/end, optional caller identifier, summary/outcome; finalization
+  validates time ordering and is immutable/idempotent on matching repeated input.
+  Tool rows record an execution UUID, controlled tool name, status/code and times;
+  arguments/results/credentials are not persisted by default. Missing response after
+  external dispatch must not be represented as confirmed failure of the action.
+- Migration and repositories are independent preparation; the live worker does
+  not write transcripts until runtime acceptance/integration is completed. No
+  knowledge tables, generated summaries or dashboard calls screen are claimed.

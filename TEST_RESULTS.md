@@ -1,5 +1,29 @@
 # Test results
 
+## Concrete tools and call storage — 2026-10-09
+
+Full `UV_CACHE_DIR=/workspace/.cache/uv UV_NO_SYNC=1 bash scripts/check.sh
+--junitxml=reports/concrete-tools-storage.xml -q`: 384 passed, zero failures,
+errors or skips. Current JUnit inspected; Ruff/format/strict mypy pass. One existing
+Starlette deprecation warning remains. Dedicated PostgreSQL/Redis and restored
+native assets were used, with no live provider credential.
+
+33 new concrete-tool checks exercise approved destinations, credentials kept in
+server headers, trusted tenant envelopes, action-specific input/output schemas,
+nonfinite/malformed/oversized/compressed replies, redirects, cancellation stream
+cleanup, no retries, current-call ownership/state and acknowledgment/idempotency,
+and fail-closed knowledge backend/foreign matches. HTTP and hangup are component
+stubs; no actual n8n business action or Evolution hangup is claimed.
+
+Nine new real-PostgreSQL integration checks cover repository isolation, composite
+FK denials for foreign instances/calls, immutable finalization, controlled tool
+completion codes, bounded reads/messages/executions, duplicate external IDs,
+rollback/no implicit commit and eight concurrent writers. Fresh full migrations,
+0004 downgrade/re-upgrade and schema comparison passed in a UUID-named separate
+database, removed afterward. Existing project history was never downgraded.
+Alembic check on the development database also reports no drift. No wave/live
+behavioral gate or ten-call performance target is inferred from these checks.
+
 ## Independent tool gateway preparation — 2026-10-09
 
 User deferred live OpenAI setup and requested other work. New independent

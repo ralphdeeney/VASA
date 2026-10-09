@@ -1,14 +1,29 @@
 # Current state
 
 Current wave: 5 (Conversation runtime; Wave 4 CPU Voice Intelligence verified)
-Current slice: Independent generic tool gateway preparation; live OpenAI acceptance deferred by user
+Current slice: Independent concrete tools and call/transcript storage verified; live OpenAI acceptance deferred by user
 Completed slices: Wave 0 governance/tooling/contracts; Wave 1 tenant PostgreSQL/pgvector/Redis and isolation; Wave 2 verified pinned-source Evolution adapter, authenticated instance mapping/control and QR dashboard; Wave 3 real-call media acceptance; Wave 4 CPU VAD/STT/TTS, bounded native cancellation and streamed LLM adapters; Wave 5 conversation runtime, trusted inbound worker and native local-WebSocket integration
-Active agents: none; independent tool gateway component verified
+Active agents: none; concrete-tool and storage verification complete
 Blockers:
 - OpenAI is selected primary, but no secure usable binding is injected. The credential pasted in chat must be revoked/replaced through VASA_OPENAI_API_KEY in environment settings, saved/published. Do not store or use the exposed credential. Anthropic is optional. Live LLM acceptance awaits this prerequisite; independent checks continue.
 - Historical cloud SSH to vasa-builder@2.25.172.155:22 was refused before authentication; proxy CONNECT closed without SSH banner. No successful VPS connection or remote changes are claimed. This does not block independent development or negate the user's accepted real call.
 Failed checks: none outstanding. Native TTS callback polarity, repeated-cancel cache cleanup, delayed state callbacks and clipped initial speech regressions fixed and verified; no tests disabled or acceptance thresholds weakened.
-Next action: continue independent concrete-tool preparation against the frozen gateway contract; keep runtime linking/live model tool acceptance gated. Live OpenAI setup/acceptance is explicitly deferred by the user on 2026-10-09; return to it later. Gate 5 remains unpassed. No need to repeat the passed diagnostic media call. Do not claim Wave 5 live dialogue acceptance or unlock dependent behavioral completion from scripted results.
+Next action: prepare tenant-isolated knowledge source/chunk storage and CPU retrieval independently; retain the live dialogue/tool/runtime integration gates. Live OpenAI setup/acceptance is explicitly deferred by the user on 2026-10-09; return to it later. Gate 5 remains unpassed. No need to repeat the passed diagnostic media call. Do not claim Wave 5 live dialogue acceptance or unlock dependent behavioral completion from scripted results.
+
+2026-10-09 continuation: prepared tenant-bound custom_webhook with approved
+HTTPS actions and strict business schemas, call-bound end_call with current
+registry checks/acknowledgment, and knowledge_search's tenant-tagged retriever
+contract (no retrieval backend). Migration 0004 adds calls/messages/tool metadata;
+every repository query is tenant-filtered, ownership is enforced by composite
+FKs, concurrent messages use locked unique sequencing, and writes never commit
+the caller transaction. No arguments/results/secrets or audio are stored in tool
+metadata. See docs/TOOL_PREPARATION.md for configuration and integration limits.
+Full verification: 384 checks pass, zero failures/errors/skips; Ruff/format and
+strict mypy pass. Current JUnit inspected at reports/concrete-tools-storage.xml.
+Fresh isolated DB upgrade/downgrade/re-upgrade and Alembic schema check passed.
+Eight real concurrent SQL writers preserved all messages and unique sequences.
+No live provider/n8n action/call, runtime transcript capture, model tool selection,
+summary accuracy or concurrency capacity is claimed. No key was used.
 
 2026-10-09 independent slice: tenant-bound ToolGateway with server permissions,
 strict input/output models, bounded JSON snapshots, fail-fast capacity,

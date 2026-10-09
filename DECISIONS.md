@@ -1,5 +1,14 @@
 # Decisions
 
+- 2026-10-09 continuation: user authorized concrete tools followed by call and
+  transcript storage while OpenAI stays deferred. Implement as independent
+  components without enabling live worker tool output. Approved webhook actions
+  require exact server destinations and strict business schemas; call ending
+  captures current trusted identity; knowledge retrieval remains a contract.
+  Durable histories enforce tenant ownership in PostgreSQL, sequence under row
+  lock and store tool metadata without argument/result bodies. Keep acceptance
+  gates pending and record uncertainty after external dispatch honestly.
+
 - 2026-10-09: User explicitly defers configuring the replacement OpenAI key and
   requests other work. Prepare the generic tool validation gateway independently,
   without voice/runtime linking or advancing acceptance gates. Reuse the existing

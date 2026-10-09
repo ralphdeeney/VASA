@@ -1,5 +1,13 @@
 # Eval results
 
+2026-10-09 concrete tools: three deterministic policy checks are marked evals:
+webhook ownership/action/URL and business-field injection denial before network,
+current-call ownership/identifier injection denial before hangup, and knowledge
+trusted-context forwarding/foreign-result rejection. They pass with positive
+controls, using component handlers. Real PostgreSQL persistence isolation also
+passes at repository and composite-FK boundaries. No live model tool selection,
+actual n8n actions, retrieval accuracy or summary quality is evaluated here.
+
 2026-10-09 independent tool gateway preparation: deterministic component
 checks exercise tenant-bound registry lookups, server-grant denial before handler
 execution, strict input/output schemas and failure cleanup. They do not evaluate

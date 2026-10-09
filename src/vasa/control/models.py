@@ -1,6 +1,6 @@
 from uuid import UUID, uuid4
 
-from sqlalchemy import ForeignKey, String, Text, Uuid
+from sqlalchemy import ForeignKey, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, validates
 
 from vasa.storage.models import Base
@@ -23,6 +23,7 @@ class User(Base):
 
 class WhatsAppInstance(Base):
     __tablename__ = "whatsapp_instances"
+    __table_args__ = (UniqueConstraint("id", "tenant_id", name="uq_instances_id_tenant"),)
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid4)
     tenant_id: Mapped[UUID] = mapped_column(
