@@ -1,0 +1,72 @@
+{
+  "candidate": "kokoro-fp32",
+  "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+  "sample_rate": 24000,
+  "samples": [
+    {
+      "iteration": 1,
+      "first_audio_seconds": 2.188029127999471,
+      "processing_seconds": 2.188029127999471,
+      "cpu_seconds": 4.259801587,
+      "audio_duration_seconds": 3.4015,
+      "real_time_factor": 0.6432541902100458
+    },
+    {
+      "iteration": 2,
+      "first_audio_seconds": 2.225469332999637,
+      "processing_seconds": 2.225469332999637,
+      "cpu_seconds": 4.3277572829999995,
+      "audio_duration_seconds": 3.399125,
+      "real_time_factor": 0.6547182975029271
+    },
+    {
+      "iteration": 3,
+      "first_audio_seconds": 2.2224748089993227,
+      "processing_seconds": 2.2224748089993227,
+      "cpu_seconds": 4.273648803,
+      "audio_duration_seconds": 3.4051666666666667,
+      "real_time_factor": 0.6526772480052829
+    },
+    {
+      "iteration": 4,
+      "first_audio_seconds": 2.222796390999065,
+      "processing_seconds": 2.222796390999065,
+      "cpu_seconds": 4.261393611000001,
+      "audio_duration_seconds": 3.3992916666666666,
+      "real_time_factor": 0.653899873551813
+    },
+    {
+      "iteration": 5,
+      "first_audio_seconds": 2.1535407820010732,
+      "processing_seconds": 2.1535407820010732,
+      "cpu_seconds": 4.175295511000002,
+      "audio_duration_seconds": 3.3994583333333335,
+      "real_time_factor": 0.6334952721392594
+    }
+  ],
+  "first_audio_seconds": {
+    "count": 5,
+    "p50": 2.2224748089993227,
+    "p95": 2.2249347445995227,
+    "minimum": 2.1535407820010732,
+    "maximum": 2.225469332999637
+  },
+  "real_time_factor": {
+    "count": 5,
+    "p50": 0.6526772480052829,
+    "p95": 0.6545546127127043,
+    "minimum": 0.6334952721392594,
+    "maximum": 0.6547182975029271
+  },
+  "cpu_seconds": {
+    "count": 5,
+    "p50": 4.261393611000001,
+    "p95": 4.316935587,
+    "minimum": 4.175295511000002,
+    "maximum": 4.3277572829999995
+  },
+  "peak_rss_kib": 580984,
+  "user_cpu_seconds": 21.241961,
+  "system_cpu_seconds": 0.10525400000000001,
+  "model_sha256": "acc4adc175b9d9986106cd20060329673ad5a2e12ef3c557d2d3745b694f8b38"
+}
