@@ -8,9 +8,11 @@ from vasa.config import Settings
 from vasa.speech.kitten import KITTEN_ARCHIVE_ROOT
 
 
-def test_kitten_trusted_selection_preserves_kokoro_default(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_kitten_trusted_selection_preserves_deepgram_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.delenv("VASA_TTS_PROVIDER", raising=False)
-    assert Settings(_env_file=None).tts_provider == "kokoro-int8"
+    assert Settings(_env_file=None).tts_provider == "deepgram"
     monkeypatch.setenv("VASA_TTS_PROVIDER", "kitten-micro")
     settings = Settings(_env_file=None)
     assert settings.tts_provider == "kitten-micro"

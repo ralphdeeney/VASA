@@ -1,5 +1,11 @@
 # Architecture
 
+2026-10-14 current default: user-selected interim Deepgram Aura2 TTS. Settings
+and deployment fallback select deepgram; explicit environment overrides still
+take precedence. A securely configured DEEPGRAM_API_KEY is required. Local STT,
+PCM contract and optional Kokoro/Piper/Kitten/Speechify providers are preserved.
+Earlier default descriptions below record prior architecture decisions.
+
 Deepgram Aura2 TTS is optional and shares pooled HTTP PCM framing/cancellation
 with Speechify through protocol-specific request/metadata hooks. One client is
 created per worker, Token-authenticated REST response audio streams into existing

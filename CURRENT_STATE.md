@@ -1,5 +1,14 @@
 # Current state
 
+2026-10-14 user explicitly selected Deepgram Aura as the interim default.
+Settings, deployment Compose fallback and example environment now select deepgram
+with aura-2-thalia-en. Kokoro INT8, Piper, Kitten and Speechify remain selectable.
+This is a user preference, not a measured production-readiness recommendation.
+The chat-pasted credential is exposed and is not stored or used. Configure a
+replacement DEEPGRAM_API_KEY securely before live validation or worker startup.
+Existing explicit VASA_TTS_PROVIDER overrides must be changed by the operator.
+No live deployment or vendor benchmark has been performed for this change.
+
 2026-10-14 current wave: stabilization / optional Deepgram Aura TTS.
 Current slice: code/config/tests/benchmark complete; stopped at live-key gate.
 User confirmed Aura TTS only. Deepgram is optional, uses one shared pooled

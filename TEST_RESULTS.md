@@ -1,5 +1,10 @@
 # Test results
 
+2026-10-14 user-selected Deepgram default: full599 checks passed in62.24s,
+zero failures/errors/skips. Ruff/format194 files and strict mypy57 sources pass.
+JUnit: reports/deepgram-default.xml. Settings defaults, provider overrides and
+missing-key worker preflight remain covered. No live API call or deployment.
+
 2026-10-14 Deepgram Aura TTS:599 full unit/component/integration/native/eval
 checks passed in62.42s,zero failures/errors/skips. Ruff/format193 files and
 strict mypy57 source files pass. JUnit reports/deepgram-aura-final.xml. New

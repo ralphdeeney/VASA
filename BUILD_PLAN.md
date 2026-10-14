@@ -1,5 +1,11 @@
 # Build plan
 
+2026-10-14 Deepgram Aura is now the explicit user-selected interim default;
+all599 checks pass. Configure a replacement DEEPGRAM_API_KEY securely and update
+any existing VASA_TTS_PROVIDER override before operator restart/live validation.
+The exposed chat credential is not stored or used; actual VPS validation remains
+manual. This preference does not establish production readiness.
+
 2026-10-14 optional Deepgram Aura TTS code/settings/worker/benchmark integration
 is complete (599 combined checks). User-approved scope is TTS only. Next gate
 requires securely setting DEEPGRAM_API_KEY before live model/auth/PCM validation

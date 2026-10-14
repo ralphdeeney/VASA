@@ -10,7 +10,7 @@ def test_deepgram_exact_secret_alias_and_optional_selection(
     monkeypatch.delenv("VASA_TTS_PROVIDER", raising=False)
     monkeypatch.setenv("DEEPGRAM_API_KEY", "component-deepgram-secret")
     settings = Settings(_env_file=None)
-    assert settings.tts_provider == "kokoro-int8"
+    assert settings.tts_provider == "deepgram"
     assert settings.deepgram_api_key.get_secret_value() == "component-deepgram-secret"
     assert "component-deepgram-secret" not in repr(settings)
     assert "component-deepgram-secret" not in settings.model_dump_json()

@@ -1,5 +1,11 @@
 # Decisions
 
+2026-10-14 user explicitly changes the interim TTS default to Deepgram Aura2
+(aura-2-thalia-en), superseding the earlier Kokoro default. Preserve all provider
+options and fail-fast missing-key behavior; no silent fallback or claimed live
+validation. Keep the chat-pasted exposed credential out of configuration and Git;
+request a securely configured replacement DEEPGRAM_API_KEY.
+
 2026-10-14 user confirmed Deepgram Aura TTS only and required an explicit secure
 key gate before live validation. Implement optional English Aura2 REST audio
 streaming, default model aura-2-thalia-en, native linear16/16000/container none.
