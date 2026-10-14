@@ -255,6 +255,19 @@ async def test_missing_speechify_key_prevents_remote_calls(
     assert rig.created == rig.actions == rig.sessions == []
 
 
+async def test_missing_deepgram_key_prevents_remote_calls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from pydantic import SecretStr
+
+    rig = PreflightRig(monkeypatch)
+    rig.settings.tts_provider = "deepgram"
+    rig.settings.deepgram_api_key = SecretStr("")
+    with pytest.raises(ValueError, match="DEEPGRAM_API_KEY"):
+        await worker.run("operator@example.invalid", uuid4(), RuntimeConfig(), once=True)
+    assert rig.created == rig.actions == rig.sessions == []
+
+
 @pytest.mark.integration
 async def test_foreign_real_sql_instance_mapping_prevents_transport_creation_or_answer(
     monkeypatch: pytest.MonkeyPatch,
@@ -401,14 +414,31 @@ def test_cli_reports_fixed_error_without_exception_details(
     assert PRIVATE_DETAIL not in output.err and "Traceback" not in output.err
 
 
-@pytest.mark.parametrize("tts_provider", ["piper", "kokoro-int8", "kitten-micro", "speechify"])
+@pytest.mark.parametrize(
+    "tts_provider", ["piper", "kokoro-int8", "kitten-micro", "speechify", "deepgram"]
+)
 async def test_all_mode_shares_native_models_and_derives_each_call_context(
     monkeypatch: pytest.MonkeyPatch,
     tts_provider: str,
 ) -> None:
     rig = PreflightRig(monkeypatch)
     rig.settings.tts_provider = tts_provider
-    if tts_provider == "speechify":
+    if tts_provider == "deepgram":
+        from pydantic import SecretStr
+
+        rig.settings.deepgram_api_key = SecretStr("component-only-deepgram")
+
+        class Deepgram:
+            def __init__(self, api_key: str, *, model: str) -> None:
+                assert api_key == "component-only-deepgram"
+                assert model == rig.settings.deepgram_model
+                rig.created.append("deepgram")
+
+            async def aclose(self) -> None:
+                rig.closed.append("deepgram")
+
+        monkeypatch.setattr(worker, "DeepgramTTS", Deepgram)
+    elif tts_provider == "speechify":
         from pydantic import SecretStr
 
         rig.settings.speechify_api_key = SecretStr("component-only-speechify")

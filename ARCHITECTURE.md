@@ -1,5 +1,12 @@
 # Architecture
 
+Deepgram Aura2 TTS is optional and shares pooled HTTP PCM framing/cancellation
+with Speechify through protocol-specific request/metadata hooks. One client is
+created per worker, Token-authenticated REST response audio streams into existing
+mono PCM16/16kHz/60ms frames and bounded playback. Local STT and the current
+Kokoro default remain intact. Benchmark provider profiles select protocols
+without mutating production settings or sharing arbitrary speech caches.
+
 Speechify Simba3.2 is optional behind trusted environment settings. A worker
 shares one pooled HTTP client for streaming native PCM16/16kHz through the
 existing60ms framing and bounded playback pipeline. Barge-in closes active HTTP

@@ -59,6 +59,10 @@ class SpeechifyTTS:
     An injected client transfers ownership to this provider and is closed at shutdown.
     """
 
+    _default_origin = "https://api.speechify.ai"
+    _path = "/v1/audio/stream"
+    _provider_label = "Speechify"
+
     def __init__(
         self,
         api_key: str,
@@ -72,15 +76,17 @@ class SpeechifyTTS:
         max_streams: int = 10,
     ) -> None:
         if not api_key or len(api_key) > 4096 or any(c.isspace() for c in api_key):
-            raise ValueError("Invalid Speechify credential")
+            raise ValueError(f"Invalid {self._provider_label} credential")
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", voice_id):
-            raise ValueError("Invalid Speechify voice")
+            raise ValueError(f"Invalid {self._provider_label} voice")
         if not 0 < request_timeout <= 180 or not 1 <= max_audio_seconds <= 180:
-            raise ValueError("Invalid Speechify bounds")
+            raise ValueError(f"Invalid {self._provider_label} bounds")
         if isinstance(max_streams, bool) or not 1 <= max_streams <= 10:
-            raise ValueError("Invalid Speechify admission bound")
-        if base_url != "https://api.speechify.ai" and client is None:
-            raise ValueError("Custom Speechify origin requires an injected test client")
+            raise ValueError(f"Invalid {self._provider_label} admission bound")
+        if base_url != self._default_origin and client is None:
+            raise ValueError(
+                f"Custom {self._provider_label} origin requires an injected test client"
+            )
         self._client = client or httpx.AsyncClient(
             limits=httpx.Limits(
                 max_connections=1, max_keepalive_connections=1, keepalive_expiry=120
@@ -90,7 +96,7 @@ class SpeechifyTTS:
         )
         self._key = api_key
         self._voice = voice_id
-        self._url = base_url.rstrip("/") + "/v1/audio/stream"
+        self._url = base_url.rstrip("/") + self._path
         self._observer = observer
         self._deadline = request_timeout
         self._max_bytes = max_audio_seconds * 32000
@@ -102,12 +108,36 @@ class SpeechifyTTS:
         self._closed = False
         self._close_task: asyncio.Task[None] | None = None
 
+    def _build_request(self, text: str, trace: Any) -> httpx.Request:
+        return self._client.build_request(
+            "POST",
+            self._url,
+            headers={
+                "Authorization": f"Bearer {self._key}",
+                "Accept": "audio/pcm",
+                "Speechify-Version": "2026-09-30",
+                "Accept-Encoding": "identity",
+            },
+            json={
+                "input": text,
+                "voice_id": self._voice,
+                "model": "simba-3.2",
+                "output_format": "pcm_16000",
+            },
+            extensions={"trace": trace},
+        )
+
+    def _response_metadata(self, response: httpx.Response, metrics: dict[str, Any]) -> None:
+        metrics["server_timing"], metrics["server_ttfb_seconds"] = _timing(
+            response.headers.get("server-timing", ""), self._key
+        )
+
     async def synthesize(self, text: str) -> AsyncIterator[AudioFrame]:
         text_chunks(text)
         if self._closed:
-            raise RuntimeError("Speechify provider closed")
+            raise RuntimeError(f"{self._provider_label} provider closed")
         if self._admitted >= self._max_streams:
-            raise RuntimeError("Speechify provider busy")
+            raise RuntimeError(f"{self._provider_label} provider busy")
         self._admitted += 1
         response: httpx.Response | None = None
         acquired = False
@@ -153,37 +183,19 @@ class SpeechifyTTS:
             await asyncio.wait_for(self._slot.acquire(), timeout=min(10, remaining()))
             acquired = True
             if self._closed:
-                raise RuntimeError("Speechify provider closed")
-            request = self._client.build_request(
-                "POST",
-                self._url,
-                headers={
-                    "Authorization": f"Bearer {self._key}",
-                    "Accept": "audio/pcm",
-                    "Speechify-Version": "2026-09-30",
-                    "Accept-Encoding": "identity",
-                },
-                json={
-                    "input": text,
-                    "voice_id": self._voice,
-                    "model": "simba-3.2",
-                    "output_format": "pcm_16000",
-                },
-                extensions={"trace": trace},
-            )
+                raise RuntimeError(f"{self._provider_label} provider closed")
+            request = self._build_request(text, trace)
             response = await asyncio.wait_for(self._client.send(request, stream=True), remaining())
             self._responses.add(response)
             if self._closed:
-                raise RuntimeError("Speechify provider closed")
+                raise RuntimeError(f"{self._provider_label} provider closed")
             metrics["http_status"] = response.status_code
-            metrics["server_timing"], metrics["server_ttfb_seconds"] = _timing(
-                response.headers.get("server-timing", ""), self._key
-            )
+            self._response_metadata(response, metrics)
             network = response.extensions.get("network_stream")
             if network is not None:
                 metrics["connection_id"] = id(network)
             if response.status_code != 200:
-                raise RuntimeError("Speechify HTTP failure")
+                raise RuntimeError(f"{self._provider_label} HTTP failure")
             content_type = Message()
             content_type["content-type"] = response.headers.get("content-type", "")
             if (
@@ -192,7 +204,7 @@ class SpeechifyTTS:
                 or content_type.get_param("channels", "1") != "1"
                 or response.headers.get("content-encoding", "identity").lower() != "identity"
             ):
-                raise RuntimeError("Speechify PCM format mismatch")
+                raise RuntimeError(f"{self._provider_label} PCM format mismatch")
             carry = bytearray()
             sequence = 0
             previous_byte: float | None = None
@@ -228,11 +240,11 @@ class SpeechifyTTS:
                 metrics["bytes_received"] += len(chunk)
                 metrics["audio_seconds"] = metrics["bytes_received"] / 32000
                 if metrics["bytes_received"] > self._max_bytes:
-                    raise RuntimeError("Speechify audio limit exceeded")
+                    raise RuntimeError(f"{self._provider_label} audio limit exceeded")
                 carry.extend(chunk)
                 while len(carry) >= 1920:
                     if self._closed:
-                        raise RuntimeError("Speechify provider closed")
+                        raise RuntimeError(f"{self._provider_label} provider closed")
                     framing_start = time.monotonic()
                     frame = AudioFrame(bytes(carry[:1920]), 16000, sequence, sequence * 60_000_000)
                     del carry[:1920]
@@ -243,10 +255,10 @@ class SpeechifyTTS:
                     yield frame
             metrics["full_response_seconds"] = time.monotonic() - started
             if not metrics["bytes_received"] or len(carry) % 2:
-                raise RuntimeError("Speechify invalid PCM length")
+                raise RuntimeError(f"{self._provider_label} invalid PCM length")
             if carry:
                 if self._closed:
-                    raise RuntimeError("Speechify provider closed")
+                    raise RuntimeError(f"{self._provider_label} provider closed")
                 framing_start = time.monotonic()
                 frame = AudioFrame(
                     bytes(carry).ljust(1920, b"\0"), 16000, sequence, sequence * 60_000_000
@@ -260,7 +272,7 @@ class SpeechifyTTS:
             metrics["outcome"] = "cancelled"
             raise
         except Exception:
-            raise RuntimeError("Speechify synthesis failed") from None
+            raise RuntimeError(f"{self._provider_label} synthesis failed") from None
         finally:
             cleanup_started = time.monotonic()
             try:
@@ -287,7 +299,7 @@ class SpeechifyTTS:
             try:
                 await asyncio.wait_for(response.aclose(), 5)
             except Exception:
-                raise RuntimeError("Speechify stream cleanup failed") from None
+                raise RuntimeError(f"{self._provider_label} stream cleanup failed") from None
 
         task = asyncio.create_task(bounded_close())
         self._cleanup_tasks.add(task)
@@ -306,7 +318,7 @@ class SpeechifyTTS:
             try:
                 await asyncio.wait_for(self._client.aclose(), 5)
             except Exception:
-                raise RuntimeError("Speechify client cleanup failed") from None
+                raise RuntimeError(f"{self._provider_label} client cleanup failed") from None
 
     async def aclose(self) -> None:
         self._closed = True

@@ -152,6 +152,7 @@ services:
       <<: *vasa-environment
       VASA_MAX_ACTIVE_CALLS: ${VASA_MAX_ACTIVE_CALLS:-2}
       VASA_TTS_PROVIDER: ${VASA_TTS_PROVIDER:-kokoro-int8}
+      VASA_DEEPGRAM_MODEL: ${VASA_DEEPGRAM_MODEL:-aura-2-thalia-en}
       VASA_SPEECHIFY_VOICE_ID: ${VASA_SPEECHIFY_VOICE_ID:-geffen_32}
       VASA_KITTEN_MODEL_DIR: /opt/vasa/.local/speech/kitten-micro
       VASA_KITTEN_NUM_THREADS: ${VASA_KITTEN_NUM_THREADS:-1}

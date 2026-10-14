@@ -21,7 +21,11 @@ class Settings(BaseSettings):
     evolution_stream_key: SecretStr = SecretStr("")
     evolution_instance_key: SecretStr = SecretStr("")
     speech_model_root: Path = Path(".local/speech")
-    tts_provider: Literal["speechify", "kitten-micro", "kokoro-int8", "piper"] = "kokoro-int8"
+    tts_provider: Literal["deepgram", "speechify", "kitten-micro", "kokoro-int8", "piper"] = (
+        "kokoro-int8"
+    )
+    deepgram_api_key: SecretStr = Field(default=SecretStr(""), validation_alias="DEEPGRAM_API_KEY")
+    deepgram_model: str = Field(default="aura-2-thalia-en", pattern=r"^aura-2-[a-z]{1,40}-en$")
     speechify_api_key: SecretStr = Field(
         default=SecretStr(""), validation_alias="SPEECHIFY_API_KEY"
     )

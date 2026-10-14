@@ -1,5 +1,14 @@
 # Decisions
 
+2026-10-14 user confirmed Deepgram Aura TTS only and required an explicit secure
+key gate before live validation. Implement optional English Aura2 REST audio
+streaming, default model aura-2-thalia-en, native linear16/16000/container none.
+Reuse bounded pooled PCM/cancellation machinery through narrow protocol hooks,
+preserving Speechify behavior. Read DEEPGRAM_API_KEY only through trusted env
+secrets; tests use mocks/local TCP, not live credentials. Reuse benchmark through
+trusted provider profile; keep Kokoro/local STT/otherproviders intact. Complete
+and verify all key-free work, then ask for secure configuration before live API.
+
 2026-10-12 add optional Speechify streaming adapter and manual VPS benchmark;
 keep Kokoro default/Piper/Kitten intact. Pin simba-3.2 and Speechify-Version
 2026-09-30 with pcm_16000 to avoid documented legacy rate mislabeling. Use one

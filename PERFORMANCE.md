@@ -1,5 +1,13 @@
 # Performance
 
+2026-10-14 Deepgram Aura2 integration/tooling is verified without a live key.
+No vendor/VPS latency, RTF, CPU/RSS or voice-quality figures exist; pending
+receipts use null metrics. Prepared tool measures native streamed16k PCM with
+first-body-byte/full60ms-frame timing, two excluded warmups, varied sequential
+direct/buffered trials, connections/stalls/cancellation and optional realSTT1.
+Actual runtime buffer is reused. Model/request UUIDs remain unknown until
+provided by a live response; no immutable model version is invented.
+
 2026-10-12 Speechify Simba3.2 benchmark integration: no live vendor/VPS timing,
 RTF, CPU, RSS or voice quality measurements are available. Do not substitute
 vendor marketing latency or cloud/native benchmarks. The prepared sequential

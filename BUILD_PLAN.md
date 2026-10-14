@@ -1,5 +1,10 @@
 # Build plan
 
+2026-10-14 optional Deepgram Aura TTS code/settings/worker/benchmark integration
+is complete (599 combined checks). User-approved scope is TTS only. Next gate
+requires securely setting DEEPGRAM_API_KEY before live model/auth/PCM validation
+and labeled measurements. Defaults and actual production deployment are unchanged.
+
 2026-10-12 Speechify optional-provider/benchmark integration is complete and
 verified (571 full checks). Actual VPS streaming measurements and listening
 are the next manual step under docs/tts-evaluation/speechify-simba-3.2-vps/.

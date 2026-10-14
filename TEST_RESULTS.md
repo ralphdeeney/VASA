@@ -1,5 +1,15 @@
 # Test results
 
+2026-10-14 Deepgram Aura TTS:599 full unit/component/integration/native/eval
+checks passed in62.42s,zero failures/errors/skips. Ruff/format193 files and
+strict mypy57 source files pass. JUnit reports/deepgram-aura-final.xml. New
+coverage:19 Deepgram provider/real TCP checks,5 benchmark component checks,
+secret settings/model validation and worker key preflight/single shared setup.
+All prior Speechify checks remain passing after shared protocol/profile hooks.
+Real TCP tests prove local reuse/stream closure; mocked HTTP proves auth/query/
+format/model validation and redaction, not live Deepgram performance. Compose
+configuration passed. Real key/live validation is deliberately pending.
+
 2026-10-12 Speechify: full571-check unit/component/integration/native/eval suite
 passed in56.85s,zero failures/errors/skips. Ruff/format and strict mypy56 sources
 pass. JUnit reports/speechify-simba-final.xml. Twenty provider/real TCP checks

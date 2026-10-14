@@ -7,6 +7,8 @@ import json
 import os
 import sys
 import time
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -27,6 +29,29 @@ from scripts.benchmark_kokoro_int8_vps import (
 from vasa.speech.speechify import SpeechifyTTS
 
 CATEGORIES = ("short", "sentence", "long")
+
+
+@dataclass(frozen=True)
+class BenchmarkProfile:
+    """Trusted provider binding; credentials and HTTP payloads never enter evidence."""
+
+    key_environment: str
+    provider_factory: Callable[[str, argparse.Namespace, Callable[[dict[str, Any]], None]], Any]
+    environment_metadata: Callable[[argparse.Namespace], dict[str, Any]]
+
+
+def speechify_metadata(args: argparse.Namespace) -> dict[str, Any]:
+    return {
+        "model": "simba-3.2",
+        "voice_id": args.voice_id,
+        "output_format": "pcm_16000",
+        "speechify_api_version": "2026-09-30",
+        "endpoint": "POST https://api.speechify.ai/v1/audio/stream",
+    }
+
+
+def speechify_factory(key: str, args: argparse.Namespace, observer: Any) -> Any:
+    return SpeechifyTTS(key, voice_id=args.voice_id, observer=observer)
 
 
 def benchmark_text(index: int) -> tuple[str, str]:
@@ -221,10 +246,15 @@ def stt_statistics(rows: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-async def run(args: argparse.Namespace) -> int:
-    key = os.environ.get("SPEECHIFY_API_KEY", "").strip()
+async def run(args: argparse.Namespace, *, profile: BenchmarkProfile | None = None) -> int:
+    profile = profile or BenchmarkProfile(
+        "SPEECHIFY_API_KEY", speechify_factory, speechify_metadata
+    )
+    key = os.environ.get(profile.key_environment, "").strip()
     if not key:
-        raise ValueError("Set SPEECHIFY_API_KEY privately in the benchmark process environment")
+        raise ValueError(
+            f"Set {profile.key_environment} privately in the benchmark process environment"
+        )
     validate_scope(args.scope, Path.cwd(), os.getuid(), True, "A")
     if args.requests < 20 or args.requests > 100:
         raise ValueError("--requests must be between 20 and 100 per mode")
@@ -245,9 +275,9 @@ async def run(args: argparse.Namespace) -> int:
     if (args.output / "measurements.json").exists():
         raise ValueError("Output already contains measurements; choose a new evidence directory")
     sampler = RSSSampler()
-    sampler.thread.start()
     events: list[dict[str, Any]] = []
-    provider = SpeechifyTTS(key, voice_id=args.voice_id, observer=events.append)
+    provider = profile.provider_factory(key, args, events.append)
+    sampler.thread.start()
     rows: list[dict[str, Any]] = []
     probes: list[dict[str, Any]] = []
     warmups: list[dict[str, Any]] = []
@@ -261,11 +291,7 @@ async def run(args: argparse.Namespace) -> int:
             "actual_vps": args.scope == "vps",
             "httpx_version": importlib.metadata.version("httpx"),
             "containers_before": container_snapshot(),
-            "model": "simba-3.2",
-            "voice_id": args.voice_id,
-            "output_format": "pcm_16000",
-            "speechify_api_version": "2026-09-30",
-            "endpoint": "POST https://api.speechify.ai/v1/audio/stream",
+            **profile.environment_metadata(args),
             "requests_per_mode": args.requests,
             "warmup_requests": 2,
             "concurrency": 1,
@@ -424,8 +450,7 @@ async def run(args: argparse.Namespace) -> int:
     measurements = {
         "scope": args.scope,
         "actual_vps": args.scope == "vps",
-        "model": "simba-3.2",
-        "voice_id": args.voice_id,
+        **profile.environment_metadata(args),
         "warmups": warmups,
         "requests": rows,
         "cancellation": probes,
@@ -474,6 +499,7 @@ async def run(args: argparse.Namespace) -> int:
     summary = {
         "scope": args.scope,
         "actual_vps": args.scope == "vps",
+        **profile.environment_metadata(args),
         "complete": complete,
         "statistics": statistics,
         "target_observations": targets,
@@ -511,12 +537,13 @@ async def run(args: argparse.Namespace) -> int:
     return 0 if complete else 1
 
 
-def parser() -> argparse.ArgumentParser:
+def parser(*, include_voice: bool = True) -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("--scope", choices=("vps", "component-smoke"), default="vps")
     result.add_argument("--mode", choices=("direct", "buffered", "both"), default="both")
     result.add_argument("--requests", type=int, default=30, help="20–100 per mode, default 30")
-    result.add_argument("--voice-id", default="geffen_32")
+    if include_voice:
+        result.add_argument("--voice-id", default="geffen_32")
     result.add_argument("--cpus", nargs=2, type=int, default=[0, 1])
     result.add_argument(
         "--output", type=Path, default=Path("docs/tts-evaluation/speechify-simba-3.2-vps/vps")

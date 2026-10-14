@@ -1,5 +1,11 @@
 # Eval results
 
+2026-10-14 all existing evals pass within the599-check combined suite after
+optional Aura TTS integration. No STT provider, default, tenant/runtime policy
+or media wire contract changes. Mock/loopback evidence does not establish
+Deepgram pronunciation, latency, quality or phone acceptance. Stop at secure
+DEEPGRAM_API_KEY gate before live validation, as explicitly requested.
+
 2026-10-12 Speechify optional integration preserves all existing evals within
 the571-check full suite. Real TCP tests establish adapter reuse/cancellation,
 and component fixtures establish runtime buffering/benchmark statistics only.

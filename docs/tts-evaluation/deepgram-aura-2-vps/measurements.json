@@ -1,0 +1,12 @@
+{
+  "status": "pending_secure_key_and_live_validation",
+  "actual_vps": false,
+  "live_requests": 0,
+  "model": "aura-2-thalia-en",
+  "default_changed": false,
+  "warmups": [],
+  "requests": [],
+  "cancellation": [],
+  "wav_samples": [],
+  "complete": false
+}

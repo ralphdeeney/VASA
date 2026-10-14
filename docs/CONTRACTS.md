@@ -1,5 +1,28 @@
 # Wave contracts
 
+## Deepgram Aura 2 TTS freeze — 2026-10-14
+
+Context is ongoing streaming TTS evaluation: add optional DeepgramTTS behind
+existing TTSProvider; preserve local STT and Kokoro default. No live key is used
+before implementation/tests/tooling are complete. Read DEEPGRAM_API_KEY only
+from trusted environment/secret configuration, never print/store real keys.
+Use HTTPS POST api.deepgram.com/v1/speak with Authorization Token, JSON{text},
+model aura-2-thalia-en by default, encoding linear16, sample_rate16000,
+container none. Share the proven pooled HTTP PCM framing/admission/cancellation
+machinery through narrow protocol hooks, retaining Speechify behavior/tests.
+Record vendor metadata only through bounded secret-safe fields; no invented
+model version or latency. DeepgramTTS(api_key, *, model="aura-2-thalia-en",
+client=None, observer=None) exposes synthesize/aclose and emits mono PCM16/60ms.
+Provider specialist owns deepgram.py, narrow speechify.py request/metadata hooks
+and Deepgram provider/TCP tests. Benchmark specialist owns benchmark_deepgram_vps.py,
+narrow reusable provider factory hooks in benchmark_speechify_vps.py, benchmark
+tests and docs/tts-evaluation/deepgram-aura-2-vps/REPRODUCE.md. Root owns settings,
+worker/deployment/exports and persistent docs/final checks. Existing benchmarks
+and providers remain backward compatible. Tooling supports sequential varied
+requests, excluded warmups, actual runtime buffering, optional real STT,
+partial failures and secret-safe results. Ask user to set DEEPGRAM_API_KEY
+securely only at the final live-validation gate; no default promotion/deployment.
+
 ## Speechify Simba 3.2 benchmark freeze — 2026-10-12
 
 Keep TTSProvider/AudioFrame/Evolution contracts and Kokoro default unchanged.

@@ -1,5 +1,22 @@
 # Current state
 
+2026-10-14 current wave: stabilization / optional Deepgram Aura TTS.
+Current slice: code/config/tests/benchmark complete; stopped at live-key gate.
+User confirmed Aura TTS only. Deepgram is optional, uses one shared pooled
+HTTP PCM streamer with Token auth/linear16/16kHz/no container, defaults to
+aura-2-thalia-en and preserves Kokoro default/local STT/other providers/media.
+DEEPGRAM_API_KEY is read through an exact secret environment alias, never
+hardcoded/logged. Benchmark shares verified sequential direct/runtime buffering,
+two excluded warmups, >=20 varied responses per mode, optional real STT and
+safe partial failures/metadata. Full599 checks passed,0 failures/errors/skips;
+Ruff/format/mypy57 sources pass; Compose configuration validates.
+Active specialists:none. Automated failures:none outstanding. Blockers:real
+Deepgram key is not configured; actual VPS access previously refused. Next
+action:ask user to set DEEPGRAM_API_KEY securely, then validate live API/PCM and
+run separate correctly labeled cloud/VPS evidence. No live Deepgram request,
+vendor latency or listening WAV is claimed. Evidence and manual commands:
+docs/tts-evaluation/deepgram-aura-2-vps/.
+
 2026-10-12 current wave: stabilization / optional Speechify streaming benchmark.
 Current slice: integration complete; actual VPS/API/listening pending.
 Speechify Simba3.2 is selectable by trusted environment configuration; Kokoro
