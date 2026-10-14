@@ -1,0 +1,16 @@
+{
+  "status": "pending_actual_vps_run",
+  "actual_vps": false,
+  "measured_requests": 0,
+  "blockers": [
+    "SSH: connect to host 2.25.172.155 port 22: Connection refused",
+    "SPEECHIFY_API_KEY is not configured in cloud environment"
+  ],
+  "model": "simba-3.2",
+  "voice_id": "geffen_32",
+  "warmups": [],
+  "requests": [],
+  "cancellation": [],
+  "wav_samples": [],
+  "complete": false
+}

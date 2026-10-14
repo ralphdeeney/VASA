@@ -1,5 +1,27 @@
 # Wave contracts
 
+## Speechify Simba 3.2 benchmark freeze — 2026-10-12
+
+Keep TTSProvider/AudioFrame/Evolution contracts and Kokoro default unchanged.
+Optional SpeechifyTTS(api_key: str, *, voice_id="geffen_32", client=None,
+observer=None) owns one persistent pooled HTTP client per worker; synthesize
+uses POST https://api.speechify.ai/v1/audio/stream, model simba-3.2,
+output_format pcm_16000, Accept audio/pcm, Speechify-Version 2026-09-30.
+Validate delivered mono16k signed little-endian PCM; emit1920-byte/60ms frames.
+No full-response wait, shared speech cache or per-request client creation.
+Bound admission/body/deadlines; cancellation closes the active stream; shutdown
+drains cleanup. Observer receives one bounded, sanitized dict per HTTP request
+with first-byte/first-frame/completion/audio duration/bytes/status/Server-Timing,
+connection trace counts/read waits/framing overhead/cancellation information.
+Observer is absent in production; never include key or request headers/bodies.
+Provider specialist owns speechify.py and provider/component tests. Benchmark
+specialist owns benchmark_speechify_vps.py and its tests/docs REPRODUCE.md;
+reuse actual runtime buffering, two excluded warmups, >=20 sequential varied
+responses per mode, real TCP reuse evidence and raw versus playback timing.
+Root owns trusted settings/worker/deployment/export integration and final checks.
+Actual VPS/API/listening remain pending when inaccessible; no fabricated WAVs or
+performance, vendor latency claims, or cloud figures relabeled as server results.
+
 ## Kitten Micro candidate freeze — 2026-10-09
 
 Add optional `KittenMicroTTS(model_dir: Path, *, num_threads=1,

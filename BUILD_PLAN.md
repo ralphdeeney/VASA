@@ -1,5 +1,10 @@
 # Build plan
 
+2026-10-12 Speechify optional-provider/benchmark integration is complete and
+verified (571 full checks). Actual VPS streaming measurements and listening
+are the next manual step under docs/tts-evaluation/speechify-simba-3.2-vps/.
+Do not change defaults or claim production readiness from component evidence.
+
 2026-10-09 Kitten Micro candidate slice is integrated and verified locally.
 Pinned optional assets, trusted selection, preload/cancellation/framing and
 matched cloud A/B evaluation are complete (539 full checks; 54 measured

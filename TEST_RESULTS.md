@@ -1,5 +1,16 @@
 # Test results
 
+2026-10-12 Speechify: full571-check unit/component/integration/native/eval suite
+passed in56.85s,zero failures/errors/skips. Ruff/format and strict mypy56 sources
+pass. JUnit reports/speechify-simba-final.xml. Twenty provider/real TCP checks
+cover framing/rate validation, connection reuse, secret-safe telemetry/errors,
+repeat cancellation/shutdown and proxy TLS tracing. Nine benchmark checks cover
+unique clauses, two excluded warmups, sequential direct/runtime buffering,
+actual-VPS guards, optional STT orchestration and sanitized partial failures.
+Worker sharing/key preflight and exact environment key alias also pass.
+Compose configuration/shell syntax pass. No live API/VPS benchmark ran; static
+pending receipts and verification are under the Speechify evaluation folder.
+
 2026-10-09 Kitten Micro: 539 complete unit/component/integration/native/eval
 checks passed, zero failures/errors/skips, 48.45s. Ruff/format and strict mypy
 (55 sources) pass. JUnit reports/kitten-micro-final.xml is copied into evaluation

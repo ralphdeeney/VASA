@@ -21,7 +21,11 @@ class Settings(BaseSettings):
     evolution_stream_key: SecretStr = SecretStr("")
     evolution_instance_key: SecretStr = SecretStr("")
     speech_model_root: Path = Path(".local/speech")
-    tts_provider: Literal["kitten-micro", "kokoro-int8", "piper"] = "kokoro-int8"
+    tts_provider: Literal["speechify", "kitten-micro", "kokoro-int8", "piper"] = "kokoro-int8"
+    speechify_api_key: SecretStr = Field(
+        default=SecretStr(""), validation_alias="SPEECHIFY_API_KEY"
+    )
+    speechify_voice_id: str = Field(default="geffen_32", min_length=1, max_length=128)
     kitten_model_dir: Path = Path(".local/speech/kitten-micro")
     kitten_num_threads: int = Field(default=1, ge=1, le=8)
     kokoro_model_dir: Path = Path(".local/speech/kokoro-int8")

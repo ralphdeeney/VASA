@@ -242,6 +242,19 @@ async def test_missing_live_prerequisite_prevents_all_remote_calls(
     assert rig.created == rig.actions == rig.sessions == []
 
 
+async def test_missing_speechify_key_prevents_remote_calls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from pydantic import SecretStr
+
+    rig = PreflightRig(monkeypatch)
+    rig.settings.tts_provider = "speechify"
+    rig.settings.speechify_api_key = SecretStr("")
+    with pytest.raises(ValueError, match="SPEECHIFY_API_KEY"):
+        await worker.run("operator@example.invalid", uuid4(), RuntimeConfig(), once=True)
+    assert rig.created == rig.actions == rig.sessions == []
+
+
 @pytest.mark.integration
 async def test_foreign_real_sql_instance_mapping_prevents_transport_creation_or_answer(
     monkeypatch: pytest.MonkeyPatch,
@@ -388,14 +401,29 @@ def test_cli_reports_fixed_error_without_exception_details(
     assert PRIVATE_DETAIL not in output.err and "Traceback" not in output.err
 
 
-@pytest.mark.parametrize("tts_provider", ["piper", "kokoro-int8", "kitten-micro"])
+@pytest.mark.parametrize("tts_provider", ["piper", "kokoro-int8", "kitten-micro", "speechify"])
 async def test_all_mode_shares_native_models_and_derives_each_call_context(
     monkeypatch: pytest.MonkeyPatch,
     tts_provider: str,
 ) -> None:
     rig = PreflightRig(monkeypatch)
     rig.settings.tts_provider = tts_provider
-    if tts_provider in {"kokoro-int8", "kitten-micro"}:
+    if tts_provider == "speechify":
+        from pydantic import SecretStr
+
+        rig.settings.speechify_api_key = SecretStr("component-only-speechify")
+
+        class Speechify:
+            def __init__(self, api_key: str, *, voice_id: str) -> None:
+                assert api_key == "component-only-speechify"
+                assert voice_id == rig.settings.speechify_voice_id
+                rig.created.append("speechify")
+
+            async def aclose(self) -> None:
+                rig.closed.append("speechify")
+
+        monkeypatch.setattr(worker, "SpeechifyTTS", Speechify)
+    elif tts_provider in {"kokoro-int8", "kitten-micro"}:
 
         class Kokoro:
             def __init__(self, path: Path, *, num_threads: int) -> None:

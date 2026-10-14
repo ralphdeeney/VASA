@@ -4,6 +4,15 @@ from vasa.speech.kitten import KittenMicroTTS
 from vasa.speech.kokoro import KokoroInt8TTS
 from vasa.speech.models import SpeechModels
 from vasa.speech.recognition import SherpaSTT
+from vasa.speech.speechify import SpeechifyTTS
 from vasa.speech.synthesis import PiperTTS, SherpaTTS
 
-__all__ = ["KittenMicroTTS", "KokoroInt8TTS", "PiperTTS", "SherpaSTT", "SherpaTTS", "SpeechModels"]
+__all__ = [
+    "KittenMicroTTS",
+    "KokoroInt8TTS",
+    "PiperTTS",
+    "SherpaSTT",
+    "SherpaTTS",
+    "SpeechModels",
+    "SpeechifyTTS",
+]

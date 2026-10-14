@@ -1,5 +1,15 @@
 # Performance
 
+2026-10-12 Speechify Simba3.2 benchmark integration: no live vendor/VPS timing,
+RTF, CPU, RSS or voice quality measurements are available. Do not substitute
+vendor marketing latency or cloud/native benchmarks. The prepared sequential
+harness measures raw PCM first byte versus first full60ms frame, numeric server
+TTFB residual, direct/network versus buffered playback timing, CPU/RSS, actual
+TCP/TLS starts and cancellation. Two warmups are excluded; default30 varied
+responses per mode yield10/category. Optional real STT1 permits B/C comparison.
+User-reported Kokoro VPS4.2s/RTF1.32/longgap4.28s remains approximate context.
+Speechify root JSON receipts retain null measurements until manual execution.
+
 2026-10-09 Kitten Micro 0.8 matched cloud A/B: three samples/text, affinity0/1,
 two-CPU quota, TTS1/STT1, uncached, actual buffered runtime. STT-contention
 sentence P50/P95: Kitten2.136/2.309s, Kokoro4.132/4.149s, Piper0.219/0.224s.

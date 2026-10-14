@@ -1,5 +1,12 @@
 # Eval results
 
+2026-10-12 Speechify optional integration preserves all existing evals within
+the571-check full suite. Real TCP tests establish adapter reuse/cancellation,
+and component fixtures establish runtime buffering/benchmark statistics only.
+They are not Speechify latency, naturalness, actual VPS or phone evidence.
+Actual Simba3.2 measurements and human preference remain pending due refused
+SSH and absent key; no automatic provider promotion is made.
+
 2026-10-09 Kitten Micro: all existing evals pass within the 539-check full suite,
 including tenant isolation, knowledge, tools, summaries and interruption.
 Matched cloud A/B records are under docs/tts-evaluation/kitten-micro/. Real STT

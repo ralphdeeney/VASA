@@ -34,6 +34,7 @@ from vasa.runtime_finalization import AuditedExecutor, DurableCall
 from vasa.speech import SherpaSTT, SherpaTTS, SpeechModels
 from vasa.speech.kitten import KittenMicroTTS
 from vasa.speech.kokoro import KokoroInt8TTS
+from vasa.speech.speechify import SpeechifyTTS
 from vasa.storage.cache import CallRegistry
 from vasa.storage.database import Database
 from vasa.storage.models import Agent
@@ -389,6 +390,8 @@ async def run(
     settings = Settings()
     models = SpeechModels(settings.speech_model_root)
     await asyncio.to_thread(models.verify)
+    if settings.tts_provider == "speechify" and not settings.speechify_api_key.get_secret_value():
+        raise ValueError("Configure SPEECHIFY_API_KEY securely before starting the voice worker")
     openai_key = settings.openai_api_key.get_secret_value()
     anthropic_key = settings.anthropic_api_key.get_secret_value()
     if not openai_key and not anthropic_key:
@@ -421,7 +424,7 @@ async def run(
         from vasa.tools.webhooks_config import load_webhooks
 
         stt: SherpaSTT | None = None
-        tts: SherpaTTS | KokoroInt8TTS | KittenMicroTTS | None = None
+        tts: SherpaTTS | KokoroInt8TTS | KittenMicroTTS | SpeechifyTTS | None = None
         knowledge = KnowledgeService(database)
         resources.push_async_callback(knowledge.aclose)
         registry = CallRegistry(cache)
@@ -531,7 +534,13 @@ async def run(
                             SherpaSTT, models.stt_dir, num_threads=settings.stt_num_threads
                         )
                         resources.push_async_callback(stt.aclose)
-                        if settings.tts_provider == "kitten-micro":
+                        if settings.tts_provider == "speechify":
+                            tts = SpeechifyTTS(
+                                settings.speechify_api_key.get_secret_value(),
+                                voice_id=settings.speechify_voice_id,
+                            )
+                            resources.push_async_callback(tts.aclose)
+                        elif settings.tts_provider == "kitten-micro":
                             tts = await asyncio.to_thread(
                                 KittenMicroTTS,
                                 settings.kitten_model_dir,

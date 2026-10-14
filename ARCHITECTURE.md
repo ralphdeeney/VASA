@@ -1,5 +1,11 @@
 # Architecture
 
+Speechify Simba3.2 is optional behind trusted environment settings. A worker
+shares one pooled HTTP client for streaming native PCM16/16kHz through the
+existing60ms framing and bounded playback pipeline. Barge-in closes active HTTP
+streams and retains bounded cleanup ownership; native models/transport/defaults
+are preserved. No shared customer/generated speech cache is added.
+
 Kitten Micro 0.8 is an optional trusted environment TTS candidate alongside
 Kokoro INT8 and Piper. It shares the existing bounded segment callback,
 framing and native cancellation ownership implementation with model-specific

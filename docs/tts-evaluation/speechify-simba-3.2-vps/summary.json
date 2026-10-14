@@ -1,0 +1,28 @@
+{
+  "status": "pending_actual_vps_run",
+  "actual_vps": false,
+  "measured_requests": 0,
+  "blockers": [
+    "SSH: connect to host 2.25.172.155 port 22: Connection refused",
+    "SPEECHIFY_API_KEY is not configured in cloud environment"
+  ],
+  "first_playable_p50_seconds": null,
+  "first_playable_p90_seconds": null,
+  "first_playable_p95_seconds": null,
+  "effective_rtf": null,
+  "cpu_seconds": null,
+  "peak_rss_mib": null,
+  "cancellation_seconds": null,
+  "max_starvation_seconds": null,
+  "kokoro_reference": {
+    "provenance": "User-reported approximate actual VPS context, not independently verified raw data",
+    "sentence_first_audio_seconds": 4.2,
+    "sentence_rtf": 1.32,
+    "long_starvation_seconds": 4.28
+  },
+  "actual_vps_piper_comparison": null,
+  "production_default": "kokoro-int8",
+  "default_changed": false,
+  "human_listening": "pending",
+  "recommendation": "Pending actual VPS measurements and human review; no promotion"
+}

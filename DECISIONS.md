@@ -1,5 +1,14 @@
 # Decisions
 
+2026-10-12 add optional Speechify streaming adapter and manual VPS benchmark;
+keep Kokoro default/Piper/Kitten intact. Pin simba-3.2 and Speechify-Version
+2026-09-30 with pcm_16000 to avoid documented legacy rate mislabeling. Use one
+pooled client, actual byte/frame timing and bounded cancellation cleanup, with
+no generated-speech cache. Only actual-VPS baseline records are accepted, and
+different text/STT/workload conditions remain explicit. No promotion without
+server measurements, listening and acceptance of external dependency. Fresh
+SSH refuses connection; absent cloud key prevents live vendor measurements.
+
 2026-10-09 add optional Kitten Micro 0.8 behind trusted environment selection;
 reuse bounded native callback/framing/cancellation behavior, retaining Kokoro
 default and Piper fallback. Official Micro/HF provenance and Apache model

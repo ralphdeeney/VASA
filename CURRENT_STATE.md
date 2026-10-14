@@ -1,5 +1,22 @@
 # Current state
 
+2026-10-12 current wave: stabilization / optional Speechify streaming benchmark.
+Current slice: integration complete; actual VPS/API/listening pending.
+Speechify Simba3.2 is selectable by trusted environment configuration; Kokoro
+remains default and all existing providers/transport are preserved. One pooled
+client, pinned API version2026-09-30, native PCM16/16kHz/60ms frames and bounded
+cancellation cleanup are verified locally. Benchmark supports two excluded
+warmups, >=20 sequential varied responses per direct/runtime-buffered mode,
+first-byte/frame/percentiles/RTF/CPU/RSS/stalls/Server-Timing/connection evidence
+and optional real one-thread STT contention with standalone fixture baseline.
+Full checks:571 pass,zero failures/errors/skips; Ruff/format/mypy56 sources pass.
+Real loopback TCP proves completed-request reuse and interrupted-stream closure.
+Active specialists:none. Automated failures:none outstanding. Blockers:fresh
+SSH to confirmed VPS returns Connection refused; cloud Speechify key absent.
+No live vendor metrics or listening WAVs are claimed. Next action:run manual
+VPS commands and listen before any production selection. Evidence/commands:
+docs/tts-evaluation/speechify-simba-3.2-vps/.
+
 2026-10-09 current wave: stabilization / optional Kitten Micro evaluation.
 Current slice: complete locally; actual VPS A/B/C and human listening pending.
 Kitten Micro 0.8 is selectable alongside Kokoro INT8/Piper, with one shared
