@@ -1,5 +1,15 @@
 # Current state
 
+2026-10-15 automatic staging phase: merged remote 79b5457 (push trigger was
+already added, but its first run failed with empty dispatch-only mode). Fixed
+push resolution to deploy/smoke=false and added allowlisted five-field summary.
+Added read-only host/container web, Evolution license/instance and sanitizer
+validation with unchanged dependency/restart checks. Push uses the same safe
+update-only controller; public ingress remains externally blocked/unverified.
+The implementation push is authorized to deploy this branch including e5431b4;
+its live receipt is recorded in the Actions run and ignored VPS deployment journal.
+No direct Codex SSH, bootstrap, migrations or account changes are authorized.
+
 2026-10-15 live WhatsApp partial integration VERIFIED by operator: inbound
 answer, caller frames and audible opening greeting; calls then reconnect/end
 after roughly 10–30 seconds, with no container restart and no completed turn.

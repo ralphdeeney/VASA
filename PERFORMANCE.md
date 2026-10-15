@@ -1,5 +1,11 @@
 # Performance
 
+2026-10-15 automatic staging deployment adds bounded read-only HTTP/database/
+instance checks, not paid provider benchmarking or speech model loading. Push
+forces provider_smoke=false. Restart stabilization remains mandatory; no live
+call latency, capacity or reconnect recovery improvement is claimed by deployment
+health checks. Public ingress is unverified and external to the VASA bridge.
+
 2026-10-15 operator reports real WhatsApp calls with heard greeting and nonzero
 inbound/outbound frames, ending after roughly 10–30 seconds with zero completed
 turns and no container restarts. These are observations, not local benchmarks.

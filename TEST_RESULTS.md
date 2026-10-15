@@ -1,5 +1,16 @@
 # Test results
 
+2026-10-15 automatic staging: **901 passed** in 67.65s, zero failures/errors/
+skips; one existing Starlette deprecation warning. Full unit/component/
+integration/native/eval suite, Ruff/format (218 files), strict mypy (60 sources),
+Actionlint across workflows and deployment shell syntax pass. New tests cover
+push/default mode resolution, five-field summary redaction, web/auth/static/
+license failures, response bounds, CLI secret suppression, capture allowlisting,
+post-validation rollback and unexpected app restarts. Existing bootstrap and
+deploy safety tests pass. JUnit: reports/automatic-staging.xml. This change's
+push is explicitly authorized to trigger normal staging deploy; actual live
+results belong to that Actions receipt, not these local tests.
+
 2026-10-15 live-call lifecycle cleanup/diagnostics: **885 passed** in 64.96s,
 zero failures/errors/skips; one existing Starlette deprecation warning. Full
 unit/component/integration/native/eval suite via scripts/check.sh, Ruff/format

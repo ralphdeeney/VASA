@@ -14,6 +14,8 @@ import signal
 import subprocess
 import sys
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 ROOT = Path("/opt/vasa")
@@ -89,6 +91,7 @@ def stage(mode, name):
             "voice_create",
             "health",
             "provider_smoke",
+            "post_validation",
             "rollback",
             "rollback_health",
         ),
@@ -124,12 +127,19 @@ def git(*args):
     return run("git", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", *args)
 
 
-def compose(*args, timeout=180, image_override=None, capture_smoke=False):
+def compose(*args, timeout=180, image_override=None, capture_smoke=False, capture_validation=False):
     if capture_smoke:
         require(
             args == ("exec", "-T", "vasa", "python", "scripts/live_provider_smoke.py")
             and image_override is None,
             "Unchecked capture is restricted to provider smoke.",
+        )
+    if capture_validation:
+        require(
+            args == ("exec", "-T", "vasa", "python", "-m", "vasa.staging_validation")
+            and image_override is None
+            and not capture_smoke,
+            "Unchecked capture is restricted to staging validation.",
         )
     extra = ()
     override = None
@@ -144,7 +154,7 @@ def compose(*args, timeout=180, image_override=None, capture_smoke=False):
         # Only override the output image tag, never context, Dockerfile, build
         # arguments, secrets, or runtime environment. Nothing is written to disk.
         override = json.dumps({"services": {"vasa": {"image": image_override}}})
-    execute = capture if capture_smoke else run
+    execute = capture if capture_smoke or capture_validation else run
     return execute(
         "docker",
         "compose",
@@ -391,7 +401,7 @@ def health(timeout=150, *, include_voice=True):
         "assert json.load(urllib.request.urlopen('http://127.0.0.1:8080/health/ready',"
         "timeout=5))['status']=='ready'",
     )
-    baseline = {service: container(service) for service in apps}
+    baseline = {service: container(service) for service in DEPENDENCIES + apps}
     time.sleep(8)
     for service, (cid, before) in baseline.items():
         after_id, after = container(service)
@@ -402,10 +412,11 @@ def health(timeout=150, *, include_voice=True):
             and after["state"]["StartedAt"] == before["state"]["StartedAt"],
             "VASA process restarted or became unhealthy during stabilization.",
         )
-        require(
-            log_health(cid, after["state"]["StartedAt"], service == "voice"),
-            "Voice worker readiness marker is missing.",
-        )
+        if service in SERVICES:
+            require(
+                log_health(cid, after["state"]["StartedAt"], service == "voice"),
+                "Voice worker readiness marker is missing.",
+            )
     print("VASA API live/ready, container health and process stability: OK", flush=True)
     if include_voice:
         print("Voice worker readiness: OK", flush=True)
@@ -741,6 +752,76 @@ def provider_smoke():
     )
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def host_web_checks():
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
+    for url, status in (
+        ("http://127.0.0.1:18081/login", 200),
+        ("http://127.0.0.1:18081/dashboard", 401),
+        ("http://127.0.0.1:18081/dashboard/assets/styles.css", 200),
+        ("http://127.0.0.1:18081/dashboard/assets/login.js", 200),
+        ("http://127.0.0.1:18080/server/ok", 200),
+    ):
+        try:
+            response = opener.open(url, timeout=5)
+        except urllib.error.HTTPError as error:
+            response = error
+        with response:
+            require(response.code == status, "Staging loopback HTTP validation failed.")
+            require(len(response.read(65537)) <= 65536, "Staging HTTP response limit exceeded.")
+    print("STAGING_HOST_BINDINGS_OK", flush=True)
+
+
+def post_validation(target):
+    require(git("rev-parse", "HEAD") == target, "Post-deploy checkout SHA mismatch.")
+    sanitizer = ROOT / "scripts/sanitize_call_diagnostics.py"
+    require(sanitizer.is_file() and not sanitizer.is_symlink(), "Call sanitizer is missing.")
+    output = run(
+        "python3", str(sanitizer), input_text="private-fixture\nCALL_MEDIA=receive_recovered\n"
+    )
+    require(output == "CALL_MEDIA=receive_recovered", "Call sanitizer validation failed.")
+    print("STAGING_SANITIZER_OK", flush=True)
+    host_web_checks()
+    expected = {
+        "STAGING_LOGIN_OK",
+        "STAGING_DASHBOARD_AUTH_OK",
+        "STAGING_STATIC_OK",
+        "STAGING_EVOLUTION_HTTP_OK",
+        "STAGING_EVOLUTION_LICENSE_OK",
+        "STAGING_INSTANCES_OK",
+    }
+    result = compose(
+        "exec",
+        "-T",
+        "vasa",
+        "python",
+        "-m",
+        "vasa.staging_validation",
+        timeout=90,
+        capture_validation=True,
+    )
+    approved = set(result.stdout.splitlines()) & expected
+    for marker in sorted(approved):
+        print(marker, flush=True)
+    failed = False
+    for marker in sorted(set(result.stdout.splitlines())):
+        if re.fullmatch(
+            r"STAGING_VALIDATION_FAILED=(?:settings|login|dashboard_auth|static|evolution_http|license|instances)",
+            marker,
+        ):
+            failed = True
+            print(marker, flush=True)
+    require(
+        result.returncode == 0 and approved == expected and not failed,
+        "Staging web/Evolution validation incomplete; raw output withheld.",
+    )
+    print("DEPLOYED_SHA=" + target, flush=True)
+
+
 def deploy(target, branch, previous, *, smoke=False):
     stage("DEPLOY", "preflight")
     require(branch == BRANCH, "Staging checkout must already be on build/vasa-foundation.")
@@ -762,10 +843,15 @@ def deploy(target, branch, previous, *, smoke=False):
             "Working tree has local modifications; nothing was overwritten.",
         )
         hashes = private_hashes()
+        require(
+            not git("ls-files", "--", *ENV_FILES), "Private runtime files must remain untracked."
+        )
         before_config = config()
         # This is an update path, not a bootstrap: all existing dependencies and
         # both app services must be healthy before any code/image mutation.
         health()
+        dependencies = snapshot_services(DEPENDENCIES)
+        previous_apps = snapshot_services(SERVICES)
         old_images = {container(s)[1]["image"] for s in SERVICES}
         require(len(old_images) == 1, "App/worker do not share the expected existing image.")
         print("Preflight healthy; fetching the staging branch.", flush=True)
@@ -863,12 +949,24 @@ def deploy(target, branch, previous, *, smoke=False):
             print("Validating VASA health and worker startup.", flush=True)
             stage("DEPLOY", "health")
             health()
+            stage("DEPLOY", "post_validation")
+            post_validation(target)
             if smoke:
                 stage("DEPLOY", "provider_smoke")
                 provider_smoke()
                 stage("DEPLOY", "health")
                 health()
             require(private_hashes() == hashes, "Runtime configuration was not preserved.")
+            assert_unchanged(dependencies)
+            current_apps = snapshot_services(SERVICES)
+            for service, previous_app in previous_apps.items():
+                current_app = current_apps[service]
+                require(
+                    current_app["restarts"] == previous_app["restarts"]
+                    if current_app["id"] == previous_app["id"]
+                    else service in touched and current_app["restarts"] == 0,
+                    "Unexpected VASA app restart count or recreation.",
+                )
             receipt.write_text(
                 json.dumps(
                     {
@@ -913,6 +1011,7 @@ def deploy(target, branch, previous, *, smoke=False):
                         )
                     stage("DEPLOY", "rollback_health")
                     health()
+                    assert_unchanged(dependencies)
                     require(
                         all(container(s)[1]["image"] == rollback_image for s in touched)
                         if app_update_attempted

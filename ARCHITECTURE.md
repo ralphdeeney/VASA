@@ -1,5 +1,14 @@
 # Architecture
 
+2026-10-15 push and manual staging triggers share the same Actions SSH wrapper
+and deployment controller. Push forces normal update mode with paid smoke off.
+Mandatory read-only postchecks use fixed VPS loopback endpoints and an in-image
+vasa.staging_validation module. They verify login assets, the unauthenticated
+dashboard 401 policy, internal Evolution health/license and existing instance
+status without creating sessions or accounts. Captured output is allowlisted;
+failure rolls back app services. Dependency identity and restart invariants span
+the deployment. Public ingress remains external and is not modified by Actions.
+
 2026-10-15 Evolution adapter tracks authenticated terminate only for active,
 instance/call-scoped streams (bounded to ten, removed on context exit). Stream
 state distinguishes remote terminate, upstream stop and local close. Worker

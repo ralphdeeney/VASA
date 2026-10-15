@@ -139,7 +139,19 @@ def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
     monkeypatch.setattr(deployment, "config", config)
     monkeypatch.setattr(deployment, "health", health)
     monkeypatch.setattr(deployment, "private_hashes", lambda: {"env": "unchanged"})
-    monkeypatch.setattr(deployment, "container", lambda _: ("c" * 64, {"image": "old-image"}))
+    monkeypatch.setattr(
+        deployment,
+        "container",
+        lambda _: (
+            "c" * 64,
+            {
+                "image": "old-image",
+                "restarts": 0,
+                "state": {"Status": "running", "StartedAt": "before"},
+            },
+        ),
+    )
+    monkeypatch.setattr(deployment, "post_validation", lambda _: None)
     monkeypatch.setattr(
         deployment, "diagnostics", lambda **kwargs: state.calls.append(("diagnostics",))
     )
@@ -218,6 +230,38 @@ def test_smoke_failure_rolls_back_once(rig, monkeypatch, capsys):
     assert calls == [True]
     assert rig.current == PREVIOUS
     assert "VASA_ROLLBACK_OK" in capsys.readouterr().out
+
+
+def test_post_validation_failure_rolls_back(rig, monkeypatch, capsys):
+    def fail(_):
+        raise deployment.Refusal("Staging web validation failed; raw output withheld.")
+
+    monkeypatch.setattr(deployment, "post_validation", fail)
+    with pytest.raises(deployment.Refusal):
+        deployment.deploy(TARGET, deployment.BRANCH, PREVIOUS)
+    assert rig.current == PREVIOUS
+    assert "VASA_ROLLBACK_OK" in capsys.readouterr().out
+
+
+def test_unexpected_app_restart_during_validation_refuses_success(rig, monkeypatch, capsys):
+    restarted = False
+    original = deployment.container
+
+    def validation(_):
+        nonlocal restarted
+        restarted = True
+
+    def container(service):
+        cid, value = original(service)
+        if service == "voice" and restarted:
+            value["restarts"] = 1
+        return cid, value
+
+    monkeypatch.setattr(deployment, "container", container)
+    monkeypatch.setattr(deployment, "post_validation", validation)
+    with pytest.raises(deployment.Refusal):
+        deployment.deploy(TARGET, deployment.BRANCH, PREVIOUS)
+    assert "VASA_DEPLOYMENT_OK" not in capsys.readouterr().out
 
 
 def test_docs_only_update_does_not_restart(rig) -> None:

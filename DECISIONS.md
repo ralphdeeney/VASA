@@ -1,5 +1,12 @@
 # Decisions
 
+2026-10-15 user explicitly authorizes push-triggered normal staging deploy and
+automatic result inspection. Never bootstrap/migrate or perform paid provider
+smoke on push. Preserve one implementation and all existing deployment safety.
+Read-only postchecks enforce existing 401 dashboard policy and check active
+Evolution license/registered instance status without user credentials or pairing.
+Root-owned public proxy changes remain outside VASA automation.
+
 2026-10-15 do not interpret Evolution's Unhandled CallTransport warning as proof
 of missing transport handling: pinned meowcaller already consumes that event.
 Do not add guessed type-3 acknowledgments/socket resets. Correct the proven

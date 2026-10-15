@@ -36,12 +36,22 @@ jobs:
         with:
           persist-credentials: false
       - name: Verify SSH trust and run the selected mode
+        id: deployment
         shell: bash
         env:
           VASA_VPS_HOST: ${{ secrets.VASA_VPS_HOST }}
           VASA_VPS_USER: ${{ secrets.VASA_VPS_USER }}
           VASA_VPS_SSH_KEY: ${{ secrets.VASA_VPS_SSH_KEY }}
           VASA_VPS_HOST_KEY_SHA256: ${{ vars.VASA_VPS_HOST_KEY_SHA256 }}
-          VASA_DEPLOY_MODE: ${{ inputs.mode }}
-          VASA_PROVIDER_SMOKE: ${{ inputs.provider_smoke }}
+          VASA_DEPLOY_MODE: ${{ github.event_name == 'push' && 'deploy' || inputs.mode }}
+          VASA_PROVIDER_SMOKE: ${{ github.event_name == 'workflow_dispatch' && inputs.provider_smoke && 'true' || 'false' }}
         run: bash deploy/actions-ssh.sh
+      - name: Write sanitized deployment summary
+        if: always()
+        env:
+          VASA_TRIGGER: ${{ github.event_name }}
+          VASA_TARGET_SHA: ${{ github.sha }}
+          VASA_RESOLVED_MODE: ${{ github.event_name == 'push' && 'deploy' || inputs.mode }}
+          VASA_SMOKE: ${{ github.event_name == 'workflow_dispatch' && inputs.provider_smoke && 'true' || 'false' }}
+          VASA_RESULT: ${{ steps.deployment.outcome }}
+        run: python3 deploy/actions_summary.py

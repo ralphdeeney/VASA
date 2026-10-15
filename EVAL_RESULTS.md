@@ -1,5 +1,10 @@
 # Eval results
 
+2026-10-15 existing evals pass within 901 full checks after automatic staging
+and read-only post-deploy validation. Local fixtures verify privacy, auth policy
+and rollback behavior, not live call stability. Push deployment will verify the
+actual staging web/services; reconnect remains a human-call evidence gate.
+
 2026-10-15 existing evals pass within 885 full checks. Local WebSocket and
 cleanup regressions establish idempotent upstream-end handling and preserved
 failure/security boundaries. Operator confirmed partial live WhatsApp media

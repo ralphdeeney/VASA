@@ -1,5 +1,10 @@
 # Build plan
 
+2026-10-15 automatic staging deployment and post-deploy web/service checks are
+prepared. Push the verified change, inspect its automatic Actions run, require
+VASA_DEPLOYMENT_OK and sanitized validation markers, then stop at the human
+WhatsApp test gate. Public ingress remains an external/root-owned proxy gate.
+
 2026-10-15 next live gate: normal Actions deploy of call lifecycle correction,
 then stable 90-second call, caller network-switch call, caller-ended and locally
 ended controls. Gather only fixed sanitized transport/media/lifecycle markers.

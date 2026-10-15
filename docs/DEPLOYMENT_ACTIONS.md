@@ -1,5 +1,26 @@
 # Staging deployment through GitHub Actions
 
+2026-10-15 push automation: every push to build/vasa-foundation now resolves
+mode=deploy and provider_smoke=false. Manual check/bootstrap/deploy and opt-in
+smoke remain available. Both triggers use the same SSH wrapper/controller.
+Bootstrap and migrations never run on push. The five-field Actions job summary
+contains trigger, target SHA, resolved mode, smoke boolean and deployment result.
+Existing concurrency, exact SHA/branch, trust, rootless, private env hashing,
+clean-tree, app-only update and rollback protections remain in force.
+
+Post-deploy validation proves the target SHA, mandatory five-service health,
+stable process counts, unchanged dependency identities, sanitizer availability,
+VPS loopback 18081/18080 HTTP bindings, /login and its assets, the actual dashboard
+401 auth boundary, internal Evolution process/license health and existing mapped
+WhatsApp instance connected/logged-in status. No account/password/session is
+created; actual authenticated login remains a human credential gate. Validation
+prints only fixed markers and fails/rolls back on failure. Paid LLM/TTS smoke
+remains off for push. Public URLs require the external ingress work described in
+docs/PUBLIC_URL_PREPARATION.md; the deploy controller never edits that proxy.
+
+Historical manual workflow instructions below remain valid for explicit runs;
+statements below that there is no push trigger describe the earlier phase.
+
 ## Normal development after successful bootstrap
 
 The operator confirmed the bridge and voice bootstrap succeeded. All five services

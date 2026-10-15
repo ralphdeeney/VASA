@@ -28,6 +28,7 @@ def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
     (tmp_path / ".local").mkdir()
     (tmp_path / ".local/llm.env").write_text("DEEPGRAM_API_KEY=" + FAKE_KEY + "\n")
     monkeypatch.setattr(controller, "ROOT", tmp_path)
+    monkeypatch.setattr(controller, "post_validation", lambda _: None)
     monkeypatch.setattr(controller.signal, "signal", lambda *_: None)
     state = SimpleNamespace(
         calls=[],
