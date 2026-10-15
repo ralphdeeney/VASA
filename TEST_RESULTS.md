@@ -1,5 +1,17 @@
 # Test results
 
+2026-10-15 bounded media recovery: **908 passed** in 67.94s, zero failures/
+errors/skips; one existing Starlette warning. Full unit/component/integration/
+native/eval suite, Ruff/format (219 files), strict mypy (60 sources), Actionlint
+and shell syntax pass. 39 focused media/lifecycle/filter checks pass. Seven new
+accelerated real-WebSocket checks cover recovery beyond the old deadline on the
+same socket, independent outbound sends, valid PCM/order/timestamps, finite
+permanent-loss expiry, immediate authenticated terminate/stop during grace,
+malformed media rejection, cancellation/task cleanup and timing-marker privacy.
+Provider, STT/TTS, pacing and bounded-queue regressions remain passing. No live
+reconnect fix is claimed; push is authorized to deploy and human validation
+remains required. JUnit: reports/media-recovery.xml.
+
 2026-10-15 automatic staging: **901 passed** in 67.65s, zero failures/errors/
 skips; one existing Starlette deprecation warning. Full unit/component/
 integration/native/eval suite, Ruff/format (218 files), strict mypy (60 sources),

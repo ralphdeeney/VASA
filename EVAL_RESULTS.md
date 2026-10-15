@@ -1,5 +1,10 @@
 # Eval results
 
+2026-10-15 existing evals pass within 908 full checks after bounded active-media
+recovery. Local socket fixtures prove recoverable waiting and finite failure,
+not live WhatsApp continuity or intelligibility. Observed human barge-in worked;
+reconnect and distorted audio remain live gates. No provider behavior changed.
+
 2026-10-15 existing evals pass within 901 full checks after automatic staging
 and read-only post-deploy validation. Local fixtures verify privacy, auth policy
 and rollback behavior, not live call stability. Push deployment will verify the

@@ -1,5 +1,13 @@
 # Performance
 
+2026-10-15 operator-observed reconnect calls last 30–36 seconds and some gaps
+recover. These are call durations, not measured gap lengths. New local monotonic
+receive_recovered_ms instrumentation and 24-second maximum active receive grace
+provide bounded evidence for tuning; no optimal recovery latency is claimed.
+TTS/provider performance, 60 ms pacing and bounded queues are unchanged. Upstream
+queue age and RTP progress remain unmeasured, so distortion/reconnect is not fixed
+by claim. See docs/MEDIA_RECOVERY_POLICY.md for the source-backed policy rationale.
+
 2026-10-15 automatic staging deployment adds bounded read-only HTTP/database/
 instance checks, not paid provider benchmarking or speech model loading. Push
 forces provider_smoke=false. Restart stabilization remains mandatory; no live

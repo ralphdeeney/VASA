@@ -309,7 +309,7 @@ class EvolutionCalls:
                 raise EvolutionError("invalid_response")
             lifecycle = self._media_lifecycles.get((instance_id, data["CallID"]))
             if lifecycle is not None and not lifecycle.remote_terminated:
-                lifecycle.remote_terminated = True
+                lifecycle.terminate()
                 print("CALL_LIFECYCLE=remote_terminate", flush=True)
             return None
         if payload.get("event") != "CallOffer":

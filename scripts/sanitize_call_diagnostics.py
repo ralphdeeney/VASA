@@ -10,6 +10,8 @@ MARKERS = frozenset(
         "CALL_MEDIA=receive_recovered",
         "CALL_MEDIA=read_timeout",
         "CALL_MEDIA=read_closed",
+        "CALL_MEDIA=receive_gap_started",
+        "CALL_MEDIA=recovery_grace_expired",
         "CALL_LIFECYCLE=remote_terminate",
         "CALL_LIFECYCLE=local_hangup",
         "CALL_LIFECYCLE=local_hangup_failed",
@@ -23,6 +25,8 @@ def classify(line: str) -> list[str]:
         for marker in sorted(MARKERS)
         if re.search(r"(?:^|\s)" + re.escape(marker) + r"(?:\s|$)", line)
     ]
+    if match := re.search(r"(?:^|\s)CALL_MEDIA=receive_recovered_ms=([0-9]{1,6})(?:\s|$)", line):
+        markers.append("CALL_MEDIA=receive_recovered_ms=" + match[1])
     if "Unhandled event *events.CallTransport" in line:
         kind = re.search(r'transport-message-type="([13])"', line)
         markers.append("CALL_TRANSPORT=type_" + kind[1] if kind else "CALL_TRANSPORT=other")

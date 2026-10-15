@@ -1,5 +1,9 @@
 # Live-call transport investigation — 2026-10-15
 
+Later update: docs/MEDIA_RECOVERY_POLICY.md replaces the active-call 10-second
+cutoff with bounded recovery. The 10-second active-read references below describe
+the earlier investigation state; handshake/write deadlines remain unchanged.
+
 ## Findings before the fix
 
 **Confirmed:** the misleading `hangup_failed` summary is caused by a redundant

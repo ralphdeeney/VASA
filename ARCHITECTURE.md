@@ -1,5 +1,13 @@
 # Architecture
 
+2026-10-15 active media receives now retain one pending recv through a one-second
+gap observation and a 24-second absolute maximum since the last frame/start.
+CallLifecycle has a termination Event to wake an idle reader immediately after
+the existing authenticated terminate validation. Stop, malformed media and socket
+failure remain authoritative; handshake/write limits and all provider behavior
+are unchanged. Cancellation cleans both call-local wait tasks. No new audio
+buffer, silence injection, TTS replay or transport retry path is introduced.
+
 2026-10-15 push and manual staging triggers share the same Actions SSH wrapper
 and deployment controller. Push forces normal update mode with paid smoke off.
 Mandatory read-only postchecks use fixed VPS loopback endpoints and an in-image

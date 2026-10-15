@@ -292,6 +292,8 @@ async def handle_call(
     finally:
 
         async def finish_cleanup() -> None:
+            if getattr(media_connection, "recovery_expired", False) is True:
+                report["media_recovery_expired"] = True
             try:
                 source = termination_source()
                 if source is not None:

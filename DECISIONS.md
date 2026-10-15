@@ -1,5 +1,12 @@
 # Decisions
 
+2026-10-15 replace only active inbound media's 10-second hard cutoff with a
+1-second observation/24-second maximum gap policy, grounded in observed recovery
+and pinned 12-second relay connection timeout. Keep the same pending recv, not
+socket retries; terminate immediately on authenticated remote end/stop. Preserve
+all provider errors and handshake/write limits. Document, rather than guess-fix,
+upstream FIFO/silence-fallback risks without measured queue/RTP evidence.
+
 2026-10-15 user explicitly authorizes push-triggered normal staging deploy and
 automatic result inspection. Never bootstrap/migrate or perform paid provider
 smoke on push. Preserve one implementation and all existing deployment safety.

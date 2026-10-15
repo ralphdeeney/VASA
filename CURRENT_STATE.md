@@ -1,5 +1,16 @@
 # Current state
 
+2026-10-15 operator reports 30–36 second reconnecting calls, distorted audio,
+working barge-in, recovered gaps and active read timeout. Confirmed local causal
+path: 10-second receive timeout closes WebSocket; Evolution then calls Hangup.
+Active media now observes gaps at 1 second and permits at most 24 seconds since
+last frame/start (two pinned 12-second relay-connect budgets). Handshake/write
+deadlines unchanged. Verified remote terminate immediately wakes the reader;
+stop/malformed data/permanent loss/cancellation remain bounded and authoritative.
+No provider, pacing, audio queue or upstream Go changes. Source-backed audio risks
+and timing rationale are in docs/MEDIA_RECOVERY_POLICY.md. Reconnect success
+remains a human live-call gate; implementation push is authorized to deploy.
+
 2026-10-15 automatic staging phase: merged remote 79b5457 (push trigger was
 already added, but its first run failed with empty dispatch-only mode). Fixed
 push resolution to deploy/smoke=false and added allowlisted five-field summary.

@@ -1,5 +1,10 @@
 # Build plan
 
+2026-10-15 bounded active-media recovery: test, push for automatic normal staging
+deployment, inspect its health/web/instance markers, then stop at the human live
+call gate. Measure receive_recovered_ms and recovery_grace_expired on a stable
+90-second call and a separate network-switch call. Do not claim reconnect fixed.
+
 2026-10-15 automatic staging deployment and post-deploy web/service checks are
 prepared. Push the verified change, inspect its automatic Actions run, require
 VASA_DEPLOYMENT_OK and sanitized validation markers, then stop at the human

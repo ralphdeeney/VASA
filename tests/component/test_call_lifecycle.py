@@ -63,7 +63,7 @@ async def test_observed_sequence_keeps_media_live_until_stop(capsys):
                     client.parse_event(event(client, "CallTerminate"), "tenant-1")
                 assert media.remote_terminated
                 assert await media.receive() is None
-                assert media.upstream_stopped
+                # Verified terminate can now end the read before the stop arrives.
                 await media.close()
             assert not client._media_lifecycles
         finally:
