@@ -1,5 +1,11 @@
 # Eval results
 
+2026-10-15 all existing evals pass in the666-check suite after explicit staging
+bootstrap support. Local controller evidence proves bounded service selection,
+secret-safe refusals and rollback orchestration, not live VPS/phone acceptance.
+User-reported healthy four-service topology and working Actions bridge motivate
+the new mode; operator bootstrap/worker acceptance remains pending.
+
 2026-10-15 existing evals remain passing in the615-check suite after adding the
 Actions staging path. Deployment controller failures/rollback are locally stubbed
 evidence, not VPS acceptance. No live connectivity, deployment, phone or TTS

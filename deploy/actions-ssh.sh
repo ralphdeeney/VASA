@@ -3,7 +3,10 @@
 set -euo pipefail
 set +x
 [[ "${GITHUB_ACTIONS:-}" == true ]] || { echo 'GitHub Actions runner required.' >&2; exit 1; }
-[[ "${VASA_DEPLOY_MODE:-}" == check || "${VASA_DEPLOY_MODE:-}" == deploy ]] || exit 1
+case "${VASA_DEPLOY_MODE:-}" in
+  check|bootstrap|deploy) ;;
+  *) exit 1 ;;
+esac
 [[ "${VASA_VPS_USER:-}" == vasa-builder ]] || { echo 'Unexpected SSH user.' >&2; exit 1; }
 [[ "${VASA_VPS_HOST:-}" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]*$ ]] || {
   echo 'VPS host must be a hostname or IPv4 address.' >&2; exit 1;

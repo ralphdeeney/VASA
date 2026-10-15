@@ -1,5 +1,11 @@
 # Build plan
 
+2026-10-15 one-time Actions voice bootstrap is code-complete and verified with
+666 full checks. Operator should run mode=bootstrap on build/vasa-foundation for
+the confirmed healthy four-service/no-worker VPS state. Require private VPS
+Deepgram key first; normal deploy remains update-only after successful bootstrap.
+No direct Codex SSH or automatic workflow dispatch/deployment is performed.
+
 2026-10-15 Actions deployment implementation complete:615 checks pass, plus
 Actionlint and shell syntax. Register manual workflow on main, configure trusted
 VASA_VPS_HOST_KEY_SHA256 repository variable, then dispatch mode=check against

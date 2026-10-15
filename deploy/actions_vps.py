@@ -198,11 +198,12 @@ def log_health(cid, started, worker=False):
     return not worker or READY_MARKER in logs
 
 
-def health(timeout=150):
+def health(timeout=150, *, include_voice=True):
+    apps = SERVICES if include_voice else ("vasa",)
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         ready = True
-        for service in DEPENDENCIES + SERVICES:
+        for service in DEPENDENCIES + apps:
             cid, value = container(service)
             if not state_ok(value):
                 ready = False
@@ -226,7 +227,7 @@ def health(timeout=150):
         "assert json.load(urllib.request.urlopen('http://127.0.0.1:8080/health/ready',"
         "timeout=5))['status']=='ready'",
     )
-    baseline = {service: container(service) for service in SERVICES}
+    baseline = {service: container(service) for service in apps}
     time.sleep(8)
     for service, (cid, before) in baseline.items():
         after_id, after = container(service)
@@ -241,7 +242,244 @@ def health(timeout=150):
             log_health(cid, after["state"]["StartedAt"], service == "voice"),
             "Voice worker readiness marker is missing.",
         )
-    print("VASA API live/ready, container health, worker readiness and stability: OK", flush=True)
+    print("VASA API live/ready, container health and process stability: OK", flush=True)
+    if include_voice:
+        print("Voice worker readiness: OK", flush=True)
+
+
+def snapshot_services(services):
+    result = {}
+    for service in services:
+        cid, value = container(service)
+        require(state_ok(value), "Expected a healthy existing VASA service: " + service)
+        result[service] = {
+            "id": cid,
+            "image": value["image"],
+            "restarts": value["restarts"],
+            "started": value["state"]["StartedAt"],
+        }
+    return result
+
+
+def assert_unchanged(snapshot):
+    require(
+        snapshot_services(tuple(snapshot)) == snapshot,
+        "Existing VASA service identity/image/restarts changed unexpectedly.",
+    )
+
+
+def bootstrap_topology():
+    expected = snapshot_services(DEPENDENCIES + ("vasa",))
+    require(
+        not compose("ps", "--all", "--quiet", "voice"),
+        "Bootstrap requires exactly zero existing voice containers.",
+    )
+    project_ids = run(
+        "docker",
+        "ps",
+        "--all",
+        "--no-trunc",
+        "--filter",
+        "label=com.docker.compose.project=" + PROJECT,
+        "--format",
+        "{{.ID}}",
+    ).splitlines()
+    require(
+        len(project_ids) == len(expected)
+        and set(project_ids) == {item["id"] for item in expected.values()},
+        "Unexpected VASA project topology; bootstrap refused.",
+    )
+    return expected
+
+
+def require_deepgram_key(data):
+    # Compose resolves the existing private env_file. Do not read a cloud key,
+    # accept a command-line key, or render the environment in logs/receipts.
+    key = data["services"]["voice"].get("environment", {}).get("DEEPGRAM_API_KEY")
+    require(isinstance(key, str) and bool(key.strip()), "DEEPGRAM_VPS_KEY_REQUIRED")
+
+
+def compatible_config(before, after):
+    require(
+        {k: v for k, v in before.items() if k != "services"}
+        == {k: v for k, v in after.items() if k != "services"},
+        "Compose project/network/volume changes require manual review.",
+    )
+    for service in DEPENDENCIES:
+        require(
+            before["services"][service] == after["services"][service],
+            "Dependency service configuration changed; automatic deployment refused.",
+        )
+
+
+def up_services(*services):
+    require(bool(services) and set(services) <= set(SERVICES), "Invalid app service selection.")
+    compose("up", "-d", "--no-deps", "--wait", "--wait-timeout", "150", *services, timeout=210)
+
+
+def remove_bootstrapped_voice():
+    if not compose("ps", "--all", "--quiet", "voice"):
+        return
+    # container() requires exactly one container and validates project, service,
+    # and working-directory labels before this single-ID removal. No volumes.
+    cid, _ = container("voice")
+    run("docker", "container", "rm", "--force", cid)
+    require(
+        not compose("ps", "--all", "--quiet", "voice"), "New voice container could not be removed."
+    )
+
+
+def write_bootstrap_receipt(path, previous, target, status):
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+    os.fchmod(fd, 0o600)
+    with os.fdopen(fd, "w") as stream:
+        json.dump(
+            {"previous_sha": previous, "target_sha": target, "mode": "bootstrap", "status": status},
+            stream,
+        )
+        stream.write("\n")
+
+
+def bootstrap(target, branch, previous):
+    require(branch == BRANCH, "Staging checkout must already be on build/vasa-foundation.")
+    require(re.fullmatch(r"[0-9a-f]{40}", target) is not None, "Invalid target commit.")
+    local = ROOT / ".local"
+    require(
+        local.is_dir() and not local.is_symlink() and local.stat().st_uid == os.getuid(),
+        "Missing owned .local directory.",
+    )
+    fd = os.open(local / "actions-deploy.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, "w") as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as exc:
+            raise Refusal("Another staging deployment holds the project lock.") from exc
+        require(
+            not git("status", "--porcelain", "--untracked-files=all"),
+            "Working tree has local modifications; nothing was overwritten.",
+        )
+        require(
+            not git("ls-files", "--", *ENV_FILES),
+            "Private runtime environment files must remain untracked.",
+        )
+        hashes = private_hashes()
+        before_config = config()
+        baseline = bootstrap_topology()
+        require_deepgram_key(before_config)
+        health(include_voice=False)
+        assert_unchanged(baseline)
+        print(
+            "Bootstrap preflight: healthy four-service topology; private key configured.",
+            flush=True,
+        )
+        print("PREVIOUS_SHA=" + previous + "\nTARGET_SHA=" + target, flush=True)
+        git("fetch", "origin")
+        require(
+            git("rev-parse", "origin/" + BRANCH) == target,
+            "Branch moved after dispatch; rerun against its current commit.",
+        )
+        git("merge-base", "--is-ancestor", previous, target)
+        changed = git("diff", "--name-only", previous, target).splitlines()
+        require(
+            not any(p.startswith("migrations/") or p == "alembic.ini" for p in changed),
+            "Schema changes require a separate operator-reviewed migration/backup plan.",
+        )
+        require(
+            not git("ls-tree", "-r", "--name-only", target, "--", *ENV_FILES),
+            "Target attempts to track private runtime environment files.",
+        )
+        old_image = baseline["vasa"]["image"]
+        backup_tag = "vasa-app:bootstrap-rollback-" + previous
+        run("docker", "image", "tag", old_image, backup_tag)
+        receipt = local / "actions-bootstrap.json"
+        write_bootstrap_receipt(receipt, previous, target, "in_progress")
+        changed_checkout = app_attempted = voice_attempted = False
+        for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
+            signal.signal(sig, signal_failure)
+        try:
+            changed_checkout = True
+            git("checkout", BRANCH)
+            git("pull", "--ff-only", "origin", BRANCH)
+            require(git("rev-parse", "HEAD") == target, "Target commit changed during pull.")
+            after_config = config()
+            compatible_config(before_config, after_config)
+            require_deepgram_key(after_config)
+            require(private_hashes() == hashes, "Private environment files changed unexpectedly.")
+            assert_unchanged(baseline)
+            require(
+                not compose("ps", "--all", "--quiet", "voice"),
+                "Voice appeared concurrently; bootstrap refused.",
+            )
+            print("Building the shared VASA app image for bootstrap.", flush=True)
+            compose("build", "vasa", timeout=900)
+            new_image = run("docker", "image", "inspect", "--format", "{{.Id}}", "vasa-app:pinned")
+            if new_image != old_image or (
+                before_config["services"]["vasa"] != after_config["services"]["vasa"]
+            ):
+                app_attempted = True
+                up_services("vasa")
+            # Recheck immediately before creation; rollback is allowed to remove
+            # voice only once this invocation has attempted its creation.
+            require(
+                not compose("ps", "--all", "--quiet", "voice"),
+                "Voice appeared concurrently; bootstrap refused.",
+            )
+            voice_attempted = True
+            up_services("voice")
+            require(
+                container("voice")[1]["image"] == new_image,
+                "Voice is not using the newly built shared app image.",
+            )
+            require(
+                container("vasa")[1]["image"] == new_image,
+                "API and voice do not share the built app image.",
+            )
+            health()
+            assert_unchanged({s: baseline[s] for s in DEPENDENCIES})
+            if not app_attempted:
+                assert_unchanged({"vasa": baseline["vasa"]})
+            require(private_hashes() == hashes, "Private environment files changed unexpectedly.")
+            write_bootstrap_receipt(receipt, previous, target, "healthy")
+            print("VASA_BOOTSTRAP_OK", flush=True)
+        except BaseException:
+            for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
+                signal.signal(sig, signal.SIG_IGN)
+            print("VASA bootstrap failed; inspecting only VASA app/worker.", flush=True)
+            diagnostics()
+            try:
+                if voice_attempted:
+                    remove_bootstrapped_voice()
+                if changed_checkout:
+                    require(
+                        not git("status", "--porcelain", "--untracked-files=all"),
+                        "Concurrent local edits detected; controlled reset refused.",
+                    )
+                    git("reset", "--hard", previous)
+                    require(private_hashes() == hashes, "Runtime configuration was not preserved.")
+                    require(
+                        config() == before_config, "Previous Compose configuration not restored."
+                    )
+                    # Restore the exact running pre-bootstrap image, avoiding a
+                    # dependency on registries or nondeterministic rebuilds.
+                    run("docker", "image", "tag", backup_tag, "vasa-app:pinned")
+                    if app_attempted:
+                        up_services("vasa")
+                    health(include_voice=False)
+                    restored = bootstrap_topology()
+                    require(
+                        restored["vasa"]["image"] == old_image,
+                        "Previous API image was not restored.",
+                    )
+                    assert_unchanged({s: baseline[s] for s in DEPENDENCIES})
+                    if not app_attempted:
+                        assert_unchanged({"vasa": baseline["vasa"]})
+                    require(private_hashes() == hashes, "Runtime configuration was not preserved.")
+                    write_bootstrap_receipt(receipt, previous, target, "rolled_back")
+                    print("VASA_BOOTSTRAP_ROLLBACK_OK; bootstrap remains failed.", flush=True)
+            except BaseException:
+                print("VASA_BOOTSTRAP_ROLLBACK_FAILED; operator intervention required.", flush=True)
+                diagnostics()
+            raise Refusal("Bootstrap failed; see sanitized VASA status above.") from None
 
 
 def private_hashes():
@@ -454,11 +692,16 @@ def deploy(target, branch, previous):
 
 def main():
     try:
-        require(len(sys.argv) == 3 and sys.argv[1] in ("check", "deploy"), "Invalid invocation.")
+        require(
+            len(sys.argv) == 3 and sys.argv[1] in ("check", "bootstrap", "deploy"),
+            "Invalid invocation.",
+        )
         branch, previous = preflight()
         if sys.argv[1] == "check":
             print("Read-only check: no fetch, checkout, writes, builds or restarts.", flush=True)
             print("VASA_VPS_CONNECTIVITY_OK", flush=True)
+        elif sys.argv[1] == "bootstrap":
+            bootstrap(sys.argv[2], branch, previous)
         else:
             deploy(sys.argv[2], branch, previous)
     except (Refusal, OSError, ValueError, KeyError, subprocess.TimeoutExpired) as exc:

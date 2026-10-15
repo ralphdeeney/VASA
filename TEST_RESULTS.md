@@ -1,5 +1,15 @@
 # Test results
 
+2026-10-15 explicit voice bootstrap:666 full unit/component/integration/native/
+eval checks passed in62.50s, zero failures/errors/skips; one existing deprecation
+warning. Ruff/format198 files, strict mypy57 sources, Actionlint1.7.7 and bash
+syntax pass. All67 deployment-focused checks pass, covering exact topology and
+ownership, dirty/tracked secrets/missing-key refusals, targeted app/worker startup,
+unchanged dependencies/private hashes, image reuse, app restoration, worker-only
+cleanup, rollback failures, explicit mode routing and strict normal deploy.
+JUnit: reports/actions-bootstrap.xml. Local stubs exercise SSH/Docker failure
+paths; no direct Codex VPS SSH or actual staging bootstrap was attempted.
+
 2026-10-15 exact VPS SSH origin alias: full630 tests passed in62.25s with zero
 failures/errors/skips; one existing deprecation warning. All31 deployment checks
 pass, including real preflight allowlist-path tests for the exact github-vasa

@@ -1,5 +1,16 @@
 # Decisions
 
+2026-10-15 add explicit one-time Actions bootstrap for the user-confirmed
+healthy postgres/redis/evolution/API topology with zero voice containers.
+Normal deploy stays update-only and requires its existing worker. Bootstrap
+requires untracked private runtime configuration and nonempty resolved Deepgram
+key, pins target/ancestry, refuses schema and dependency topology changes, and
+builds the existing shared image. Update the API only when image/config differs;
+create voice separately with --no-deps. Validate unchanged dependencies/secrets.
+Rollback removes only a newly attempted, owned worker and restores the prior
+Git/API image; recovery is health-checked and remains a failed job. Codex never
+SSHes directly or transfers provider secrets.
+
 2026-10-15 VPS origin is intentionally git@github-vasa:ralphdeeney/VASA.git.
 Accept that exact SSH alias/repository string in addition to the four canonical
 origins; retain exact allowlist matching and the existing vasa-builder SSH

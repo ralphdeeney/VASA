@@ -1,5 +1,13 @@
 # Architecture
 
+2026-10-15 manual Actions modes are check/bootstrap/deploy (default check).
+Bootstrap accepts exactly four healthy owned existing services with no voice;
+normal deploy still requires all five. Bootstrap health explicitly excludes the
+absent worker only before creation/after rollback. Dependency ID/image/start/
+restart snapshots and private environment hashes enforce preservation. A saved
+exact API image and owned-worker-only cleanup restore the original topology on
+failure. No database migrations or dependency service changes are automated.
+
 2026-10-15 staging deployments use GitHub Actions as the exclusive SSH bridge.
 The manual workflow reuses deploy/compose.yaml (vasa-vps), builds vasa's shared
 app image and updates only vasa/voice with --no-deps. Dependencies, existing

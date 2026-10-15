@@ -1,5 +1,21 @@
 # Current state
 
+2026-10-15 explicit missing-worker bootstrap is implemented and verified locally.
+User confirms the Actions bridge works and VPS postgres/redis/evolution/API are
+healthy, with no voice container. Workflow modes are check/bootstrap/deploy,
+default check. Bootstrap requires precisely that owned healthy topology, clean
+Git, untracked private env files and nonempty resolved DEEPGRAM_API_KEY; missing
+key emits DEEPGRAM_VPS_KEY_REQUIRED before fetch. It builds the existing shared
+app image, updates API only if necessary, and creates only the missing worker.
+Health checks, dependency snapshots and environment hashes gate success. Failure
+removes only the new owned worker and restores Git/API image; health-checked
+rollback stays nonzero. Normal deploy still requires its existing worker.
+All666 full checks pass, including67 deployment-focused checks; static/type,
+Actionlint and shell validation pass. No live bootstrap or direct VPS SSH ran.
+Next operator action: VASA staging VPS, branch build/vasa-foundation,
+mode=bootstrap. Expected success: VASA_BOOTSTRAP_OK. Runbook:
+docs/DEPLOYMENT_ACTIONS.md; JUnit: reports/actions-bootstrap.xml.
+
 2026-10-15 origin compatibility fix: exact git@github-vasa:ralphdeeney/VASA.git
 is accepted alongside the four canonical origins. No wildcard matching, remote
 rewrite, credential change or direct VPS SSH. All630 checks pass, including31

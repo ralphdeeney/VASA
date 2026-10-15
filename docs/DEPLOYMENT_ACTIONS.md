@@ -6,9 +6,10 @@ trigger. Select branch `build/vasa-foundation`; default mode is `check`.
 
 The workflow uses the existing `/opt/vasa/deploy/compose.yaml`, project
 `vasa-vps`, and `.local/vps.env`. Application services are `vasa` and `voice`;
-only `vasa` has a build definition and both share `vasa-app:pinned`. This is an
-update path for an already healthy staging installation, not a bootstrap path.
-It never invokes `deploy/up.sh`, which also manages Evolution/bootstrap assets.
+only `vasa` has a build definition and both share `vasa-app:pinned`. `deploy`
+is strictly update-only. Explicit `bootstrap` can create only the missing voice
+worker in the healthy four-service topology described below. Neither mode
+invokes `deploy/up.sh`, which also manages Evolution/bootstrap assets.
 
 ## GitHub configuration
 
@@ -31,7 +32,7 @@ ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub -E sha256
 
 Use only the `SHA256:...` field. This is public host-key metadata. The runner
 scans host keys into a temporary file and accepts only the key matching that
-fingerprint. Missing/mismatched trust fails before SSH login in both modes.
+fingerprint. Missing/mismatched trust fails before SSH login in all modes.
 It never prints the host, username secret, private key, scanned keys, or remote
 environment. Strict host checking, a dedicated mode-0600 temporary key, no
 agent/config forwarding, and cleanup on success/failure are enforced.
@@ -57,6 +58,61 @@ user, owned repository/path/identity, branch/SHA, Docker info/rootless security
 options, Compose version, and the owned Unix socket. It does not create remote
 files, fetch, change Git state, build, restart, or inspect application secrets.
 Python 3, Git, Docker and Compose must already be installed on the server.
+
+## One-time missing-worker bootstrap
+
+The operator confirmed the Actions bridge works and the VPS has exactly these
+healthy containers: `vasa-vps-postgres-1`, `vasa-vps-redis-1`,
+`vasa-vps-evolution-1`, `vasa-vps-vasa-1`. No voice container exists. This is the
+only topology accepted by `bootstrap` (including stopped containers in checks).
+All four must have the expected project/service/working-directory ownership
+labels. An existing worker, missing or unhealthy dependency, duplicate service,
+or extra project container causes refusal. Unrelated Compose projects are ignored.
+
+Run **VASA staging VPS**, branch **build/vasa-foundation**, mode **bootstrap**:
+
+```bash
+gh workflow run vasa-vps-deploy.yml --repo ralphdeeney/VASA \
+  --ref build/vasa-foundation -f mode=bootstrap
+```
+
+Bootstrap uses the same trusted SSH, exact user/path/repository checks, rootless
+Docker, clean-tree rule, project lock and Actions concurrency as deploy mode.
+Before fetching, it verifies the private runtime environment files are untracked
+and hashes them, validates Compose, checks the four-service health/readiness,
+and requires a non-empty `DEEPGRAM_API_KEY` in the resolved voice environment.
+If absent or blank it fails with **`DEEPGRAM_VPS_KEY_REQUIRED`**. Configure that
+key privately on the VPS in `/opt/vasa/.local/llm.env`; do not commit it or
+pass it through Actions. No provider secret is printed, copied or written by
+bootstrap. Existing provider selection and all runtime files are preserved.
+
+It records `PREVIOUS_SHA`/target SHA, fetches the existing authenticated origin,
+requires the target to match `origin/build/vasa-foundation` with fast-forward
+ancestry, and refuses schema/migration changes or tracked private files. It
+checks out/pulls the staging branch, validates Compose and refuses dependency,
+network or volume changes. It always builds only `vasa`'s shared image. The
+existing API is updated only if its image ID or service configuration changed;
+otherwise its running container is left alone. The worker is created separately
+with `up -d --no-deps --wait voice` from that same image.
+
+Success requires exactly one owned, running worker on the shared image, no OOM,
+stable restarts, the worker readiness log marker, healthy API live/ready probes,
+and unchanged dependency IDs/images/start times/restart counts. Private file
+hashes must still match. Only then is **`VASA_BOOTSTRAP_OK`** printed. The
+nonsecret receipt is `.local/actions-bootstrap.json`.
+
+On failure, rollback removes only the newly attempted voice container after
+validating its single-ID ownership. It restores the prior Git revision under
+the clean-tree check and the exact saved prior API image. Only an API whose
+update was attempted is restored with a targeted `up --no-deps vasa`. It never
+recreates database, Redis or Evolution. Health validation runs for the original
+four-service topology, with no worker expected, and checks unchanged dependencies
+and private hashes again. It prints **`VASA_BOOTSTRAP_ROLLBACK_OK`** only after
+successful recovery and still exits nonzero. Failed recovery prints
+`VASA_BOOTSTRAP_ROLLBACK_FAILED`; raw logs and secrets remain withheld.
+
+After success, use normal `deploy`. It still requires exactly one existing
+worker and never falls back to bootstrap. Repeating `bootstrap` is refused.
 
 ## Deploy
 

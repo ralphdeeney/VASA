@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: Read-only connectivity check or targeted staging deployment
+        description: Read-only check, one-time voice bootstrap, or staging deployment
         type: choice
-        options: [check, deploy]
+        options: [check, bootstrap, deploy]
         default: check
         required: true
 

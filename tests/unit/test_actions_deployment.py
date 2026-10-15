@@ -288,7 +288,8 @@ def test_health_rejects_oom_and_unhealthy_containers() -> None:
 
 
 @pytest.mark.parametrize("trusted", [True, False])
-def test_ssh_requires_pinned_host_and_cleans_temporary_key(tmp_path, trusted) -> None:
+@pytest.mark.parametrize("mode", ["check", "bootstrap", "deploy"])
+def test_ssh_requires_pinned_host_and_cleans_temporary_key(tmp_path, trusted, mode) -> None:
     commands = tmp_path / "bin"
     commands.mkdir()
     programs = {
@@ -311,7 +312,7 @@ def test_ssh_requires_pinned_host_and_cleans_temporary_key(tmp_path, trusted) ->
             "PATH": str(commands) + os.pathsep + environment["PATH"],
             "GITHUB_ACTIONS": "true",
             "GITHUB_SHA": TARGET,
-            "VASA_DEPLOY_MODE": "check",
+            "VASA_DEPLOY_MODE": mode,
             "VASA_VPS_USER": "vasa-builder",
             "VASA_VPS_HOST": "example.invalid",
             "VASA_VPS_SSH_KEY": "fake-unit-test-key",
