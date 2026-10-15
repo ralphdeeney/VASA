@@ -12,6 +12,9 @@ API access to repository Actions variables is denied to the connected GitHub
 integration (403); no secret values were requested or exposed. Manual runbook:
 docs/DEPLOYMENT_ACTIONS.md. Deepgram test configuration remains local/ignored;
 the workflow does not transfer provider credentials to the VPS.
+Registration PR: https://github.com/ralphdeeney/VASA/pull/2 (workflow only).
+Initial mode=check dispatch returned HTTP404 because registration is pending;
+no Actions SSH or deploy ran. Implementation is committed as ab64274.
 
 2026-10-14 user explicitly selected Deepgram Aura as the interim default.
 Settings, deployment Compose fallback and example environment now select deepgram

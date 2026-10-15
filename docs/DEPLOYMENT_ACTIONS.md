@@ -33,9 +33,12 @@ environment. Strict host checking, a dedicated mode-0600 temporary key, no
 agent/config forwarding, and cleanup on success/failure are enforced.
 
 GitHub only registers a new `workflow_dispatch` workflow when its file exists
-on the repository default branch. If the default branch remains `main`, merge
-the workflow and helper files there through the normal review process first.
+on the repository default branch. Registration PR
+[ralphdeeney/VASA#2](https://github.com/ralphdeeney/VASA/pull/2) adds only the
+workflow to `main`; helpers remain on `build/vasa-foundation` and are checked
+out from the dispatched commit. Merge that PR through the normal review process.
 Do not switch the repository default branch just to register this workflow.
+An initial dispatch returned HTTP404 before registration; no VPS operation ran.
 Then dispatch its `build/vasa-foundation` version:
 
 ```bash
