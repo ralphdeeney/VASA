@@ -1,5 +1,10 @@
 # Build plan
 
+2026-10-15 provider-aware speech verification/persisted voice handling is
+verified with754 full checks. Run Actions bootstrap again for local Sherpa STT
+plus configured Deepgram TTS; unused local TTS/fixture assets no longer block
+worker startup. All selected local-model checksum protections remain enforced.
+
 2026-10-15 OpenAI base URL setting/worker wiring is complete;692 full checks
 pass. Preserve the private VPS gateway URL/key/model already configured and
 rerun VASA staging VPS mode=bootstrap on build/vasa-foundation. Deployment is

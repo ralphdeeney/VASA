@@ -1,6 +1,7 @@
 """Operational worker admission/lifecycle checks; transport/speech/providers are component fakes."""
 
 import asyncio
+import hashlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -63,7 +64,12 @@ class PreflightRig:
             def __init__(self, root: Path) -> None:
                 pass
 
-            def verify(self) -> None:
+            def verify_runtime(self, tts_provider: str, **directories: Path) -> None:
+                assert tts_provider == rig.settings.tts_provider
+                assert directories == {
+                    "kokoro_dir": rig.settings.kokoro_model_dir,
+                    "kitten_dir": rig.settings.kitten_model_dir,
+                }
                 rig.model_verified = True
                 if rig.model_failure is not None:
                     raise rig.model_failure
@@ -198,6 +204,7 @@ class PreflightRig:
         async def agent_config(
             database: object, context: object, config: RuntimeConfig, **options: Any
         ) -> RuntimeConfig:
+            assert options["tts_provider"] == rig.settings.tts_provider
             return config
 
         class Persistence:
@@ -404,6 +411,103 @@ async def test_worker_passes_openai_base_url_model_and_secret_without_logging(
     assert sorted(rig.created) == sorted(rig.closed)
     output = capsys.readouterr()
     assert "component-only-openai" not in output.out + output.err
+
+
+@pytest.fixture
+def asr_only_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    from scripts import prepare_speech
+    from vasa.speech import models
+
+    (tmp_path / "asr").mkdir()
+    (tmp_path / "asr/model.onnx").write_bytes(b"unit-ASR-checksum-fixture")
+    monkeypatch.setattr(
+        models,
+        "ASR_FILES",
+        {
+            "model.onnx": hashlib.sha256(b"unit-ASR-checksum-fixture").hexdigest(),
+        },
+    )
+    monkeypatch.setattr(prepare_speech, "download", lambda *args: pytest.fail("Startup download"))
+    return tmp_path
+
+
+@pytest.mark.parametrize("provider", ["deepgram", "speechify"])
+async def test_cloud_worker_starts_with_asr_and_no_local_tts(
+    monkeypatch: pytest.MonkeyPatch,
+    asr_only_root: Path,
+    provider: str,
+) -> None:
+    from vasa.speech.models import SpeechModels
+
+    rig = PreflightRig(monkeypatch)
+    rig.settings.tts_provider = provider
+    rig.settings.speech_model_root = asr_only_root
+    rig.settings.deepgram_api_key = type(rig.settings.openai_api_key)("component-deepgram-key")
+    rig.settings.speechify_api_key = type(rig.settings.openai_api_key)("component-speechify-key")
+    rig.block_calls = False
+    rig.offers = [IncomingCall(rig.external, "cloud-once", "private-caller")]
+
+    class CloudTTS:
+        def __init__(self, key: str, **options: str) -> None:
+            if provider == "deepgram":
+                assert key == "component-deepgram-key"
+                assert options == {"model": rig.settings.deepgram_model}
+            else:
+                assert key == "component-speechify-key"
+                assert options == {"voice_id": rig.settings.speechify_voice_id}
+            rig.created.append(provider)
+
+        async def aclose(self) -> None:
+            rig.closed.append(provider)
+
+    monkeypatch.setattr(worker, "SpeechModels", SpeechModels)
+    monkeypatch.setattr(
+        worker, "DeepgramTTS" if provider == "deepgram" else "SpeechifyTTS", CloudTTS
+    )
+    await worker.run("operator@example.invalid", uuid4(), RuntimeConfig(), once=True)
+    assert provider in rig.created and "asr" in rig.created
+    assert sorted(rig.created) == sorted(rig.closed)
+    assert not (asr_only_root / "piper").exists() and not (asr_only_root / "kokoro-int8").exists()
+    assert not (asr_only_root / "fixtures").exists()
+
+
+@pytest.mark.parametrize("provider", ["piper", "kokoro-int8", "kitten-micro"])
+async def test_worker_refuses_missing_selected_local_tts_before_remote_clients(
+    monkeypatch: pytest.MonkeyPatch,
+    asr_only_root: Path,
+    provider: str,
+) -> None:
+    from vasa.speech.models import SpeechModels
+
+    rig = PreflightRig(monkeypatch)
+    rig.settings.tts_provider = provider
+    rig.settings.speech_model_root = asr_only_root
+    rig.settings.kokoro_model_dir = asr_only_root / "kokoro-int8"
+    rig.settings.kitten_model_dir = asr_only_root / "kitten-micro"
+    monkeypatch.setattr(worker, "SpeechModels", SpeechModels)
+    with pytest.raises(RuntimeError, match="missing or invalid"):
+        await worker.run("operator@example.invalid", uuid4(), RuntimeConfig(), once=True)
+    assert rig.created == []
+
+
+@pytest.mark.parametrize(
+    "provider", ["deepgram", "speechify", "piper", "kokoro-int8", "kitten-micro"]
+)
+async def test_worker_always_rejects_invalid_asr_before_remote_clients(
+    monkeypatch: pytest.MonkeyPatch,
+    asr_only_root: Path,
+    provider: str,
+) -> None:
+    from vasa.speech.models import SpeechModels
+
+    rig = PreflightRig(monkeypatch)
+    rig.settings.tts_provider = provider
+    rig.settings.speech_model_root = asr_only_root
+    (asr_only_root / "asr/model.onnx").write_bytes(b"corrupt")
+    monkeypatch.setattr(worker, "SpeechModels", SpeechModels)
+    with pytest.raises(RuntimeError, match="Speech model missing or invalid"):
+        await worker.run("operator@example.invalid", uuid4(), RuntimeConfig(), once=True)
+    assert rig.created == []
 
 
 async def test_reject_rpc_failure_drains_admitted_calls_and_never_prints_raw_error(

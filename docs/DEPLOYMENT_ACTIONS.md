@@ -114,6 +114,41 @@ successful recovery and still exits nonzero. Failed recovery prints
 After success, use normal `deploy`. It still requires exactly one existing
 worker and never falls back to bootstrap. Repeating `bootstrap` is refused.
 
+## Provider-aware speech asset checks
+
+Worker startup always checksum-verifies the local Sherpa ASR assets. It then
+verifies only the selected TTS provider's assets:
+
+| Trusted TTS provider | Additional local runtime assets |
+| --- | --- |
+| `deepgram` | None |
+| `speechify` | None |
+| `piper` | Pinned Piper model/files and eSpeak resource tree |
+| `kokoro-int8` | Pinned Kokoro model/files and eSpeak resource tree |
+| `kitten-micro` | Pinned Kitten model/files and eSpeak resource tree |
+
+Test WAV/transcript fixtures are not required by the worker. Runtime verification
+never downloads models and preserves all checksum/resource-tree checks. Trusted
+Kokoro/Kitten model-directory settings are honored. A read-only operator check
+is available in the runtime/repository environment with its speech cache mounted:
+
+```bash
+python scripts/prepare_speech.py --verify-runtime --tts-provider deepgram \
+  --directory .local/speech
+```
+
+Use the matching `--tts-provider` for other providers; optional
+`--kokoro-model-dir`/`--kitten-model-dir` select their trusted runtime paths.
+Without `--verify-runtime`, the existing provisioning script still prepares the
+complete ASR/Piper/Kokoro/fixtures bundle; `--verify-only` verifies that full
+bundle, and `--kitten-micro` still adds/verifies the optional Kitten assets.
+
+For Deepgram/Speechify, persisted tenant voice metadata (including legacy local
+voice labels) is ignored. Cloud model/voice selection comes only from trusted
+server settings, never tenant voice strings. English-language validation and
+the existing fixed local-provider voice allowlist remain enforced. This changes
+neither Deepgram/9Router configuration nor the deployment topology.
+
 ## Deploy
 
 Only after the check passes, manually select `deploy`:

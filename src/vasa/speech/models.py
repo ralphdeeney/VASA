@@ -55,6 +55,7 @@ TTS_FILES = {
 }
 ESPEAK_TREE_SHA256 = "e9c56f8c7cc79f16b1a2dc482074ed777e5b881da2a215a6f99630284dc4b3b8"
 T = TypeVar("T")
+TTS_PROVIDERS = ("deepgram", "speechify", "piper", "kokoro-int8", "kitten-micro")
 
 
 def sha256_file(path: Path) -> str:
@@ -108,13 +109,49 @@ class SpeechModels:
     def fixture_dir(self) -> Path:
         return self.root / "fixtures"
 
-    def verify(self) -> None:
+    @property
+    def kitten_dir(self) -> Path:
+        return self.root / "kitten-micro"
+
+    def verify_asr(self) -> None:
+        verify_files(self.stt_dir, ASR_FILES)
+
+    def verify_fixtures(self) -> None:
+        verify_files(self.fixture_dir, FIXTURE_FILES)
+
+    def verify_piper(self) -> None:
+        verify_tts(self.tts_dir)
+
+    def verify_kokoro(self, directory: Path | None = None) -> None:
         from vasa.speech.kokoro import verify_kokoro_int8
 
-        verify_files(self.stt_dir, ASR_FILES)
-        verify_tts(self.tts_dir)
-        verify_kokoro_int8(self.kokoro_dir)
-        verify_files(self.fixture_dir, FIXTURE_FILES)
+        verify_kokoro_int8(self.kokoro_dir if directory is None else directory)
+
+    def verify_kitten(self, directory: Path | None = None) -> None:
+        from vasa.speech.kitten import verify_kitten_micro
+
+        verify_kitten_micro(self.kitten_dir if directory is None else directory)
+
+    def verify_runtime(
+        self, tts_provider: str, *, kokoro_dir: Path | None = None, kitten_dir: Path | None = None
+    ) -> None:
+        """Read-only startup verification; no fixtures, downloads or unrelated TTS."""
+        if tts_provider not in TTS_PROVIDERS:
+            raise ValueError("Unsupported trusted TTS provider")
+        self.verify_asr()
+        if tts_provider == "piper":
+            self.verify_piper()
+        elif tts_provider == "kokoro-int8":
+            self.verify_kokoro(kokoro_dir)
+        elif tts_provider == "kitten-micro":
+            self.verify_kitten(kitten_dir)
+
+    def verify(self) -> None:
+        """Full pinned provisioning/benchmark bundle; Kitten remains optional."""
+        self.verify_asr()
+        self.verify_piper()
+        self.verify_kokoro()
+        self.verify_fixtures()
 
 
 class NativeWorker:

@@ -1,5 +1,13 @@
 # Architecture
 
+2026-10-15 worker speech preflight is provider-aware and read-only. Every
+provider requires pinned local ASR; Deepgram/Speechify require no local TTS or
+fixtures. Piper/Kokoro/Kitten additionally verify only their selected assets,
+including unchanged file and phonemizer-tree checksums. Provisioning retains
+full-bundle verification separately. Persisted cloud voice metadata is inert;
+trusted Settings alone select cloud models/voices. English validation and the
+existing fixed local voice allowlist remain intact. No topology/API-key changes.
+
 2026-10-15 trusted VASA_OPENAI_BASE_URL configures the existing OpenAI adapter
 through voice_worker, defaulting to https://api.openai.com/v1. The existing
 adapter appends /chat/completions, preserving configured model names, bearer

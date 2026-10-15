@@ -35,6 +35,7 @@ from vasa.speech import SherpaSTT, SherpaTTS, SpeechModels
 from vasa.speech.deepgram import DeepgramTTS
 from vasa.speech.kitten import KittenMicroTTS
 from vasa.speech.kokoro import KokoroInt8TTS
+from vasa.speech.models import TTS_PROVIDERS
 from vasa.speech.speechify import SpeechifyTTS
 from vasa.storage.cache import CallRegistry
 from vasa.storage.database import Database
@@ -78,14 +79,22 @@ async def persisted_config(
     *,
     greeting_override: bool = False,
     instructions_override: bool = False,
+    tts_provider: str = "kokoro-int8",
 ) -> RuntimeConfig:
+    if tts_provider not in TTS_PROVIDERS:
+        raise ValueError("unsupported trusted speech provider")
     async with database.session() as session:
         agent = await session.scalar(
             select(Agent).where(Agent.tenant_id == context.tenant_id).order_by(Agent.id).limit(1)
         )
         if agent is None:
             return config
-        if agent.language != "en" or agent.voice != "kokoro_af_maple":
+        # Cloud voices/models come only from trusted Settings. Persisted voice
+        # metadata is inert for these providers, including legacy local labels.
+        # Local providers retain the existing fixed voice allowlist.
+        if agent.language != "en" or (
+            tts_provider not in {"deepgram", "speechify"} and agent.voice != "kokoro_af_maple"
+        ):
             raise ValueError("unsupported persisted speech configuration")
         prompt = (
             "You are a business voice assistant. Keep responses concise. "
@@ -390,7 +399,12 @@ async def run(
 ) -> None:
     settings = Settings()
     models = SpeechModels(settings.speech_model_root)
-    await asyncio.to_thread(models.verify)
+    await asyncio.to_thread(
+        models.verify_runtime,
+        settings.tts_provider,
+        kokoro_dir=settings.kokoro_model_dir,
+        kitten_dir=settings.kitten_model_dir,
+    )
     if settings.tts_provider == "deepgram" and not settings.deepgram_api_key.get_secret_value():
         raise ValueError("Configure DEEPGRAM_API_KEY securely before starting the voice worker")
     if settings.tts_provider == "speechify" and not settings.speechify_api_key.get_secret_value():
@@ -473,6 +487,7 @@ async def run(
                     config,
                     greeting_override=greeting_override,
                     instructions_override=instructions_override,
+                    tts_provider=settings.tts_provider,
                 )
                 existing = target_cache.get(external_id)
                 if existing is not None and (existing.context, existing.instance) == (

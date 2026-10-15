@@ -20,6 +20,7 @@ from vasa.speech.models import (
     TTS_ARCHIVE_ROOT,
     TTS_ARCHIVE_SHA256,
     TTS_FILES,
+    TTS_PROVIDERS,
     TTS_URL,
     SpeechModels,
     sha256_file,
@@ -242,9 +243,28 @@ def ensure_plain_directory(path: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--directory", type=Path, default=Path(".local/speech"))
-    parser.add_argument("--verify-only", action="store_true")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--verify-only", action="store_true")
+    mode.add_argument(
+        "--verify-runtime", action="store_true", help="Read-only selected-provider check"
+    )
+    parser.add_argument("--tts-provider", choices=TTS_PROVIDERS)
+    parser.add_argument("--kokoro-model-dir", type=Path)
+    parser.add_argument("--kitten-model-dir", type=Path)
     parser.add_argument("--kitten-micro", action="store_true", help="Include optional Micro 0.8")
     args = parser.parse_args()
+    if args.verify_runtime:
+        if args.tts_provider is None or args.kitten_micro:
+            parser.error(
+                "--verify-runtime requires --tts-provider; do not combine with --kitten-micro"
+            )
+        SpeechModels(args.directory).verify_runtime(
+            args.tts_provider, kokoro_dir=args.kokoro_model_dir, kitten_dir=args.kitten_model_dir
+        )
+        print("Verified runtime speech assets are ready.")
+        return
+    if args.tts_provider is not None or args.kokoro_model_dir or args.kitten_model_dir:
+        parser.error("Provider/directory selection requires --verify-runtime")
     if args.verify_only:
         SpeechModels(args.directory).verify()
     else:

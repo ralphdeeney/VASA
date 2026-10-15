@@ -1,5 +1,18 @@
 # Current state
 
+2026-10-15 provider-aware speech startup fix is complete and verified. Worker
+calls SpeechModels.verify_runtime, always checking ASR and only the configured
+local TTS provider's assets; Deepgram/Speechify need no local TTS or fixtures.
+Full verify()/provisioning still checks ASR/Piper/Kokoro/fixtures, with Kitten
+optional as before. Read-only CLI: scripts/prepare_speech.py --verify-runtime
+--tts-provider deepgram (supports trusted local-model directory overrides).
+Cloud persisted voice strings are ignored and cannot select provider/model;
+English and the existing fixed local voice allowlist remain enforced. All754
+full checks pass, including87 focused asset/worker/persistence checks; static,
+type, Actionlint and shell checks pass. No downloads at worker startup, no real
+key/configuration edits, no direct VPS SSH and no deployment. Operator next:
+VASA staging VPS, branch build/vasa-foundation, mode=bootstrap.
+
 2026-10-15 custom OpenAI-compatible gateway support is wired end to end:
 Settings.openai_base_url reads VASA_OPENAI_BASE_URL with official default
 https://api.openai.com/v1; voice_worker passes it to the existing provider.

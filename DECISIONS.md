@@ -1,5 +1,14 @@
 # Decisions
 
+2026-10-15 replace unconditional full-bundle worker verification with explicit
+ASR/selected-TTS runtime verification. Do not require unused Piper/Kokoro/Kitten
+or benchmark fixtures for cloud TTS. Keep complete provisioning/benchmark checks
+and optional Kitten preparation; add --verify-runtime with explicit provider
+and trusted model-directory overrides, without downloads. Ignore stored voice
+metadata for cloud TTS rather than interpreting it as a provider/model selector;
+retain English and fixed local voice validation. No migrations, media, gateway
+or Deepgram configuration changes; deployment remains manual via Actions.
+
 2026-10-15 expose the existing OpenAIProvider base_url option through Settings
 and the voice worker as VASA_OPENAI_BASE_URL. Preserve the official OpenAI
 default and existing URL safety checks, SSE/tool protocol and private key alias.

@@ -1,5 +1,16 @@
 # Test results
 
+2026-10-15 provider-aware speech:754 full unit/component/integration/native/
+eval checks passed in67.35s, zero failures/errors/skips, one existing deprecation
+warning. Ruff/format200 files, strict mypy57 sources, Actionlint1.7.7 and bash
+syntax pass. All87 focused checks pass. Coverage includes ASR-only cloud worker
+startup, selected local asset absence/corruption/symlinks and phonemizer checks,
+invalid ASR for every provider, no-download CLI/runtime paths, custom model
+directories, preserved full-bundle checks, real SQL persisted voice isolation,
+inert cloud legacy/injection strings and retained language/local voice rules.
+JUnit: reports/provider-aware-speech.xml. No gateway/Deepgram configuration,
+deployment topology, Evolution or provider interface changes; no live deploy.
+
 2026-10-15 OpenAI gateway support:692 full unit/component/integration/native/
 eval checks passed in64.28s, zero failures/errors/skips, one existing deprecation
 warning. Ruff/format199 files, strict mypy57 sources, Actionlint1.7.7 and bash

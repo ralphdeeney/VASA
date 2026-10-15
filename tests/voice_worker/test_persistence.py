@@ -163,6 +163,128 @@ async def test_persisted_prompt_greeting_and_explicit_operator_overrides(
 
 
 @pytest.mark.integration
+@pytest.mark.parametrize("provider", ["deepgram", "speechify"])
+@pytest.mark.parametrize("voice", ["kokoro_af_maple", "ljspeech_en", "https://evil.invalid/model"])
+async def test_cloud_persisted_voice_is_inert_and_cannot_select_provider_or_model(
+    control_harness: ControlHarness,
+    provider: str,
+    voice: str,
+) -> None:
+    from vasa.runtime import RuntimeConfig
+    from vasa.storage.models import Agent
+    from vasa.voice_worker import persisted_config
+
+    h = control_harness
+    context = TenantContext(h.tenants[0].id, h.users[0].id)
+    async with h.database.session() as session, session.begin():
+        session.add(
+            Agent(
+                tenant_id=context.tenant_id,
+                name="Reception",
+                business_name="Clinic",
+                business_description="Open weekdays",
+                greeting="Welcome",
+                instructions="Use approved knowledge",
+                language="en",
+                voice=voice,
+            )
+        )
+    config = await persisted_config(h.database, context, RuntimeConfig(), tts_provider=provider)
+    assert config.greeting == "Welcome"
+    assert "Clinic" in config.system_prompt
+    assert voice not in repr(config)
+    assert not hasattr(config, "tts_provider") and not hasattr(config, "voice")
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize(
+    "provider", ["deepgram", "speechify", "piper", "kokoro-int8", "kitten-micro"]
+)
+async def test_persisted_language_validation_stays_strict_for_every_provider(
+    control_harness: ControlHarness,
+    provider: str,
+) -> None:
+    from vasa.runtime import RuntimeConfig
+    from vasa.storage.models import Agent
+    from vasa.voice_worker import persisted_config
+
+    h = control_harness
+    context = TenantContext(h.tenants[0].id, h.users[0].id)
+    async with h.database.session() as session, session.begin():
+        session.add(
+            Agent(
+                tenant_id=context.tenant_id,
+                name="Reception",
+                business_name="Clinic",
+                business_description="",
+                greeting="Welcome",
+                instructions="",
+                language="fr",
+                voice="kokoro_af_maple",
+            )
+        )
+    with pytest.raises(ValueError, match="unsupported persisted speech configuration"):
+        await persisted_config(h.database, context, RuntimeConfig(), tts_provider=provider)
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("provider", ["piper", "kokoro-int8", "kitten-micro"])
+async def test_local_persisted_voice_allowlist_is_preserved(
+    control_harness: ControlHarness,
+    provider: str,
+) -> None:
+    from sqlalchemy import update
+
+    from vasa.runtime import RuntimeConfig
+    from vasa.storage.models import Agent
+    from vasa.voice_worker import persisted_config
+
+    h = control_harness
+    context = TenantContext(h.tenants[0].id, h.users[0].id)
+    async with h.database.session() as session, session.begin():
+        session.add(
+            Agent(
+                tenant_id=context.tenant_id,
+                name="Reception",
+                business_name="Clinic",
+                business_description="",
+                greeting="Welcome",
+                instructions="",
+                language="en",
+                voice="kokoro_af_maple",
+            )
+        )
+    assert (
+        await persisted_config(h.database, context, RuntimeConfig(), tts_provider=provider)
+    ).greeting == "Welcome"
+    async with h.database.session() as session, session.begin():
+        await session.execute(
+            update(Agent)
+            .where(Agent.tenant_id == context.tenant_id)
+            .values(voice="https://evil.invalid/model")
+        )
+    with pytest.raises(ValueError, match="unsupported persisted speech configuration"):
+        await persisted_config(h.database, context, RuntimeConfig(), tts_provider=provider)
+
+
+async def test_persisted_config_refuses_unknown_trusted_provider_before_sql() -> None:
+    from vasa.runtime import RuntimeConfig
+    from vasa.voice_worker import persisted_config
+
+    class NoDatabase:
+        def session(self):
+            pytest.fail("Unknown provider must fail before SQL")
+
+    with pytest.raises(ValueError, match="unsupported trusted speech provider"):
+        await persisted_config(
+            NoDatabase(),
+            TenantContext(uuid4(), uuid4()),
+            RuntimeConfig(),
+            tts_provider="tenant-chosen-provider",
+        )
+
+
+@pytest.mark.integration
 async def test_all_instance_contexts_come_from_matching_tenant_users(
     control_harness: ControlHarness,
 ) -> None:

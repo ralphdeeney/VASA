@@ -1,5 +1,11 @@
 # Eval results
 
+2026-10-15 existing evals pass within the754-check suite after provider-aware
+speech verification. Checksum fixtures and worker stubs establish asset selection
+and no-download behavior; real SQL tests establish persisted voice isolation.
+Existing native checks retain real pinned model verification. No live phone,
+Deepgram/gateway quality or staging deployment success is inferred.
+
 2026-10-15 existing evals pass within the692-check suite after OpenAI base URL
 wiring. Synthetic gateway HTTP/SSE and worker fixtures verify request routing,
 model/key handling and unchanged tool contracts; they do not establish real
