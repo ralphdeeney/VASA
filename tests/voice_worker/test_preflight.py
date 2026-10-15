@@ -39,6 +39,7 @@ class PreflightRig:
         self.sessions: list[CallSession] = []
         self.deleted: list[UUID] = []
         self.providers: list[str] = []
+        self.openai_parameters: list[tuple[str, str, str | None]] = []
         self.model_failure: Exception | None = None
         self.model_verified = False
         self.paired = True
@@ -143,8 +144,12 @@ class PreflightRig:
                 rig.closed.append("transport")
 
         class Provider:
-            def __init__(self, api_key: str, *, model: str, tools: Any = None) -> None:
+            def __init__(
+                self, api_key: str, *, model: str, tools: Any = None, base_url: str | None = None
+            ) -> None:
                 self.name = "openai" if "openai" in api_key else "anthropic"
+                if self.name == "openai":
+                    rig.openai_parameters.append((api_key, model, base_url))
                 rig.created.append(self.name)
                 rig.providers.append(self.name)
 
@@ -374,6 +379,31 @@ async def test_once_waits_for_one_call_and_closes_every_provider(
     output = capsys.readouterr().out
     assert '"audio_recorded":false' in output
     assert "private-caller" not in output
+
+
+@pytest.mark.parametrize("custom", [False, True])
+async def test_worker_passes_openai_base_url_model_and_secret_without_logging(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    custom: bool,
+) -> None:
+    rig = PreflightRig(monkeypatch)
+    if custom:
+        rig.settings.openai_base_url = "https://gateway.example/v1/"
+        rig.settings.openai_model = "cx/gpt-5.6-sol"
+    rig.block_calls = False
+    rig.offers = [IncomingCall(rig.external, "gateway-call", "private-caller")]
+    await worker.run("operator@example.invalid", uuid4(), RuntimeConfig(), once=True)
+    assert rig.openai_parameters == [
+        (
+            "component-only-openai",
+            rig.settings.openai_model,
+            rig.settings.openai_base_url,
+        )
+    ]
+    assert sorted(rig.created) == sorted(rig.closed)
+    output = capsys.readouterr()
+    assert "component-only-openai" not in output.out + output.err
 
 
 async def test_reject_rpc_failure_drains_admitted_calls_and_never_prints_raw_error(

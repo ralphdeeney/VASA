@@ -1,5 +1,15 @@
 # Test results
 
+2026-10-15 OpenAI gateway support:692 full unit/component/integration/native/
+eval checks passed in64.28s, zero failures/errors/skips, one existing deprecation
+warning. Ruff/format199 files, strict mypy57 sources, Actionlint1.7.7 and bash
+syntax pass. Ten new cases verify settings defaults/env/key redaction, custom
+URL path/trailing slash/model/bearer auth, streamed text/tool events, and real
+worker constructor wiring/default/lifecycle without key logging. Existing SSE
+loopback/tool continuation regressions pass. JUnit: reports/openai-base-url.xml.
+Only dedicated local test database/cache services were started; no VPS deploy,
+real key edits or live gateway requests occurred.
+
 2026-10-15 rollback-image recovery:682 full unit/component/integration/native/
 eval checks passed in62.73s, zero failures/errors/skips, one existing deprecation
 warning. Ruff/format198 files and strict mypy57 sources pass; Actionlint1.7.7

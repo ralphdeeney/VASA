@@ -1,5 +1,16 @@
 # Current state
 
+2026-10-15 custom OpenAI-compatible gateway support is wired end to end:
+Settings.openai_base_url reads VASA_OPENAI_BASE_URL with official default
+https://api.openai.com/v1; voice_worker passes it to the existing provider.
+Provider URL construction remains base.rstrip('/') + '/chat/completions',
+retaining model names, bearer auth, SSE and tools. The example uses only a
+commented gateway placeholder. Real gateway keys/runtime files, Deepgram and
+deployment configuration are untouched. All692 checks pass, plus static/type,
+Actionlint and shell checks. JUnit: reports/openai-base-url.xml. No live gateway
+call, direct VPS SSH or deployment. Operator next: VASA staging VPS, branch
+build/vasa-foundation, mode=bootstrap.
+
 2026-10-15 rollback-image recovery fix: user reports the healthy VPS API image
 ID is unavailable in the local rootless Docker image store, causing bootstrap
 backup tagging to fail. Shared bootstrap/deploy helper now inspects/tags when

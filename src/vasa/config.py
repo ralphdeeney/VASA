@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr = SecretStr("")
     anthropic_api_key: SecretStr = SecretStr("")
     openai_model: str = "gpt-4o-mini"
+    openai_base_url: str = "https://api.openai.com/v1"
     anthropic_model: str = "claude-sonnet-4-6"
     llm_primary: Literal["openai", "anthropic"] = "openai"
     webhook_config_path: Path | None = None

@@ -512,7 +512,10 @@ async def run(
                     providers: dict[str, OpenAIProvider | AnthropicProvider] = {}
                     if openai_key:
                         providers["openai"] = OpenAIProvider(
-                            openai_key, model=settings.openai_model, tools=tool_specs
+                            openai_key,
+                            model=settings.openai_model,
+                            base_url=settings.openai_base_url,
+                            tools=tool_specs,
                         )
                         target_resources.push_async_callback(providers["openai"].aclose)
                     if anthropic_key:

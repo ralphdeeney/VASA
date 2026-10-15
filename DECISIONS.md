@@ -1,5 +1,12 @@
 # Decisions
 
+2026-10-15 expose the existing OpenAIProvider base_url option through Settings
+and the voice worker as VASA_OPENAI_BASE_URL. Preserve the official OpenAI
+default and existing URL safety checks, SSE/tool protocol and private key alias.
+Pass custom gateway model names unchanged. Use only synthetic keys and mock
+transport/worker fixtures for new validation; do not modify private runtime
+configuration, Deepgram or deployment state. Deployment remains manual.
+
 2026-10-15 user diagnosed a healthy VPS API referencing a locally unavailable
 image ID. Missing rollback-image tagging must not cause an immediate hard stop
 when clean PREVIOUS_SHA source can provide recovery. A shared helper first

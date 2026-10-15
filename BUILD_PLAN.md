@@ -1,5 +1,10 @@
 # Build plan
 
+2026-10-15 OpenAI base URL setting/worker wiring is complete;692 full checks
+pass. Preserve the private VPS gateway URL/key/model already configured and
+rerun VASA staging VPS mode=bootstrap on build/vasa-foundation. Deployment is
+manual; Deepgram settings remain unchanged.
+
 2026-10-15 shared missing-image rollback acquisition is verified (682 checks).
 Operator can rerun bootstrap for the healthy four-service/no-worker topology.
 Rollback construction occurs before target checkout and preserves healthy

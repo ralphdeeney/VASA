@@ -1,5 +1,10 @@
 # Architecture
 
+2026-10-15 trusted VASA_OPENAI_BASE_URL configures the existing OpenAI adapter
+through voice_worker, defaulting to https://api.openai.com/v1. The existing
+adapter appends /chat/completions, preserving configured model names, bearer
+authentication, streaming SSE and tool calls. No Deepgram/media changes.
+
 2026-10-15 rollback-image acquisition is shared by bootstrap/deploy. Prefer the
 running image when locally inspectable/taggable; otherwise build clean
 PREVIOUS_SHA source through the same Compose build with an in-memory image-tag

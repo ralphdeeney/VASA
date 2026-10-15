@@ -1,5 +1,10 @@
 # Eval results
 
+2026-10-15 existing evals pass within the692-check suite after OpenAI base URL
+wiring. Synthetic gateway HTTP/SSE and worker fixtures verify request routing,
+model/key handling and unchanged tool contracts; they do not establish real
+gateway/model quality or live phone acceptance. Deepgram/media are unchanged.
+
 2026-10-15 existing evals pass in the682-check suite after rollback-image recovery
 and stage diagnostics. Local stateful Docker/Git stubs exercise the user-reported
 missing-image condition, preserving running topology before target updates and
