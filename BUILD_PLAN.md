@@ -1,5 +1,9 @@
 # Build plan
 
+2026-10-15 observed 9Router missing-DONE compatibility fix implemented with
+strict terminal EOF regression coverage. Next live step: normal Actions deploy
+and opt-in provider smoke, then full AI WhatsApp call. No automatic deployment.
+
 2026-10-15 next LLM gate: operator runs docs/LLM_SSE_DIAGNOSTICS.md after deploying
 tooling with provider_smoke=false. Actual 9Router SSE shape is still unavailable;
 add its regression fixture and minimal compatibility change only after observing

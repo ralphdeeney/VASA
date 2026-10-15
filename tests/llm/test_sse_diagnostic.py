@@ -140,13 +140,11 @@ async def test_standard_text_and_tools_remain_valid(tools):
         "string_index",
         "empty_choices",
         "missing_finish",
-        "missing_done",
         "invalid_delta",
     ],
 )
 async def test_synthetic_incompatibilities_still_rejected(mutation):
-    # These are hypotheses, NOT captured 9Router fixtures. Do not relax the parser
-    # until the operator provides the actual structural diagnostic.
+    # Malformed structures remain invalid after clean terminal EOF support.
     choice = {"index": 0, "delta": {"content": "Hello"}, "finish_reason": "stop"}
     if mutation == "missing_index":
         del choice["index"]
@@ -158,8 +156,7 @@ async def test_synthetic_incompatibilities_still_rejected(mutation):
         choice["finish_reason"] = None
     choices = [] if mutation == "empty_choices" else [choice]
     parts = [("data: " + json.dumps({"choices": choices}) + "\n\n").encode()]
-    if mutation != "missing_done":
-        parts.append(b"data: [DONE]\n\n")
+    parts.append(b"data: [DONE]\n\n")
     async with httpx.AsyncClient(
         transport=httpx.MockTransport(
             lambda request: httpx.Response(

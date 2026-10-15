@@ -1,5 +1,13 @@
 # Current state
 
+2026-10-15 exact 9Router mismatch confirmed by operator: valid terminal stop
+choice then clean EOF, no DONE sentinel. OpenAIProvider now shares terminal
+finalization between DONE and clean SSE exhaustion; EOF requires prior valid
+stop/tool_calls finish and all accumulated tool calls validate before emission.
+Strict SSE framing, indices, limits and post-finish content checks remain intact.
+Regression fixture uses synthetic text matching observed content/content/stop+
+usage shape. No direct VPS SSH, API request or deployment dispatched here.
+
 2026-10-15 operator confirms gateway auth/model/chat/streaming HTTP 200 and SSE,
 but VASA LLM smoke still reports provider_error. Added one-request structural
 SSE diagnostic, packaged in the app image; see docs/LLM_SSE_DIAGNOSTICS.md.

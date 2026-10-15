@@ -52,6 +52,16 @@ class OpenAIProvider:
             raise LLMError("unavailable")
         budget, finished = TextBudget(), False
         calls: dict[int, dict[str, str]] = {}
+
+        def finalize() -> list[dict[str, Any]]:
+            if not finished:
+                raise LLMError("invalid_response")
+            # Validate every call before emitting any tool event, for either terminator.
+            return [
+                tool_event(call["id"], call["name"], call["arguments"], self._approved)
+                for call in calls.values()
+            ]
+
         events = stream_events(
             self._client,
             self._url,
@@ -80,12 +90,8 @@ class OpenAIProvider:
         async with aclosing(events):
             async for event in events:
                 if event.data == "[DONE]":
-                    if not finished:
-                        raise LLMError("invalid_response")
-                    for call in calls.values():
-                        yield tool_event(
-                            call["id"], call["name"], call["arguments"], self._approved
-                        )
+                    for output_event in finalize():
+                        yield output_event
                     return
                 data = event.json()
                 if event.name == "error" or "error" in data:
@@ -165,4 +171,7 @@ class OpenAIProvider:
                     output = budget.event(content)
                     if output:
                         yield output
-        raise LLMError("invalid_response")
+        # Some compatible gateways close cleanly after the terminal choice chunk.
+        # The SSE iterator must exhaust successfully (including framing checks).
+        for output_event in finalize():
+            yield output_event

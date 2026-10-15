@@ -1,5 +1,11 @@
 # Architecture
 
+2026-10-15 OpenAIProvider supports both DONE and clean EOF after a validated stop
+or tool_calls terminal choice. Shared finalization checks terminal state and
+validates complete approved tool calls. SSE framing remains unchanged; iterator
+exceptions do not reach EOF finalization. This addresses the observed 9Router
+terminal pattern without changing the speech stack or deployment topology.
+
 2026-10-15 explicit scripts/diagnose_llm_sse.py uses the bounded SSE framing
 reader without the semantic OpenAI choice parser, so malformed choice shapes can
 be described safely. One matching smoke request emits only structural JSON with

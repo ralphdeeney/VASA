@@ -1,5 +1,10 @@
 # Decisions
 
+2026-10-15 accept clean SSE EOF only after an already validated terminal choice,
+based on operator-confirmed 9Router stream evidence. Share the same finalizer
+with DONE and validate all tools before emitting any; never catch framing or
+transport failures to manufacture a clean EOF. Do not relax other parser rules.
+
 2026-10-15 HTTP 200/SSE alone cannot identify a strict OpenAI parser mismatch.
 Add bounded structural inspection before relaxing validation. Unknown property
 names/header values/event names are untrusted too, so render only fixed known

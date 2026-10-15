@@ -1,9 +1,16 @@
 # Safe LLM SSE shape inspection
 
+2026-10-15 confirmed operator receipt: HTTP 200, identity text/event-stream;
+two integer-index-zero content choices followed by an empty-delta stop choice
+with usage, then clean EOF without DONE. OpenAIProvider now accepts this exact
+terminal pattern. DONE remains supported. Both termination paths share strict
+finalization, including full tool validation. Incomplete framing and premature
+or interrupted transport EOF remain errors.
+
 The operator confirmed HTTP 200 for model listing, chat completion and streaming
-with cx/gpt-5.6-sol through the configured 9Router gateway. This does not yet
-identify the stream shape rejected by VASA. No actual gateway SSE structure has
-been captured here. Production parser validation is deliberately unchanged.
+with cx/gpt-5.6-sol through the configured 9Router gateway. The later structural
+receipt identified the missing DONE sentinel as the mismatch. The diagnostic
+below remains available for future stream-shape investigations.
 
 Deploy this tooling through GitHub Actions with smoke disabled, then an operator
 already on the VPS can run one bounded request:
@@ -47,13 +54,14 @@ Compare the sanitized output with current parser rules:
 | finish_reason length | output_limit; 32 completion tokens may be insufficient |
 | finish_reason tool_calls | Requires approved tools and accumulated calls |
 | Duplicate/post-finish choice events | Rejected |
-| DONE before finish or EOF without DONE | Rejected |
+| DONE before finish or clean EOF before finish | Rejected |
+| Clean EOF after valid stop/tool_calls finish | Accepted with shared finalization |
 
-The model's reasoning may consume a small completion budget, but that is only a
-hypothesis until the diagnostic shows finish_reason=length. Likewise missing or
-string indices are hypotheses, not confirmed gateway behavior. Synthetic tests
+Previously, the model's reasoning consuming a small completion budget was only a
+hypothesis requiring finish_reason=length. Likewise missing or
+string indices were hypotheses, not confirmed gateway behavior. Synthetic tests
 cover these rejection cases; they are not labeled as captured 9Router fixtures.
-Provide only the sanitized JSON output for the next compatibility change. Once
-the actual mismatch is established, add its regression fixture and make the
-smallest supported change; do not broadly coerce indices or accept truncated
-streams. Never share raw SSE, response bodies or private runtime files.
+The confirmed mismatch is now covered by a regression fixture with synthetic
+content matching the observed three-event shape. Do not broadly coerce indices
+or accept truncated streams. Never share raw SSE, response bodies or private
+runtime files.

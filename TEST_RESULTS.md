@@ -1,5 +1,16 @@
 # Test results
 
+2026-10-15 terminal clean-EOF compatibility: **872 passed** in 67.67s, zero
+failures/errors/skips; one existing Starlette warning. Full unit/component/
+integration/native/eval suite via scripts/check.sh passed. Ruff/format (210
+files), strict mypy (59 sources), Actionlint and shell syntax pass. Regression
+tests match the operator-observed 9Router content/content/stop+usage/no-DONE
+shape using synthetic content. Standard DONE and complete tool calls work on
+both paths; incomplete calls/identities, premature EOF, malformed framing,
+transport errors, invalid indexes/deltas/multiple choices, post-finish content
+and limits still fail. JUnit: reports/openai-terminal-eof.xml. No deployment,
+direct VPS SSH or live API request was performed for this change.
+
 2026-10-15 safe SSE diagnostic: **843 passed** in 65.70s; zero failures/errors/
 skips, one existing Starlette deprecation warning. Full scripts/check.sh suite,
 Ruff/format (208 files), strict mypy (59 sources), Actionlint and shell syntax

@@ -1,5 +1,10 @@
 # Eval results
 
+2026-10-15 existing evals pass within 872 full checks. Operator-confirmed
+9Router terminal EOF shape now succeeds locally alongside OpenAI DONE streams;
+shared complete-tool finalization and malformed/truncated rejection are covered.
+Live provider smoke after deploying this fix remains pending.
+
 2026-10-15 all existing evals pass within the 843-check suite after isolated
 structural SSE diagnostics. This does not establish the live gateway mismatch;
 standard text/tools work locally and malformed hypotheses remain rejected.
