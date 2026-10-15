@@ -1,5 +1,12 @@
 # Current state
 
+2026-10-15 operator reports normal deploy reached healthy API/voice and failed
+only at optional provider_smoke. Fix diagnostic capture: a nonzero smoke exit now
+preserves stdout/stderr in memory, prints only exact approved provider status/error
+markers and numeric timings, then still fails deployment and invokes rollback.
+Stderr and arbitrary stdout remain withheld. Default deploy remains unchanged;
+no workflow dispatch, direct VPS SSH or live provider call made for this fix.
+
 2026-10-15 normal development phase:
 
 - GitHub Actions → VPS deployment bridge: VERIFIED (operator-confirmed).

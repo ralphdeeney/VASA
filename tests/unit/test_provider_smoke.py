@@ -102,15 +102,19 @@ def test_actions_filters_untrusted_output(monkeypatch, capsys):
     monkeypatch.setattr(
         deploy,
         "compose",
-        lambda *a, **k: "\n".join(
-            [
-                "LLM_SMOKE_OK",
-                "DEEPGRAM_SMOKE_OK",
-                "LLM_FIRST_TOKEN_MS=12.34",
-                SECRET,
-                "DEEPGRAM_TOTAL_MS=NaN",
-                "LLM_TOTAL_MS=12.34 " + SECRET,
-            ]
+        lambda *a, **k: SimpleNamespace(
+            returncode=0,
+            stdout="\n".join(
+                [
+                    "LLM_SMOKE_OK",
+                    "DEEPGRAM_SMOKE_OK",
+                    "LLM_FIRST_TOKEN_MS=12.34",
+                    SECRET,
+                    "DEEPGRAM_TOTAL_MS=NaN",
+                    "LLM_TOTAL_MS=12.34 " + SECRET,
+                ]
+            ),
+            stderr=SECRET,
         ),
     )
     deploy.provider_smoke()
@@ -120,9 +124,84 @@ def test_actions_filters_untrusted_output(monkeypatch, capsys):
 
 
 def test_actions_requires_both_providers(monkeypatch):
-    monkeypatch.setattr(deploy, "compose", lambda *a, **k: "LLM_SMOKE_OK\n" + SECRET)
+    monkeypatch.setattr(
+        deploy,
+        "compose",
+        lambda *a, **k: SimpleNamespace(
+            returncode=1, stdout="LLM_SMOKE_OK\n" + SECRET, stderr=SECRET
+        ),
+    )
     with pytest.raises(deploy.Refusal, match="smoke failed"):
         deploy.provider_smoke()
+
+
+@pytest.mark.parametrize("llm_ok,deepgram_ok", [(False, True), (True, False), (False, False)])
+def test_nonzero_smoke_preserves_safe_markers(monkeypatch, capsys, llm_ok, deepgram_ok):
+    llm = "LLM_SMOKE_OK" if llm_ok else "LLM_SMOKE_FAILED=provider_error"
+    dg = "DEEPGRAM_SMOKE_OK" if deepgram_ok else "DEEPGRAM_SMOKE_FAILED=timeout"
+    malicious = [
+        SECRET,
+        "Authorization: Bearer " + SECRET,
+        "https://example.test/?key=" + SECRET,
+        "prompt=" + SECRET,
+        "LLM_SMOKE_FAILED=" + SECRET,
+        "LLM_SMOKE_OK " + SECRET,
+        "DEEPGRAM_TOTAL_MS=NaN",
+        "DEEPGRAM_SMOKE_FAILED=timeout " + SECRET,
+    ]
+
+    def subprocess_run(args, **kwargs):
+        assert args[-5:] == ("exec", "-T", "vasa", "python", "scripts/live_provider_smoke.py")
+        assert kwargs["capture_output"] and not kwargs["check"]
+        return SimpleNamespace(returncode=1, stdout="\n".join([llm, dg, *malicious]), stderr=SECRET)
+
+    monkeypatch.setattr(deploy.subprocess, "run", subprocess_run)
+    with pytest.raises(deploy.Refusal, match="smoke failed"):
+        deploy.provider_smoke()
+    assert capsys.readouterr().out.splitlines() == [llm, dg]
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "missing_configuration",
+        "invalid_configuration",
+        "invalid_response",
+        "timeout",
+        "provider_error",
+        "internal_error",
+    ],
+)
+def test_approved_failure_codes(monkeypatch, capsys, code):
+    marker = "LLM_SMOKE_FAILED=" + code
+    monkeypatch.setattr(
+        deploy,
+        "compose",
+        lambda *a, **k: SimpleNamespace(
+            returncode=1, stdout=marker + "\nDEEPGRAM_SMOKE_OK", stderr=SECRET
+        ),
+    )
+    with pytest.raises(deploy.Refusal):
+        deploy.provider_smoke()
+    assert marker in capsys.readouterr().out
+
+
+def test_nonzero_with_ok_markers_still_fails(monkeypatch, capsys):
+    monkeypatch.setattr(
+        deploy.subprocess,
+        "run",
+        lambda *a, **k: SimpleNamespace(
+            returncode=1, stdout="LLM_SMOKE_OK\nDEEPGRAM_SMOKE_OK", stderr=SECRET
+        ),
+    )
+    with pytest.raises(deploy.Refusal):
+        deploy.provider_smoke()
+    assert SECRET not in capsys.readouterr().out
+
+
+def test_unchecked_compose_capture_is_smoke_only():
+    with pytest.raises(deploy.Refusal, match="restricted"):
+        deploy.compose("up", "vasa", capture_smoke=True)
 
 
 @pytest.mark.parametrize("kind", ["empty", "invalid_pcm", "remote_failure"])

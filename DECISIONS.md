@@ -1,5 +1,11 @@
 # Decisions
 
+2026-10-15 preserve nonzero provider smoke diagnostics through a capture-only
+Compose option restricted to the exact smoke exec command. All ordinary commands
+retain fail-fast behavior. Only fixed provider status/error markers and numeric
+timings may reach Actions; stderr is never forwarded. Require both OK markers,
+zero exit and no failure markers; otherwise retain application rollback.
+
 2026-10-15 retain manual Actions-only deployment after successful bootstrap;
 do not install a push trigger or dispatch during implementation. Treat normal
 deploy/live providers/full AI call as pending until actual receipts. Add a

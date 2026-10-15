@@ -1,5 +1,16 @@
 # Test results
 
+2026-10-15 nonzero smoke diagnostic fix: **822 passed** in 68.13s, zero
+failures/errors/skips and one existing Starlette deprecation warning. Full unit,
+component, integration, native and eval suite passed via scripts/check.sh;
+Ruff/format (205 files), strict mypy (58 sources), Actionlint and shell syntax pass.
+115 focused smoke/deployment/bootstrap tests pass. Added subprocess-boundary
+checks prove nonzero exit preserves both approved failure markers, mixed success/
+failure is reported, all six fixed codes are accepted, malicious stdout/stderr
+and secrets are withheld, and unchecked capture is unavailable to other Compose
+commands. Existing success timings, default-off behavior and app rollback pass.
+JUnit: reports/provider-smoke-exit.xml. No live requests or deployment dispatched.
+
 2026-10-15 normal deploy/optional provider smoke: **811 passed** in 66.60s;
 zero failures/errors/skips, one existing Starlette deprecation warning. Full
 unit/component/integration/native/eval suite ran through scripts/check.sh.

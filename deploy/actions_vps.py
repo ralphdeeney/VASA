@@ -98,7 +98,7 @@ def stage(mode, name):
     print(ACTIVE_STAGE, flush=True)
 
 
-def run(*args, timeout=60, input_text=None):
+def capture(*args, timeout=60, input_text=None):
     """Never include command output/arguments in exceptions (may contain secrets)."""
     try:
         result = subprocess.run(
@@ -111,6 +111,11 @@ def run(*args, timeout=60, input_text=None):
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         raise Refusal(ACTIVE_STAGE + " failed or timed out; raw output withheld.") from exc
+    return result
+
+
+def run(*args, timeout=60, input_text=None):
+    result = capture(*args, timeout=timeout, input_text=input_text)
     require(result.returncode == 0, ACTIVE_STAGE + " failed; raw output withheld.")
     return result.stdout.strip()
 
@@ -119,7 +124,13 @@ def git(*args):
     return run("git", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", *args)
 
 
-def compose(*args, timeout=180, image_override=None):
+def compose(*args, timeout=180, image_override=None, capture_smoke=False):
+    if capture_smoke:
+        require(
+            args == ("exec", "-T", "vasa", "python", "scripts/live_provider_smoke.py")
+            and image_override is None,
+            "Unchecked capture is restricted to provider smoke.",
+        )
     extra = ()
     override = None
     if image_override is not None:
@@ -133,7 +144,8 @@ def compose(*args, timeout=180, image_override=None):
         # Only override the output image tag, never context, Dockerfile, build
         # arguments, secrets, or runtime environment. Nothing is written to disk.
         override = json.dumps({"services": {"vasa": {"image": image_override}}})
-    return run(
+    execute = capture if capture_smoke else run
+    return execute(
         "docker",
         "compose",
         "--project-name",
@@ -691,18 +703,40 @@ def signal_failure(_signum, _frame):
 
 def provider_smoke():
     # Capture stdout/stderr even on failure; never forward arbitrary container logs.
-    result = compose("exec", "-T", "vasa", "python", "scripts/live_provider_smoke.py", timeout=105)
+    result = compose(
+        "exec",
+        "-T",
+        "vasa",
+        "python",
+        "scripts/live_provider_smoke.py",
+        timeout=105,
+        capture_smoke=True,
+    )
     approved = []
-    for line in result.splitlines():
-        if re.fullmatch(r"(?:LLM|DEEPGRAM)_SMOKE_OK", line) or re.fullmatch(
-            r"(?:LLM_FIRST_TOKEN|LLM_TOTAL|DEEPGRAM_FIRST_AUDIO|DEEPGRAM_TOTAL|DEEPGRAM_AUDIO)_MS=[0-9]{1,8}\.[0-9]{2}",
-            line,
+    fields = set()
+    for line in result.stdout.splitlines():
+        if (
+            re.fullmatch(r"(?:LLM|DEEPGRAM)_SMOKE_OK", line)
+            or re.fullmatch(
+                r"(?:LLM|DEEPGRAM)_SMOKE_FAILED=(?:missing_configuration|invalid_configuration|invalid_response|timeout|provider_error|internal_error)",
+                line,
+            )
+            or re.fullmatch(
+                r"(?:LLM_FIRST_TOKEN|LLM_TOTAL|DEEPGRAM_FIRST_AUDIO|DEEPGRAM_TOTAL|DEEPGRAM_AUDIO)_MS=[0-9]{1,8}\.[0-9]{2}",
+                line,
+            )
         ):
-            approved.append(line)
-    for line in approved[:9]:
+            field = line.split("=", 1)[0]
+            if field not in fields:
+                approved.append(line)
+                fields.add(field)
+    for line in approved:
         print(line, flush=True)
     require(
-        "LLM_SMOKE_OK" in approved and "DEEPGRAM_SMOKE_OK" in approved,
+        result.returncode == 0
+        and "LLM_SMOKE_OK" in approved
+        and "DEEPGRAM_SMOKE_OK" in approved
+        and not any("_SMOKE_FAILED=" in line for line in approved),
         "Live provider smoke failed; raw output withheld.",
     )
 

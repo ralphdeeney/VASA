@@ -51,8 +51,9 @@ or WAVs are saved. Exit status is nonzero if either probe fails.
 
 Success emits `LLM_SMOKE_OK`, `LLM_FIRST_TOKEN_MS`, `LLM_TOTAL_MS`,
 `DEEPGRAM_SMOKE_OK`, `DEEPGRAM_FIRST_AUDIO_MS`, `DEEPGRAM_TOTAL_MS` and
-`DEEPGRAM_AUDIO_MS`. Failure emits fixed `*_SMOKE_FAILED` codes locally; Actions
-withholds raw failed-command output. It prints only allowlisted success/timing
+`DEEPGRAM_AUDIO_MS`. Failure emits fixed `*_SMOKE_FAILED` codes; Actions captures
+nonzero exits and prints approved failure markers before invoking rollback.
+It withholds stderr and raw output, printing only allowlisted status/timing
 lines, never arbitrary container output. No URLs, keys, prompts, response bodies
 or exception strings are printed. HTTP/provider logging is disabled in the smoke
 process. Generated audio duration includes final framing padding. This is a small
