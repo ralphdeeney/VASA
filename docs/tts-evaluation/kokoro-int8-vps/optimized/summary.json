@@ -1,0 +1,195 @@
+{
+  "selected_code_default": "kokoro-int8",
+  "retired_provider": "ljspeech",
+  "retained_alternative": "piper",
+  "actual_vps_status": "pending operator run",
+  "voice_quality_review": "unrun",
+  "profiles": [
+    {
+      "scope": "cloud-smoke",
+      "candidate": "kokoro-int8",
+      "condition": "B",
+      "model_load_seconds": 1.239165287996002,
+      "cases": {
+        "short": {
+          "first_playable_max_seconds": 0.0005970029960735701,
+          "first_playable_p50_seconds": 0.0005970029960735701,
+          "first_playable_p95_seconds": 0.0005970029960735701,
+          "first_playable_samples_seconds": [
+            0.0005970029960735701
+          ],
+          "rtf_max": 0.00021618187652759093,
+          "cpu_seconds_mean": 0.15206290099999897,
+          "peak_rss_mib": 454.828125,
+          "max_chunk_starvation_seconds": 0
+        },
+        "sentence": {
+          "first_playable_max_seconds": 4.071015713998349,
+          "first_playable_p50_seconds": 4.071015713998349,
+          "first_playable_p95_seconds": 4.071015713998349,
+          "first_playable_samples_seconds": [
+            4.071015713998349
+          ],
+          "rtf_max": 1.2573655722187622,
+          "cpu_seconds_mean": 4.475238453000001,
+          "peak_rss_mib": 479.078125,
+          "max_chunk_starvation_seconds": 0
+        },
+        "long": {
+          "first_playable_max_seconds": 2.451734383997973,
+          "first_playable_p50_seconds": 2.451734383997973,
+          "first_playable_p95_seconds": 2.451734383997973,
+          "first_playable_samples_seconds": [
+            2.451734383997973
+          ],
+          "rtf_max": 1.2970409570666896,
+          "cpu_seconds_mean": 19.378709623000006,
+          "peak_rss_mib": 508.828125,
+          "max_chunk_starvation_seconds": 4.127195910002629
+        }
+      },
+      "cancellation": [
+        {
+          "phase": "before_first_audio",
+          "consumer_cancellation_seconds": 0.00013510099961422384,
+          "native_cleanup_drain_seconds": 2.584433171003184,
+          "frames_after_cancel": 0,
+          "frames_before_cancel": 0
+        },
+        {
+          "phase": "playback",
+          "consumer_cancellation_seconds": 0.00012745900312438607,
+          "native_cleanup_drain_seconds": 0.10488453099969774,
+          "frames_after_cancel": 0,
+          "frames_before_cancel": 1
+        }
+      ],
+      "selection": "Not automatic: actual VPS results and human voice review required"
+    },
+    {
+      "scope": "cloud-smoke",
+      "candidate": "kokoro-int8",
+      "condition": "B",
+      "model_load_seconds": 1.182671686001413,
+      "cases": {
+        "short": {
+          "first_playable_max_seconds": 0.0007807849979144521,
+          "first_playable_p50_seconds": 0.0007807849979144521,
+          "first_playable_p95_seconds": 0.0007807849979144521,
+          "first_playable_samples_seconds": [
+            0.0007807849979144521
+          ],
+          "rtf_max": 0.0002233289969676728,
+          "cpu_seconds_mean": 0.08387061400000029,
+          "peak_rss_mib": 457.42578125,
+          "max_chunk_starvation_seconds": 0
+        },
+        "sentence": {
+          "first_playable_max_seconds": 3.8004460079973796,
+          "first_playable_p50_seconds": 3.8004460079973796,
+          "first_playable_p95_seconds": 3.8004460079973796,
+          "first_playable_samples_seconds": [
+            3.8004460079973796
+          ],
+          "rtf_max": 1.173280209567801,
+          "cpu_seconds_mean": 7.034271102,
+          "peak_rss_mib": 481.55078125,
+          "max_chunk_starvation_seconds": 0
+        },
+        "long": {
+          "first_playable_max_seconds": 2.2679161249980098,
+          "first_playable_p50_seconds": 2.2679161249980098,
+          "first_playable_p95_seconds": 2.2679161249980098,
+          "first_playable_samples_seconds": [
+            2.2679161249980098
+          ],
+          "rtf_max": 1.1814271831240917,
+          "cpu_seconds_mean": 30.109077345000003,
+          "peak_rss_mib": 511.30078125,
+          "max_chunk_starvation_seconds": 3.4530761979962703
+        }
+      },
+      "cancellation": [
+        {
+          "phase": "before_first_audio",
+          "consumer_cancellation_seconds": 0.00011185599578311667,
+          "native_cleanup_drain_seconds": 2.5223918789997697,
+          "frames_after_cancel": 0,
+          "frames_before_cancel": 0
+        },
+        {
+          "phase": "playback",
+          "consumer_cancellation_seconds": 9.121499897446483e-05,
+          "native_cleanup_drain_seconds": 0.0888741349990596,
+          "frames_after_cancel": 0,
+          "frames_before_cancel": 1
+        }
+      ],
+      "selection": "Not automatic: actual VPS results and human voice review required"
+    },
+    {
+      "scope": "cloud-smoke",
+      "candidate": "piper",
+      "condition": "B",
+      "model_load_seconds": 0.6493542329990305,
+      "cases": {
+        "short": {
+          "first_playable_max_seconds": 0.1011835949975648,
+          "first_playable_p50_seconds": 0.1011835949975648,
+          "first_playable_p95_seconds": 0.1011835949975648,
+          "first_playable_samples_seconds": [
+            0.1011835949975648
+          ],
+          "rtf_max": 0.09857507844286624,
+          "cpu_seconds_mean": 0.15779177700000036,
+          "peak_rss_mib": 284.17578125,
+          "max_chunk_starvation_seconds": 0
+        },
+        "sentence": {
+          "first_playable_max_seconds": 0.21649880900076823,
+          "first_playable_p50_seconds": 0.21649880900076823,
+          "first_playable_p95_seconds": 0.21649880900076823,
+          "first_playable_samples_seconds": [
+            0.21649880900076823
+          ],
+          "rtf_max": 0.09017765874887118,
+          "cpu_seconds_mean": 0.33082476800000027,
+          "peak_rss_mib": 312.55078125,
+          "max_chunk_starvation_seconds": 0
+        },
+        "long": {
+          "first_playable_max_seconds": 0.11918170099670533,
+          "first_playable_p50_seconds": 0.11918170099670533,
+          "first_playable_p95_seconds": 0.11918170099670533,
+          "first_playable_samples_seconds": [
+            0.11918170099670533
+          ],
+          "rtf_max": 0.08991691775172676,
+          "cpu_seconds_mean": 1.5800430860000003,
+          "peak_rss_mib": 343.05078125,
+          "max_chunk_starvation_seconds": 0.00027014700521199586
+        }
+      },
+      "cancellation": [
+        {
+          "phase": "before_first_audio",
+          "consumer_cancellation_seconds": 0.11304799099889351,
+          "native_cleanup_drain_seconds": 0.0077697809974779375,
+          "frames_after_cancel": 0,
+          "frames_before_cancel": 0
+        },
+        {
+          "phase": "playback",
+          "consumer_cancellation_seconds": 0.00010513600136619061,
+          "native_cleanup_drain_seconds": 0.00804777199664386,
+          "frames_after_cancel": 0,
+          "frames_before_cancel": 1
+        }
+      ],
+      "selection": "Not automatic: actual VPS results and human voice review required"
+    }
+  ],
+  "preferred_unseen_900ms_target_met_on_cloud": false,
+  "rtf_under_one_for_uncached_kokoro_on_cloud": false,
+  "major_kokoro_starvation_resolved": false
+}

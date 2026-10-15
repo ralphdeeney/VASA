@@ -1,0 +1,98 @@
+{
+  "scope": "cloud-smoke",
+  "candidate": "piper",
+  "condition": "B",
+  "model_load_seconds": 0.6223858110024594,
+  "cases": {
+    "short": {
+      "sample_count": 3,
+      "percentile_note": "Linear interpolation; three runs do not establish a robust tail",
+      "first_playable_max_seconds": 0.10141974900034256,
+      "first_playable_p50_seconds": 0.10068218800006434,
+      "first_playable_p95_seconds": 0.10134599290031474,
+      "first_playable_samples_seconds": [
+        0.0934266770054819,
+        0.10068218800006434,
+        0.10141974900034256
+      ],
+      "rtf_max": 0.09874708138180294,
+      "cpu_seconds_mean": 0.16545295766666643,
+      "cpu_utilization_percent_mean": 14.722593162499436,
+      "audio_seconds_mean": 1.02,
+      "peak_rss_mib": 376.04296875,
+      "max_chunk_starvation_seconds": 0,
+      "max_frame_starvation_seconds": 0.0017154030042001445
+    },
+    "sentence": {
+      "sample_count": 3,
+      "percentile_note": "Linear interpolation; three runs do not establish a robust tail",
+      "first_playable_max_seconds": 0.22455788200022653,
+      "first_playable_p50_seconds": 0.21943361000012374,
+      "first_playable_p95_seconds": 0.22404545480021626,
+      "first_playable_samples_seconds": [
+        0.21026944299956085,
+        0.21943361000012374,
+        0.22455788200022653
+      ],
+      "rtf_max": 0.09347190875208375,
+      "cpu_seconds_mean": 0.3484265286666665,
+      "cpu_utilization_percent_mean": 13.255263576882376,
+      "audio_seconds_mean": 2.4,
+      "peak_rss_mib": 376.04296875,
+      "max_chunk_starvation_seconds": 0,
+      "max_frame_starvation_seconds": 0.0006935500036342468
+    },
+    "long": {
+      "sample_count": 3,
+      "percentile_note": "Linear interpolation; three runs do not establish a robust tail",
+      "first_playable_max_seconds": 0.12759058899973752,
+      "first_playable_p50_seconds": 0.12127978100033943,
+      "first_playable_p95_seconds": 0.1269595081997977,
+      "first_playable_samples_seconds": [
+        0.12015713200526079,
+        0.12127978100033943,
+        0.12759058899973752
+      ],
+      "rtf_max": 0.0928184541381753,
+      "cpu_seconds_mean": 1.5899023130000003,
+      "cpu_utilization_percent_mean": 14.093277455101623,
+      "audio_seconds_mean": 11.1,
+      "peak_rss_mib": 376.16796875,
+      "max_chunk_starvation_seconds": 0.0007124849993851434,
+      "max_frame_starvation_seconds": 0.004337547002651265
+    }
+  },
+  "cancellation": [
+    {
+      "phase": "before_first_audio",
+      "consumer_cancellation_seconds": 0.1113128310025786,
+      "native_cleanup_drain_seconds": 0.007902650999312755,
+      "frames_after_cancel": 0,
+      "frames_before_cancel": 0
+    },
+    {
+      "phase": "playback",
+      "consumer_cancellation_seconds": 8.564699965063483e-05,
+      "native_cleanup_drain_seconds": 0.00740042699908372,
+      "frames_after_cancel": 0,
+      "frames_before_cancel": 1
+    }
+  ],
+  "stt": {
+    "stt_baseline": {
+      "completed_runs": 1,
+      "wall_seconds_mean": 6.611836796000716,
+      "wer_mean": 0.05555555555555555,
+      "max_processing_deadline_overrun_seconds": 0
+    },
+    "stt_contender": {
+      "completed_runs": 7,
+      "wall_seconds_mean": 6.612822572571791,
+      "wer_mean": 0.055555555555555566,
+      "max_processing_deadline_overrun_seconds": 0
+    },
+    "wall_time_degradation_ratio": 0.00014909269564422623,
+    "note": "Paced fixture wall includes audio duration; compare WER and frame deadlines "
+  },
+  "selection": "Not automatic: actual VPS results and human voice review required"
+}

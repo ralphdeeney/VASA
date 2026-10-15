@@ -1,0 +1,65 @@
+{
+  "official_code_commit": "dfb907a02bba8152ca444717ca5d78747ccb4bec",
+  "files": [
+    {
+      "file": ".local/kokoro-streaming-official/v10/config.json",
+      "url": "https://huggingface.co/hexgrad/Kokoro-82M/resolve/f3ff3571791e39611d31c381e3a41a3af07b4987/config.json",
+      "sha256": "5abb01e2403b072bf03d04fde160443e209d7a0dad49a423be15196b9b43c17f"
+    },
+    {
+      "file": ".local/kokoro-streaming-official/v10/model.pth",
+      "url": "https://huggingface.co/hexgrad/Kokoro-82M/resolve/f3ff3571791e39611d31c381e3a41a3af07b4987/kokoro-v1_0.pth",
+      "sha256": "496dba118d1a58f5f3db2efc88dbdc216e0483fc89fe6e47ee1f2c53f18ad1e4"
+    },
+    {
+      "file": ".local/kokoro-streaming-official/v10/voice.pt",
+      "url": "https://huggingface.co/hexgrad/Kokoro-82M/resolve/f3ff3571791e39611d31c381e3a41a3af07b4987/voices/af_heart.pt",
+      "sha256": "0ab5709b8ffab19bfd849cd11d98f75b60af7733253ad0d67b12382a102cb4ff"
+    },
+    {
+      "file": ".local/kokoro-streaming-official/v11/config.json",
+      "url": "https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh/resolve/01e7505bd6a7a2ac4975463114c3a7650a9f7218/config.json",
+      "sha256": "bc333efa5ce4ceff433c8c8e5d027a1eca0166001e4e4a62bea2d26ff7a46890"
+    },
+    {
+      "file": ".local/kokoro-streaming-official/v11/model.pth",
+      "url": "https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh/resolve/01e7505bd6a7a2ac4975463114c3a7650a9f7218/kokoro-v1_1-zh.pth",
+      "sha256": "b1d8410fa44dfb5c15471fd6c4225ea6b4e9ac7fa03c98e8bea47a9928476e2b"
+    },
+    {
+      "file": ".local/kokoro-streaming-official/v11/voice.pt",
+      "url": "https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh/resolve/01e7505bd6a7a2ac4975463114c3a7650a9f7218/voices/af_maple.pt",
+      "sha256": "f1211a6b94795d843cb7957568ccf2208e6ce76d2fbb36c7279b24e1be9b862f"
+    },
+    {
+      "file": ".local/tts-evaluation/models/kokoro-fp32/model.onnx",
+      "sha256": "acc4adc175b9d9986106cd20060329673ad5a2e12ef3c557d2d3745b694f8b38",
+      "provenance": "Pinned release archive in ../report.json"
+    },
+    {
+      "file": ".local/tts-evaluation/models/kokoro-fp32/tokens.txt",
+      "sha256": "931ab2df2400cd65d580a22402024c2347ced8ae9ea300e545144b1aacc48e14",
+      "provenance": "Pinned release archive in ../report.json"
+    },
+    {
+      "file": ".local/tts-evaluation/models/kokoro-fp32/voices.bin",
+      "sha256": "e64a5a581d8c2a350d848f51c3121657cd83aa07ed6109172177345874a7244c",
+      "provenance": "Pinned release archive in ../report.json"
+    },
+    {
+      "file": ".local/tts-evaluation/models/kokoro-fp32/lexicon-us-en.txt",
+      "sha256": "7daaab53a181be9885b853a8582bf1838186317e5dadacbcef9c426d6fa0da14",
+      "provenance": "Pinned release archive in ../report.json"
+    },
+    {
+      "file": ".local/tts-evaluation/models/piper-libritts/en_US-libritts_r-medium.onnx",
+      "sha256": "8cce84cee4060bc3c2194bf95d33253c48dc8ff15e197b3b7a00b334ee0017f4",
+      "provenance": "Pinned release archive in ../report.json"
+    },
+    {
+      "file": ".local/tts-evaluation/models/piper-libritts/tokens.txt",
+      "sha256": "620e1aecf1a68fea3ba5850d137b0138fa2037c9b372dad13b95a2a215d0849a",
+      "provenance": "Pinned release archive in ../report.json"
+    }
+  ]
+}

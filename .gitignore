@@ -1,0 +1,19 @@
+.venv/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+*.egg-info/
+.local/
+reports/
+
+# Intermediate build scratch and test client artifacts
+work/
+:memory:.ses

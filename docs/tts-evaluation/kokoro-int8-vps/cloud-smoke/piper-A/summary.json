@@ -1,0 +1,61 @@
+{
+  "scope": "cloud-smoke",
+  "candidate": "piper",
+  "condition": "A",
+  "model_load_seconds": 0.5922003890009364,
+  "cases": {
+    "short": {
+      "first_playable_max_seconds": 0.10800545200618217,
+      "first_playable_p50_seconds": 0.10800545200618217,
+      "first_playable_p95_seconds": 0.10800545200618217,
+      "first_playable_samples_seconds": [
+        0.10800545200618217
+      ],
+      "rtf_max": 0.10597017941358454,
+      "cpu_seconds_mean": 0.11447499400000005,
+      "peak_rss_mib": 209.67578125,
+      "max_chunk_starvation_seconds": 0
+    },
+    "sentence": {
+      "first_playable_max_seconds": 0.21871081599965692,
+      "first_playable_p50_seconds": 0.21871081599965692,
+      "first_playable_p95_seconds": 0.21871081599965692,
+      "first_playable_samples_seconds": [
+        0.21871081599965692
+      ],
+      "rtf_max": 0.09148046790869557,
+      "cpu_seconds_mean": 0.23316845699999988,
+      "peak_rss_mib": 237.92578125,
+      "max_chunk_starvation_seconds": 0
+    },
+    "long": {
+      "first_playable_max_seconds": 0.12116394199983915,
+      "first_playable_p50_seconds": 0.12116394199983915,
+      "first_playable_p95_seconds": 0.12116394199983915,
+      "first_playable_samples_seconds": [
+        0.12116394199983915
+      ],
+      "rtf_max": 0.08868927228355401,
+      "cpu_seconds_mean": 1.060263997,
+      "peak_rss_mib": 278.42578125,
+      "max_chunk_starvation_seconds": 0.3362436009992962
+    }
+  },
+  "cancellation": [
+    {
+      "phase": "before_first_audio",
+      "consumer_cancellation_seconds": 0.11385060699831229,
+      "native_cleanup_drain_seconds": 0.00819580200186465,
+      "frames_after_cancel": 0,
+      "frames_before_cancel": 0
+    },
+    {
+      "phase": "playback",
+      "consumer_cancellation_seconds": 8.874200284481049e-05,
+      "native_cleanup_drain_seconds": 0.007734948994766455,
+      "frames_after_cancel": 0,
+      "frames_before_cancel": 1
+    }
+  ],
+  "selection": "Not automatic: actual VPS results and human voice review required"
+}

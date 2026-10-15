@@ -1,0 +1,37 @@
+{
+  "status": "all_key_free_checks_passed_live_gate_pending",
+  "command": "UV_CACHE_DIR=/workspace/.cache/uv UV_NO_SYNC=1 bash scripts/check.sh --junitxml=reports/deepgram-aura-final.xml -q",
+  "tests": 599,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "seconds": 62.414,
+  "ruff": "passed",
+  "format": "passed:193 files",
+  "strict_mypy": "passed:57 source files",
+  "compose_configuration": "passed",
+  "deepgram_provider_and_real_TCP_checks": 19,
+  "deepgram_benchmark_component_checks": 5,
+  "all_prior_speechify_regressions": "passed",
+  "live_API_requests": 0,
+  "scope": "Aura TTS only; existing local STT unchanged",
+  "live_gate": "Ask user to set DEEPGRAM_API_KEY securely",
+  "production_default": "kokoro-int8",
+  "default_changed": false,
+  "dependencies": {
+    "httpx": "0.28.1",
+    "httpcore": "1.0.9",
+    "pydantic-settings": "2.15.0"
+  },
+  "uv_lock_sha256": "0369a7a487d9c14b9064b6cbf08c2fc99f4016b118c4cae39362118b6be20faa",
+  "source_sha256": {
+    "src/vasa/speech/deepgram.py": "d2005112dc25a38e80e747f5d54c50f5cb04ebb4c525e9e2988de7e192d39943",
+    "src/vasa/speech/speechify.py": "028eef6c5b630982e73e609711ce85a8b9dceb14a001cc33a691e91d6b1209f2",
+    "scripts/benchmark_deepgram_vps.py": "2ef9f9655eb512000653aeb647f58830bfdb7cb555b16e38774981a846ef89a8",
+    "scripts/benchmark_speechify_vps.py": "4f0ae13005a7dd55c9d0ddd9fe83edca8d8c9123d70c271594470d4c467a1773",
+    "src/vasa/config.py": "0ba76ddedd33c56fe5e58b28976d50d0933167965ed79f6abe133909aab05dd6",
+    "src/vasa/voice_worker.py": "139c8af62d016ae7219393dc3ec198e2c504790a6bc4780b8a3f4bcb216a7896"
+  },
+  "junit": "verification.junit.xml",
+  "junit_sha256": "0f5778c6423cf07d1e9bfb68f7e30f7803d247f8da3a3548479e67450d4b3d53"
+}

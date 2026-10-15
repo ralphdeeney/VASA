@@ -1,0 +1,412 @@
+{
+  "schema_version": 1,
+  "measured_at_utc": "2026-10-09T03:15:20.686009+00:00",
+  "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+  "policy": "Candidates run sequentially in fresh subprocesses; no competing models run together.",
+  "environment": {
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "python": "3.12.14",
+    "threads": 2,
+    "dependencies": {
+      "sherpa-onnx": "1.13.8",
+      "sherpa-onnx-core": "1.13.8",
+      "numpy": "2.5.3",
+      "scipy": "1.18.1"
+    }
+  },
+  "artifacts": {
+    "schema_version": 1,
+    "artifacts": {
+      "kokoro-fp32": {
+        "archive": "kokoro-multi-lang-v1_1.tar.bz2",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-multi-lang-v1_1.tar.bz2",
+        "sha256": "a3f4c73d043860e3fd2e5b06f36795eb81de0fc8e8de6df703245edddd87dbad",
+        "source": "https://huggingface.co/hexgrad/Kokoro-82M",
+        "license_note": "Kokoro-82M model license is retained inside the archive; review before redistribution."
+      },
+      "kokoro-int8": {
+        "archive": "kokoro-int8-multi-lang-v1_1.tar.bz2",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_1.tar.bz2",
+        "sha256": "a1e94694776049035c4f2c6529f003aaece993c76aae9a78995831c3c4dcafc6",
+        "source": "https://huggingface.co/hexgrad/Kokoro-82M",
+        "license_note": "Kokoro-82M model license is retained inside the archive; review before redistribution."
+      },
+      "piper-libritts": {
+        "archive": "vits-piper-en_US-libritts_r-medium.tar.bz2",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-libritts_r-medium.tar.bz2",
+        "sha256": "10dc268f3e371696d721486123e2705a9fc1faa113491979fde4d88dba1f1b1c",
+        "source": "https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/libritts_r/medium",
+        "license_note": "Piper model/data licensing is retained inside the archive; LibriTTS-R license is linked in the report."
+      },
+      "melotts": {
+        "archive": "vits-melo-tts-zh_en.tar.bz2",
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-melo-tts-zh_en.tar.bz2",
+        "sha256": "e58351ed7149f290a54534538badd4077cdbe6fddc964b24d0bee870415d1514",
+        "source": "https://huggingface.co/myshell-ai/MeloTTS-Chinese",
+        "license_note": "MeloTTS licensing is retained inside the archive; source project license is linked in the report."
+      }
+    }
+  },
+  "results": [
+    {
+      "candidate": "baseline",
+      "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+      "sample_rate": 22050,
+      "samples": [
+        {
+          "iteration": 1,
+          "first_audio_seconds": 0.5962725970002793,
+          "processing_seconds": 0.5962725970002793,
+          "cpu_seconds": 1.130981725,
+          "audio_duration_seconds": 2.8560544217687074,
+          "real_time_factor": 0.20877494226143548
+        },
+        {
+          "iteration": 2,
+          "first_audio_seconds": 0.6023960599995917,
+          "processing_seconds": 0.6023960599995917,
+          "cpu_seconds": 1.1412312420000004,
+          "audio_duration_seconds": 2.8560544217687074,
+          "real_time_factor": 0.2109189710840796
+        },
+        {
+          "iteration": 3,
+          "first_audio_seconds": 0.5751622050011065,
+          "processing_seconds": 0.5751622050011065,
+          "cpu_seconds": 1.142214267,
+          "audio_duration_seconds": 2.8560544217687074,
+          "real_time_factor": 0.2013834892701092
+        },
+        {
+          "iteration": 4,
+          "first_audio_seconds": 0.5735865520000516,
+          "processing_seconds": 0.5735865520000516,
+          "cpu_seconds": 1.1316425269999995,
+          "audio_duration_seconds": 2.8560544217687074,
+          "real_time_factor": 0.20083180055260955
+        },
+        {
+          "iteration": 5,
+          "first_audio_seconds": 0.5888841400010278,
+          "processing_seconds": 0.5888841400010278,
+          "cpu_seconds": 1.0717380680000002,
+          "audio_duration_seconds": 2.8560544217687074,
+          "real_time_factor": 0.2061879968086678
+        }
+      ],
+      "first_audio_seconds": {
+        "count": 5,
+        "p50": 0.5888841400010278,
+        "p95": 0.6011713673997292,
+        "minimum": 0.5735865520000516,
+        "maximum": 0.6023960599995917
+      },
+      "real_time_factor": {
+        "count": 5,
+        "p50": 0.2061879968086678,
+        "p95": 0.21049016531955075,
+        "minimum": 0.20083180055260955,
+        "maximum": 0.2109189710840796
+      },
+      "cpu_seconds": {
+        "count": 5,
+        "p50": 1.1316425269999995,
+        "p95": 1.142017662,
+        "minimum": 1.0717380680000002,
+        "maximum": 1.142214267
+      },
+      "peak_rss_kib": 173324,
+      "user_cpu_seconds": 5.603998000000001,
+      "system_cpu_seconds": 0.040828,
+      "model_sha256": "206a8403baad4df7642156918a6ebe205798290d82f24d0d0119d7afa8a2738e"
+    },
+    {
+      "candidate": "kokoro-fp32",
+      "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+      "sample_rate": 24000,
+      "samples": [
+        {
+          "iteration": 1,
+          "first_audio_seconds": 2.188029127999471,
+          "processing_seconds": 2.188029127999471,
+          "cpu_seconds": 4.259801587,
+          "audio_duration_seconds": 3.4015,
+          "real_time_factor": 0.6432541902100458
+        },
+        {
+          "iteration": 2,
+          "first_audio_seconds": 2.225469332999637,
+          "processing_seconds": 2.225469332999637,
+          "cpu_seconds": 4.3277572829999995,
+          "audio_duration_seconds": 3.399125,
+          "real_time_factor": 0.6547182975029271
+        },
+        {
+          "iteration": 3,
+          "first_audio_seconds": 2.2224748089993227,
+          "processing_seconds": 2.2224748089993227,
+          "cpu_seconds": 4.273648803,
+          "audio_duration_seconds": 3.4051666666666667,
+          "real_time_factor": 0.6526772480052829
+        },
+        {
+          "iteration": 4,
+          "first_audio_seconds": 2.222796390999065,
+          "processing_seconds": 2.222796390999065,
+          "cpu_seconds": 4.261393611000001,
+          "audio_duration_seconds": 3.3992916666666666,
+          "real_time_factor": 0.653899873551813
+        },
+        {
+          "iteration": 5,
+          "first_audio_seconds": 2.1535407820010732,
+          "processing_seconds": 2.1535407820010732,
+          "cpu_seconds": 4.175295511000002,
+          "audio_duration_seconds": 3.3994583333333335,
+          "real_time_factor": 0.6334952721392594
+        }
+      ],
+      "first_audio_seconds": {
+        "count": 5,
+        "p50": 2.2224748089993227,
+        "p95": 2.2249347445995227,
+        "minimum": 2.1535407820010732,
+        "maximum": 2.225469332999637
+      },
+      "real_time_factor": {
+        "count": 5,
+        "p50": 0.6526772480052829,
+        "p95": 0.6545546127127043,
+        "minimum": 0.6334952721392594,
+        "maximum": 0.6547182975029271
+      },
+      "cpu_seconds": {
+        "count": 5,
+        "p50": 4.261393611000001,
+        "p95": 4.316935587,
+        "minimum": 4.175295511000002,
+        "maximum": 4.3277572829999995
+      },
+      "peak_rss_kib": 580984,
+      "user_cpu_seconds": 21.241961,
+      "system_cpu_seconds": 0.10525400000000001,
+      "model_sha256": "acc4adc175b9d9986106cd20060329673ad5a2e12ef3c557d2d3745b694f8b38"
+    },
+    {
+      "candidate": "kokoro-int8",
+      "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+      "sample_rate": 24000,
+      "samples": [
+        {
+          "iteration": 1,
+          "first_audio_seconds": 4.039873260000604,
+          "processing_seconds": 4.039873260000604,
+          "cpu_seconds": 7.390303605999999,
+          "audio_duration_seconds": 3.352125,
+          "real_time_factor": 1.2051678442780636
+        },
+        {
+          "iteration": 2,
+          "first_audio_seconds": 4.516029865000746,
+          "processing_seconds": 4.516029865000746,
+          "cpu_seconds": 8.296374766,
+          "audio_duration_seconds": 3.354416666666667,
+          "real_time_factor": 1.3462936521503728
+        },
+        {
+          "iteration": 3,
+          "first_audio_seconds": 4.587509468999997,
+          "processing_seconds": 4.587509468999997,
+          "cpu_seconds": 8.363328173,
+          "audio_duration_seconds": 3.35175,
+          "real_time_factor": 1.368690823897963
+        },
+        {
+          "iteration": 4,
+          "first_audio_seconds": 3.9462391629986087,
+          "processing_seconds": 3.9462391629986087,
+          "cpu_seconds": 7.276049856000004,
+          "audio_duration_seconds": 3.354833333333333,
+          "real_time_factor": 1.1762847125039324
+        },
+        {
+          "iteration": 5,
+          "first_audio_seconds": 4.472360805999415,
+          "processing_seconds": 4.472360805999415,
+          "cpu_seconds": 8.229934951000004,
+          "audio_duration_seconds": 3.352375,
+          "real_time_factor": 1.3340872682797762
+        }
+      ],
+      "first_audio_seconds": {
+        "count": 5,
+        "p50": 4.472360805999415,
+        "p95": 4.573213548200147,
+        "minimum": 3.9462391629986087,
+        "maximum": 4.587509468999997
+      },
+      "real_time_factor": {
+        "count": 5,
+        "p50": 1.3340872682797762,
+        "p95": 1.364211389548445,
+        "minimum": 1.1762847125039324,
+        "maximum": 1.368690823897963
+      },
+      "cpu_seconds": {
+        "count": 5,
+        "p50": 8.229934951000004,
+        "p95": 8.349937491599999,
+        "minimum": 7.276049856000004,
+        "maximum": 8.363328173
+      },
+      "peak_rss_kib": 427176,
+      "user_cpu_seconds": 39.478609999999996,
+      "system_cpu_seconds": 0.110119,
+      "model_sha256": "bda15858163726a492d02a9a727bc263551b86ac77f90812c4b30ff41d380e26"
+    },
+    {
+      "candidate": "piper-libritts",
+      "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+      "sample_rate": 22050,
+      "samples": [
+        {
+          "iteration": 1,
+          "first_audio_seconds": 0.13661205200151016,
+          "processing_seconds": 0.13661205200151016,
+          "cpu_seconds": 0.26566419799999996,
+          "audio_duration_seconds": 2.2871655328798184,
+          "real_time_factor": 0.05972984903698642
+        },
+        {
+          "iteration": 2,
+          "first_audio_seconds": 0.12382585999876028,
+          "processing_seconds": 0.12382585999876028,
+          "cpu_seconds": 0.24726310600000012,
+          "audio_duration_seconds": 2.2871655328798184,
+          "real_time_factor": 0.05413943950215467
+        },
+        {
+          "iteration": 3,
+          "first_audio_seconds": 0.15334929900018324,
+          "processing_seconds": 0.15334929900018324,
+          "cpu_seconds": 0.30475542099999986,
+          "audio_duration_seconds": 2.2871655328798184,
+          "real_time_factor": 0.06704774831365087
+        },
+        {
+          "iteration": 4,
+          "first_audio_seconds": 0.15421893799975805,
+          "processing_seconds": 0.15421893799975805,
+          "cpu_seconds": 0.3087143190000001,
+          "audio_duration_seconds": 2.2871655328798184,
+          "real_time_factor": 0.06742797396285424
+        },
+        {
+          "iteration": 5,
+          "first_audio_seconds": 0.16414394700041157,
+          "processing_seconds": 0.16414394700041157,
+          "cpu_seconds": 0.316434844,
+          "audio_duration_seconds": 2.2871655328798184,
+          "real_time_factor": 0.07176741020302735
+        }
+      ],
+      "first_audio_seconds": {
+        "count": 5,
+        "p50": 0.15334929900018324,
+        "p95": 0.16215894520028087,
+        "minimum": 0.12382585999876028,
+        "maximum": 0.16414394700041157
+      },
+      "real_time_factor": {
+        "count": 5,
+        "p50": 0.06704774831365087,
+        "p95": 0.07089952295499273,
+        "minimum": 0.05413943950215467,
+        "maximum": 0.07176741020302735
+      },
+      "cpu_seconds": {
+        "count": 5,
+        "p50": 0.30475542099999986,
+        "p95": 0.31489073900000003,
+        "minimum": 0.24726310600000012,
+        "maximum": 0.316434844
+      },
+      "peak_rss_kib": 198776,
+      "user_cpu_seconds": 1.4384640000000002,
+      "system_cpu_seconds": 0.027398999999999993,
+      "model_sha256": "8cce84cee4060bc3c2194bf95d33253c48dc8ff15e197b3b7a00b334ee0017f4"
+    },
+    {
+      "candidate": "melotts",
+      "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+      "sample_rate": 44100,
+      "samples": [
+        {
+          "iteration": 1,
+          "first_audio_seconds": 1.4092798519995995,
+          "processing_seconds": 1.4092798519995995,
+          "cpu_seconds": 2.8031901949999996,
+          "audio_duration_seconds": 3.5484353741496597,
+          "real_time_factor": 0.39715528209029777
+        },
+        {
+          "iteration": 2,
+          "first_audio_seconds": 1.4443288379989099,
+          "processing_seconds": 1.4443288379989099,
+          "cpu_seconds": 2.7842690369999996,
+          "audio_duration_seconds": 3.5484353741496597,
+          "real_time_factor": 0.40703258921406343
+        },
+        {
+          "iteration": 3,
+          "first_audio_seconds": 1.585045177000211,
+          "processing_seconds": 1.585045177000211,
+          "cpu_seconds": 3.0643417389999996,
+          "audio_duration_seconds": 3.5484353741496597,
+          "real_time_factor": 0.44668847248769417
+        },
+        {
+          "iteration": 4,
+          "first_audio_seconds": 1.566486055000496,
+          "processing_seconds": 1.566486055000496,
+          "cpu_seconds": 3.077292571000001,
+          "audio_duration_seconds": 3.5484353741496597,
+          "real_time_factor": 0.44145824562914177
+        },
+        {
+          "iteration": 5,
+          "first_audio_seconds": 1.5910897860012483,
+          "processing_seconds": 1.5910897860012483,
+          "cpu_seconds": 3.111023778999998,
+          "audio_duration_seconds": 3.5484353741496597,
+          "real_time_factor": 0.4483919300298752
+        }
+      ],
+      "first_audio_seconds": {
+        "count": 5,
+        "p50": 1.566486055000496,
+        "p95": 1.589880864201041,
+        "minimum": 1.4092798519995995,
+        "maximum": 1.5910897860012483
+      },
+      "real_time_factor": {
+        "count": 5,
+        "p50": 0.44145824562914177,
+        "p95": 0.448051238521439,
+        "minimum": 0.39715528209029777,
+        "maximum": 0.4483919300298752
+      },
+      "cpu_seconds": {
+        "count": 5,
+        "p50": 3.0643417389999996,
+        "p95": 3.104277537399999,
+        "minimum": 2.7842690369999996,
+        "maximum": 3.111023778999998
+      },
+      "peak_rss_kib": 384612,
+      "user_cpu_seconds": 14.862435999999999,
+      "system_cpu_seconds": 0.04665,
+      "model_sha256": "bf30582eb1b012250a35b1a4a80e7dfbcf8485e7bb9de0d95efbbeef0e4ad86d"
+    }
+  ]
+}

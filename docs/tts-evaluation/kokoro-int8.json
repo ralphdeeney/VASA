@@ -1,0 +1,72 @@
+{
+  "candidate": "kokoro-int8",
+  "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+  "sample_rate": 24000,
+  "samples": [
+    {
+      "iteration": 1,
+      "first_audio_seconds": 4.039873260000604,
+      "processing_seconds": 4.039873260000604,
+      "cpu_seconds": 7.390303605999999,
+      "audio_duration_seconds": 3.352125,
+      "real_time_factor": 1.2051678442780636
+    },
+    {
+      "iteration": 2,
+      "first_audio_seconds": 4.516029865000746,
+      "processing_seconds": 4.516029865000746,
+      "cpu_seconds": 8.296374766,
+      "audio_duration_seconds": 3.354416666666667,
+      "real_time_factor": 1.3462936521503728
+    },
+    {
+      "iteration": 3,
+      "first_audio_seconds": 4.587509468999997,
+      "processing_seconds": 4.587509468999997,
+      "cpu_seconds": 8.363328173,
+      "audio_duration_seconds": 3.35175,
+      "real_time_factor": 1.368690823897963
+    },
+    {
+      "iteration": 4,
+      "first_audio_seconds": 3.9462391629986087,
+      "processing_seconds": 3.9462391629986087,
+      "cpu_seconds": 7.276049856000004,
+      "audio_duration_seconds": 3.354833333333333,
+      "real_time_factor": 1.1762847125039324
+    },
+    {
+      "iteration": 5,
+      "first_audio_seconds": 4.472360805999415,
+      "processing_seconds": 4.472360805999415,
+      "cpu_seconds": 8.229934951000004,
+      "audio_duration_seconds": 3.352375,
+      "real_time_factor": 1.3340872682797762
+    }
+  ],
+  "first_audio_seconds": {
+    "count": 5,
+    "p50": 4.472360805999415,
+    "p95": 4.573213548200147,
+    "minimum": 3.9462391629986087,
+    "maximum": 4.587509468999997
+  },
+  "real_time_factor": {
+    "count": 5,
+    "p50": 1.3340872682797762,
+    "p95": 1.364211389548445,
+    "minimum": 1.1762847125039324,
+    "maximum": 1.368690823897963
+  },
+  "cpu_seconds": {
+    "count": 5,
+    "p50": 8.229934951000004,
+    "p95": 8.349937491599999,
+    "minimum": 7.276049856000004,
+    "maximum": 8.363328173
+  },
+  "peak_rss_kib": 427176,
+  "user_cpu_seconds": 39.478609999999996,
+  "system_cpu_seconds": 0.110119,
+  "model_sha256": "bda15858163726a492d02a9a727bc263551b86ac77f90812c4b30ff41d380e26"
+}

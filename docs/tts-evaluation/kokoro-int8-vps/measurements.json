@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "scope": "actual-vps",
+  "status": "pending-operator-run",
+  "target": "vasa-builder@2.25.172.155:22",
+  "connectivity_error": "ssh: connect to host 2.25.172.155 port 22: Connection refused",
+  "operator_instruction": "Correct address; skip access and prepare manual VPS execution",
+  "conditions": {"A": null, "B": null, "C": null},
+  "cloud_smoke_results": "cloud-smoke/",
+  "production_provider_changed": false
+}

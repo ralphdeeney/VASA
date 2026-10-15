@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Your workspace · VASA</title>
+    <link rel="stylesheet" href="/dashboard/assets/styles.css">
+    <script src="/dashboard/assets/dashboard.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="wordmark" href="/dashboard" aria-label="VASA dashboard">VASA<span
+         class="brand-dot" aria-hidden="true"></span></a>
+      <div class="account-actions">
+        <span id="account-email" class="small muted"></span>
+        <button id="logout" class="button secondary compact" type="button" disabled>Sign out</button>
+      </div>
+    </header>
+    <main class="workspace">
+      <div class="page-heading">
+        <p class="eyebrow">Your workspace</p>
+        <h1>Your voice agent</h1>
+        <p class="muted">Set up your assistant, connect WhatsApp, and review conversations.</p>
+      </div>
+      <p id="page-status" class="small muted" role="status" aria-live="polite">Loading your workspace…</p>
+      <p id="page-error" class="notice error" role="alert" tabindex="-1" hidden></p>
+      <nav class="workspace-nav" aria-label="Workspace sections">
+        <a href="#agent-heading">Agent</a><a href="#connections-heading">WhatsApp</a>
+        <a href="#knowledge-heading">Knowledge</a><a href="#calls-heading">Calls</a>
+      </nav>
+      <section class="card product-section" aria-labelledby="agent-heading">
+        <h2 id="agent-heading">Your assistant</h2>
+        <p class="muted small">Tell your assistant how to help callers. English with one built-in voice is currently supported.</p>
+        <form id="agent-form" class="form-grid">
+          <div><label for="agent-name">Assistant name</label><input id="agent-name" maxlength="200" required disabled></div>
+          <div><label for="business-name">Business name</label><input id="business-name" maxlength="200" required disabled></div>
+          <div class="wide"><label for="greeting">Opening greeting</label><textarea id="greeting" maxlength="1000" rows="2" required disabled></textarea></div>
+          <div class="wide"><label for="business-description">About your business</label><textarea id="business-description" maxlength="2000" rows="3" disabled></textarea></div>
+          <div class="wide"><label for="instructions">How should your assistant help?</label><textarea id="instructions" maxlength="2000" rows="4" disabled aria-describedby="assistant-length-help"></textarea><p id="assistant-length-help" class="small muted">Keep assistant name, business name, business description, and instructions within 3,600 characters combined.</p></div>
+          <div class="wide"><button id="agent-save" type="submit" disabled>Save assistant</button>
+          <button id="agent-retry" class="secondary" type="button" disabled>Reload assistant</button></div>
+        </form>
+        <p id="agent-status" class="small muted" role="status" aria-live="polite"></p>
+        <p id="agent-error" class="notice error" role="alert" hidden></p>
+      </section>
+      <div class="connection-layout">
+        <section class="card connection-list" aria-labelledby="connections-heading">
+          <h2 id="connections-heading">Your accounts</h2>
+          <p id="empty-state" class="muted small" hidden>Add your first account to get started.</p>
+          <ul id="instance-list" class="instance-list" aria-label="WhatsApp accounts"></ul>
+          <form id="create-form" class="create-form">
+            <label for="instance-name">Account name</label>
+            <input id="instance-name" name="name" placeholder="e.g. Customer support"
+                   maxlength="200" required disabled>
+            <button id="create-submit" class="secondary" type="submit" disabled>Add account</button>
+          </form>
+        </section>
+        <section class="card connection-detail" aria-labelledby="selected-name">
+          <div class="detail-heading">
+            <div>
+              <p class="eyebrow">Connection</p>
+              <h2 id="selected-name">Choose an account</h2>
+            </div>
+            <span id="connection-badge" class="badge">No account selected</span>
+          </div>
+          <p id="connection-message" class="muted">Select an account or add one to connect WhatsApp.</p>
+          <div id="connection-controls" class="button-row" hidden>
+            <button id="connect" type="button" disabled>Connect WhatsApp</button>
+            <button id="disconnect" class="secondary" type="button" disabled>Disconnect</button>
+            <button id="refresh" class="secondary" type="button" disabled>Refresh status</button>
+          </div>
+          <div id="qr-panel" class="qr-panel" hidden>
+            <div class="qr-image-wrap"><img id="qr-image" alt="QR code to connect your WhatsApp account"
+                width="256" height="256" hidden></div>
+            <div class="qr-instructions">
+              <h3>Link your WhatsApp account</h3>
+              <ol>
+                <li>Open WhatsApp on your phone.</li>
+                <li>Open <strong>Linked devices</strong> in Settings or the menu.</li>
+                <li>Tap <strong>Link a device</strong> and scan this code.</li>
+              </ol>
+              <p class="small muted">Keep this page open. It updates when your account connects.</p>
+            </div>
+          </div>
+          <p id="connection-status" class="small muted" role="status" aria-live="polite"></p>
+          <p id="connection-error" class="notice error" role="alert" tabindex="-1" hidden></p>
+        </section>
+      </div>
+      <section class="card product-section" aria-labelledby="knowledge-heading">
+        <h2 id="knowledge-heading">Business knowledge</h2>
+        <p class="muted small">Add helpful facts or questions and answers your assistant can use during calls.</p>
+        <form id="knowledge-form" class="stack">
+          <div><label for="knowledge-name">Title</label><input id="knowledge-name" maxlength="200" required disabled></div>
+          <div><label for="knowledge-text">Text or frequently asked questions</label><textarea id="knowledge-text" rows="6" maxlength="100000" required disabled></textarea></div>
+          <div><button type="submit" disabled>Add knowledge</button></div>
+        </form>
+        <form id="upload-form" class="stack">
+          <div><label for="knowledge-file">Upload a TXT, PDF, or DOCX file</label><input id="knowledge-file" type="file" accept=".txt,.pdf,.docx" required disabled aria-describedby="upload-help"><p id="upload-help" class="small muted">Up to 2 MB. Scanned documents need selectable text.</p></div>
+          <div><button type="submit" disabled>Upload document</button><button id="knowledge-retry" class="secondary" type="button" disabled>Refresh sources</button></div>
+        </form>
+        <p id="knowledge-status" class="small muted" role="status" aria-live="polite"></p>
+        <p id="knowledge-error" class="notice error" role="alert" hidden></p>
+        <ul id="source-list" class="source-list" aria-label="Knowledge sources"></ul>
+      </section>
+      <section class="card product-section" aria-labelledby="calls-heading">
+        <div class="detail-heading"><h2 id="calls-heading">Recent calls</h2><button id="calls-refresh" class="secondary" type="button" disabled>Refresh calls</button></div>
+        <p id="calls-status" class="small muted" role="status" aria-live="polite"></p>
+        <p id="calls-error" class="notice error" role="alert" hidden></p>
+        <ul id="call-list" class="instance-list" aria-label="Recent calls"></ul>
+        <section id="call-detail" hidden aria-labelledby="call-heading">
+          <h3 id="call-heading" tabindex="-1">Call details</h3>
+          <p id="call-meta" class="small muted"></p>
+          <h3>Summary</h3><p id="call-summary" class="preserve-lines"></p>
+          <h3>Outcome</h3><p id="call-outcome" class="preserve-lines"></p>
+          <h3>Transcript</h3><ol id="transcript" class="transcript"></ol>
+          <h3>Actions</h3><ul id="call-actions"></ul>
+        </section>
+      </section>
+      <noscript><p class="notice">Enable JavaScript to manage your WhatsApp connections.</p></noscript>
+    </main>
+  </body>
+</html>

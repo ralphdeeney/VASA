@@ -1,0 +1,61 @@
+{
+  "scope": "cloud-smoke",
+  "candidate": "piper",
+  "condition": "B",
+  "model_load_seconds": 0.606914529002097,
+  "cases": {
+    "short": {
+      "first_playable_max_seconds": 0.10213346300588455,
+      "first_playable_p50_seconds": 0.10213346300588455,
+      "first_playable_p95_seconds": 0.10213346300588455,
+      "first_playable_samples_seconds": [
+        0.10213346300588455
+      ],
+      "rtf_max": 0.10015719903201577,
+      "cpu_seconds_mean": 0.5121813399999997,
+      "peak_rss_mib": 289.76171875,
+      "max_chunk_starvation_seconds": 0
+    },
+    "sentence": {
+      "first_playable_max_seconds": 0.2695201409951551,
+      "first_playable_p50_seconds": 0.2695201409951551,
+      "first_playable_p95_seconds": 0.2695201409951551,
+      "first_playable_samples_seconds": [
+        0.2695201409951551
+      ],
+      "rtf_max": 0.11260378291808593,
+      "cpu_seconds_mean": 1.434935629,
+      "peak_rss_mib": 317.13671875,
+      "max_chunk_starvation_seconds": 0
+    },
+    "long": {
+      "first_playable_max_seconds": 0.19360757400136208,
+      "first_playable_p50_seconds": 0.19360757400136208,
+      "first_playable_p95_seconds": 0.19360757400136208,
+      "first_playable_samples_seconds": [
+        0.19360757400136208
+      ],
+      "rtf_max": 0.10950632513770102,
+      "cpu_seconds_mean": 6.187332152999999,
+      "peak_rss_mib": 357.51171875,
+      "max_chunk_starvation_seconds": 0.4090481430030195
+    }
+  },
+  "cancellation": [
+    {
+      "phase": "before_first_audio",
+      "consumer_cancellation_seconds": 0.21913468000275316,
+      "native_cleanup_drain_seconds": 0.007451217003108468,
+      "frames_after_cancel": 0,
+      "frames_before_cancel": 0
+    },
+    {
+      "phase": "playback",
+      "consumer_cancellation_seconds": 8.947199967224151e-05,
+      "native_cleanup_drain_seconds": 0.007370398998318706,
+      "frames_after_cancel": 0,
+      "frames_before_cancel": 1
+    }
+  ],
+  "selection": "Not automatic: actual VPS results and human voice review required"
+}

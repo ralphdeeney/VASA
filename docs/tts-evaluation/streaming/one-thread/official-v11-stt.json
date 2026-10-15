@@ -1,0 +1,404 @@
+{
+  "candidate": "official-v11",
+  "threads_per_model": 1,
+  "contention": true,
+  "cpu_affinity": [
+    0,
+    1
+  ],
+  "load_seconds": 3.8891519910030183,
+  "peak_rss_kib": 1696020,
+  "rows": [
+    {
+      "first_playable_seconds": 1.6945247760013444,
+      "complete_seconds": 1.6945732470012445,
+      "audio_seconds": 2.28,
+      "rtf": 0.7432338802637037,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Certainly, I can help.",
+          "start_seconds": 4.427001840667799e-06,
+          "ready_seconds": 1.6945042250008555,
+          "generation_seconds": 1.6944997979990148,
+          "process_cpu_seconds": 1.7556910119999989,
+          "audio_seconds": 2.28
+        }
+      ],
+      "boundaries": [],
+      "total_playback_underrun_seconds": 0.0,
+      "cpu_seconds": 1.7557801039999994,
+      "case": "short",
+      "text": "Certainly, I can help.",
+      "policy": "sentence",
+      "iteration": 0,
+      "wav": "official-v11-stt-short-sentence.wav"
+    },
+    {
+      "first_playable_seconds": 1.501951251000719,
+      "complete_seconds": 1.5019998230018246,
+      "audio_seconds": 2.28,
+      "rtf": 0.6587718521937828,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Certainly, I can help.",
+          "start_seconds": 4.80699964100495e-06,
+          "ready_seconds": 1.5019348860005266,
+          "generation_seconds": 1.5019300790008856,
+          "process_cpu_seconds": 1.5555532989999996,
+          "audio_seconds": 2.28
+        }
+      ],
+      "boundaries": [],
+      "total_playback_underrun_seconds": 0.0,
+      "cpu_seconds": 1.555639617999999,
+      "case": "short",
+      "text": "Certainly, I can help.",
+      "policy": "sentence",
+      "iteration": 1
+    },
+    {
+      "first_playable_seconds": 1.5206528839989915,
+      "complete_seconds": 1.5207030279998435,
+      "audio_seconds": 2.28,
+      "rtf": 0.6669750122806332,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Certainly, I can help.",
+          "start_seconds": 4.426001396495849e-06,
+          "ready_seconds": 1.5206349569998565,
+          "generation_seconds": 1.52063053099846,
+          "process_cpu_seconds": 1.5563380599999999,
+          "audio_seconds": 2.28
+        }
+      ],
+      "boundaries": [],
+      "total_playback_underrun_seconds": 0.0,
+      "cpu_seconds": 1.5564265109999997,
+      "case": "short",
+      "text": "Certainly, I can help.",
+      "policy": "sentence",
+      "iteration": 2
+    },
+    {
+      "first_playable_seconds": 3.085118415998295,
+      "complete_seconds": 3.0851993859978393,
+      "audio_seconds": 4.08,
+      "rtf": 0.7561763200975096,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Your appointment is confirmed for tomorrow morning at ten o'clock.",
+          "start_seconds": 4.45699697593227e-06,
+          "ready_seconds": 3.0850994779975736,
+          "generation_seconds": 3.0850950210005976,
+          "process_cpu_seconds": 3.245052664000001,
+          "audio_seconds": 4.08
+        }
+      ],
+      "boundaries": [],
+      "total_playback_underrun_seconds": 0.0,
+      "cpu_seconds": 3.2451722430000007,
+      "case": "sentence",
+      "text": "Your appointment is confirmed for tomorrow morning at ten o'clock.",
+      "policy": "sentence",
+      "iteration": 0,
+      "wav": "official-v11-stt-sentence-sentence.wav"
+    },
+    {
+      "first_playable_seconds": 2.822596030000568,
+      "complete_seconds": 2.8226799049989495,
+      "audio_seconds": 4.08,
+      "rtf": 0.6918333100487621,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Your appointment is confirmed for tomorrow morning at ten o'clock.",
+          "start_seconds": 6.119000317994505e-06,
+          "ready_seconds": 2.8225824599976477,
+          "generation_seconds": 2.8225763409973297,
+          "process_cpu_seconds": 2.930960454000001,
+          "audio_seconds": 4.08
+        }
+      ],
+      "boundaries": [],
+      "total_playback_underrun_seconds": 0.0,
+      "cpu_seconds": 2.9310831660000005,
+      "case": "sentence",
+      "text": "Your appointment is confirmed for tomorrow morning at ten o'clock.",
+      "policy": "sentence",
+      "iteration": 1
+    },
+    {
+      "first_playable_seconds": 2.788746007001464,
+      "complete_seconds": 2.788827748001495,
+      "audio_seconds": 4.08,
+      "rtf": 0.6835362127454644,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "Your appointment is confirmed for tomorrow morning at ten o'clock.",
+          "start_seconds": 4.426998202688992e-06,
+          "ready_seconds": 2.7887032739999995,
+          "generation_seconds": 2.788698847001797,
+          "process_cpu_seconds": 2.901673713000001,
+          "audio_seconds": 4.08
+        }
+      ],
+      "boundaries": [],
+      "total_playback_underrun_seconds": 0.0,
+      "cpu_seconds": 2.9018199299999985,
+      "case": "sentence",
+      "text": "Your appointment is confirmed for tomorrow morning at ten o'clock.",
+      "policy": "sentence",
+      "iteration": 2
+    },
+    {
+      "first_playable_seconds": 2.0315222999997786,
+      "complete_seconds": 13.457656526999926,
+      "audio_seconds": 17.52,
+      "rtf": 0.768131080308215,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "I can help you arrange an appointment.",
+          "start_seconds": 5.056997906649485e-06,
+          "ready_seconds": 2.0315041129979363,
+          "generation_seconds": 2.0314990560000297,
+          "process_cpu_seconds": 2.1071908740000005,
+          "audio_seconds": 2.76
+        },
+        {
+          "index": 1,
+          "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+          "start_seconds": 2.0315951480006333,
+          "ready_seconds": 6.226002519000758,
+          "generation_seconds": 4.194407371000125,
+          "process_cpu_seconds": 4.361916470000001,
+          "audio_seconds": 5.4
+        },
+        {
+          "index": 2,
+          "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+          "start_seconds": 6.226121334999334,
+          "ready_seconds": 10.321904981999978,
+          "generation_seconds": 4.095783647000644,
+          "process_cpu_seconds": 4.281328887999997,
+          "audio_seconds": 5.34
+        },
+        {
+          "index": 3,
+          "text": "If your plans change, you can contact our team to reschedule.",
+          "start_seconds": 10.322022787000606,
+          "ready_seconds": 13.457527586000651,
+          "generation_seconds": 3.1355047990000458,
+          "process_cpu_seconds": 3.2927811810000023,
+          "audio_seconds": 4.02
+        }
+      ],
+      "boundaries": [
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.0,
+          "right_100ms_rms": 0.0,
+          "playback_underrun_seconds": 1.434498406002822
+        },
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.0,
+          "right_100ms_rms": 0.0,
+          "playback_underrun_seconds": 0.0
+        },
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.0,
+          "right_100ms_rms": 0.0,
+          "playback_underrun_seconds": 0.0
+        }
+      ],
+      "total_playback_underrun_seconds": 1.434498406002822,
+      "cpu_seconds": 14.044134184,
+      "case": "long",
+      "text": "I can help you arrange an appointment. Please tell me which day works best for you and whether you prefer the morning or afternoon. Once I have checked the available times, I will read the details back so you can confirm them. If your plans change, you can contact our team to reschedule.",
+      "policy": "sentence",
+      "iteration": 0,
+      "wav": "official-v11-stt-long-sentence.wav"
+    },
+    {
+      "first_playable_seconds": 1.7961586179990263,
+      "complete_seconds": 11.938194897000358,
+      "audio_seconds": 17.52,
+      "rtf": 0.6814038183219382,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "I can help you arrange an appointment.",
+          "start_seconds": 5.337999027688056e-06,
+          "ready_seconds": 1.796141352999257,
+          "generation_seconds": 1.7961360150002292,
+          "process_cpu_seconds": 1.8628731920000021,
+          "audio_seconds": 2.76
+        },
+        {
+          "index": 1,
+          "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+          "start_seconds": 1.7962126479978906,
+          "ready_seconds": 5.537373750998086,
+          "generation_seconds": 3.741161103000195,
+          "process_cpu_seconds": 3.886927569000001,
+          "audio_seconds": 5.4
+        },
+        {
+          "index": 2,
+          "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+          "start_seconds": 5.53752696799711,
+          "ready_seconds": 9.196517704000144,
+          "generation_seconds": 3.658990736003034,
+          "process_cpu_seconds": 3.8351495200000016,
+          "audio_seconds": 5.34
+        },
+        {
+          "index": 3,
+          "text": "If your plans change, you can contact our team to reschedule.",
+          "start_seconds": 9.196631942999375,
+          "ready_seconds": 11.938088298997172,
+          "generation_seconds": 2.741456355997798,
+          "process_cpu_seconds": 2.8540257900000015,
+          "audio_seconds": 4.02
+        }
+      ],
+      "boundaries": [
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.0,
+          "right_100ms_rms": 0.0,
+          "playback_underrun_seconds": 0.9812323979988289
+        },
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.0,
+          "right_100ms_rms": 0.0,
+          "playback_underrun_seconds": 0.0
+        },
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.0,
+          "right_100ms_rms": 0.0,
+          "playback_underrun_seconds": 0.0
+        }
+      ],
+      "total_playback_underrun_seconds": 0.9812323979988289,
+      "cpu_seconds": 12.441433629999999,
+      "case": "long",
+      "text": "I can help you arrange an appointment. Please tell me which day works best for you and whether you prefer the morning or afternoon. Once I have checked the available times, I will read the details back so you can confirm them. If your plans change, you can contact our team to reschedule.",
+      "policy": "sentence",
+      "iteration": 1
+    },
+    {
+      "first_playable_seconds": 1.8487990600006015,
+      "complete_seconds": 11.931547324998974,
+      "audio_seconds": 17.52,
+      "rtf": 0.6810243906962885,
+      "chunks": [
+        {
+          "index": 0,
+          "text": "I can help you arrange an appointment.",
+          "start_seconds": 8.373001037398353e-06,
+          "ready_seconds": 1.8487807429992245,
+          "generation_seconds": 1.848772369998187,
+          "process_cpu_seconds": 1.9256340979999962,
+          "audio_seconds": 2.76
+        },
+        {
+          "index": 1,
+          "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+          "start_seconds": 1.848851927999931,
+          "ready_seconds": 5.601159035999444,
+          "generation_seconds": 3.7523071079995134,
+          "process_cpu_seconds": 3.885086732000005,
+          "audio_seconds": 5.4
+        },
+        {
+          "index": 2,
+          "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+          "start_seconds": 5.601279324000643,
+          "ready_seconds": 9.301818145999277,
+          "generation_seconds": 3.7005388219986344,
+          "process_cpu_seconds": 3.8675577020000063,
+          "audio_seconds": 5.34
+        },
+        {
+          "index": 3,
+          "text": "If your plans change, you can contact our team to reschedule.",
+          "start_seconds": 9.30193142400094,
+          "ready_seconds": 11.931447476999892,
+          "generation_seconds": 2.6295160529989516,
+          "process_cpu_seconds": 2.729867937999998,
+          "audio_seconds": 4.02
+        }
+      ],
+      "boundaries": [
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.0,
+          "right_100ms_rms": 0.0,
+          "playback_underrun_seconds": 0.9923782930002201
+        },
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.0,
+          "right_100ms_rms": 0.0,
+          "playback_underrun_seconds": 0.0
+        },
+        {
+          "sample_step": 0.0,
+          "left_100ms_rms": 0.0,
+          "right_100ms_rms": 0.0,
+          "playback_underrun_seconds": 0.0
+        }
+      ],
+      "total_playback_underrun_seconds": 0.9923782930002201,
+      "cpu_seconds": 12.409004455000002,
+      "case": "long",
+      "text": "I can help you arrange an appointment. Please tell me which day works best for you and whether you prefer the morning or afternoon. Once I have checked the available times, I will read the details back so you can confirm them. If your plans change, you can contact our team to reschedule.",
+      "policy": "sentence",
+      "iteration": 2
+    }
+  ],
+  "stt_utterances": [
+    {
+      "wall_seconds": 6.992501374999847,
+      "text": "AFTER EARLY NIGHTFALL THE YELLOW LAMPS WOULD LIGHT UP HERE AND THERE THE SQUALID QUARTER OF THE BROFFELS"
+    },
+    {
+      "wall_seconds": 7.01199287000054,
+      "text": "AFTER EARLY NIGHTFALL THE YELLOW LAMPS WOULD LIGHT UP HERE AND THERE THE SQUALID QUARTER OF THE BROFFELS"
+    },
+    {
+      "wall_seconds": 7.000927758999751,
+      "text": "AFTER EARLY NIGHTFALL THE YELLOW LAMPS WOULD LIGHT UP HERE AND THERE THE SQUALID QUARTER OF THE BROFFELS"
+    },
+    {
+      "wall_seconds": 7.005914325996855,
+      "text": "AFTER EARLY NIGHTFALL THE YELLOW LAMPS WOULD LIGHT UP HERE AND THERE THE SQUALID QUARTER OF THE BROFFELS"
+    },
+    {
+      "wall_seconds": 6.979363057002047,
+      "text": "AFTER EARLY NIGHTFALL THE YELLOW LAMPS WOULD LIGHT UP HERE AND THERE THE SQUALID QUARTER OF THE BROFFELS"
+    },
+    {
+      "wall_seconds": 7.016440486000647,
+      "text": "AFTER EARLY NIGHTFALL THE YELLOW LAMPS WOULD LIGHT UP HERE AND THERE THE SQUALID QUARTER OF THE BROFFELS"
+    },
+    {
+      "wall_seconds": 7.004589273001329,
+      "text": "AFTER EARLY NIGHTFALL THE YELLOW LAMPS WOULD LIGHT UP HERE AND THERE THE SQUALID QUARTER OF THE BROFFELS"
+    },
+    {
+      "wall_seconds": 3.672998761998315,
+      "text": "AFTER EARLY NIGHTFALL THE YELLOW LAMPS WOULD LIGHT UP"
+    }
+  ]
+}

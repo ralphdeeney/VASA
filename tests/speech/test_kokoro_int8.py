@@ -1,0 +1,309 @@
+import asyncio
+import hashlib
+import threading
+from collections.abc import AsyncGenerator, Callable
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any, cast
+
+import numpy as np
+import pytest
+
+from vasa.contracts.models import AudioFrame
+from vasa.speech import kokoro
+
+
+def fake_provider(
+    monkeypatch: pytest.MonkeyPatch,
+    generate: Callable[..., Any],
+    *,
+    streams: int = 2,
+    **options: Any,
+) -> tuple[kokoro.KokoroInt8TTS, list[dict[str, Any]]]:
+    original_import = kokoro.importlib.import_module
+    configs: list[dict[str, Any]] = []
+
+    def model_config(**kwargs: Any) -> dict[str, Any]:
+        configs.append(kwargs)
+        return kwargs
+
+    native = SimpleNamespace(
+        OfflineTtsKokoroModelConfig=lambda **kw: kw,
+        OfflineTtsModelConfig=model_config,
+        OfflineTtsConfig=lambda **kw: kw,
+        OfflineTts=lambda _: SimpleNamespace(generate=generate, sample_rate=16000),
+    )
+    monkeypatch.setattr(kokoro, "verify_kokoro_int8", lambda _: None)
+    monkeypatch.setattr(
+        kokoro.importlib,
+        "import_module",
+        lambda name: native if name == "sherpa_onnx" else original_import(name),
+    )
+    return kokoro.KokoroInt8TTS(Path("unused"), max_streams=streams, **options), configs
+
+
+async def test_frame_format_chunk_order_and_model_reuse(monkeypatch: pytest.MonkeyPatch) -> None:
+    texts: list[str] = []
+
+    def generate(text: str, **_: Any) -> SimpleNamespace:
+        texts.append(text)
+        return SimpleNamespace(sample_rate=24000, samples=np.full(2400, 0.2, np.float32))
+
+    provider, configs = fake_provider(monkeypatch, generate)
+    try:
+        first = [frame async for frame in provider.synthesize("Yes, I can help. Tomorrow works.")]
+        second = [frame async for frame in provider.synthesize("Welcome.")]
+        assert texts == ["Yes, I can help.", "Tomorrow works.", "Welcome."]
+        assert len(configs) == 1 and configs[0]["num_threads"] == 1
+        assert len(first) == 4 and len(second) == 2
+        assert [frame.sequence for frame in first] == list(range(4))
+        assert all(len(frame.pcm) == 1920 and frame.sample_rate == 16000 for frame in first)
+        assert any(first[0].pcm) and first[1].pcm[-640:] == bytes(640)
+    finally:
+        await provider.aclose()
+
+
+async def test_barge_in_detaches_consumer_but_retains_native_admission(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    entered, release = threading.Event(), threading.Event()
+    callback_results: list[int] = []
+
+    def generate(_: str, **kwargs: Any) -> SimpleNamespace:
+        entered.set()
+        assert release.wait(5)
+        callback_results.append(kwargs["callback"](np.zeros(1, np.float32), 1.0))
+        return SimpleNamespace(sample_rate=16000, samples=np.ones(960, np.float32))
+
+    provider, _ = fake_provider(monkeypatch, generate)
+    output = cast(AsyncGenerator[AudioFrame, None], provider.synthesize("Hello."))
+    pending = asyncio.create_task(anext(output))
+    try:
+        assert await asyncio.to_thread(entered.wait, 2)
+        pending.cancel()
+        pending.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await asyncio.wait_for(pending, 0.2)
+        assert len(provider._pending) == 1 and provider._slot.locked()
+        replacement = cast(AsyncGenerator[AudioFrame, None], provider.synthesize("Again."))
+        waiting = asyncio.create_task(anext(replacement))
+        await asyncio.sleep(0.03)
+        assert not waiting.done() and len(provider._pending) == 1
+        waiting.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await asyncio.wait_for(waiting, 0.2)
+        await replacement.aclose()
+        closer = asyncio.create_task(provider.aclose())
+        await asyncio.sleep(0)
+        closer.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await closer
+        release.set()
+        await provider.aclose()
+        await provider.aclose()
+        assert callback_results == [0]
+        assert not provider._pending and not provider._slot.locked()
+        assert provider._model is None
+    finally:
+        release.set()
+        await output.aclose()
+        await provider.aclose()
+
+
+async def test_stalled_outputs_remain_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
+    def generate(_: str, **__: Any) -> SimpleNamespace:
+        return SimpleNamespace(sample_rate=16000, samples=np.ones(1920, np.float32))
+
+    provider, _ = fake_provider(monkeypatch, generate, streams=1)
+    first = cast(AsyncGenerator[AudioFrame, None], provider.synthesize("First."))
+    second = cast(AsyncGenerator[AudioFrame, None], provider.synthesize("Second."))
+    pending: asyncio.Task[AudioFrame] | None = None
+    try:
+        assert len((await anext(first)).pcm) == 1920
+        pending = asyncio.create_task(anext(second))
+        await asyncio.sleep(0.03)
+        assert not pending.done() and not provider._pending
+        await first.aclose()
+        assert len((await asyncio.wait_for(pending, 1)).pcm) == 1920
+    finally:
+        if pending is not None and not pending.done():
+            pending.cancel()
+            await asyncio.gather(pending, return_exceptions=True)
+        await first.aclose()
+        await second.aclose()
+        await provider.aclose()
+
+
+@pytest.mark.parametrize("field", ["num_threads", "max_streams"])
+@pytest.mark.parametrize("value", [0, 11, True, 1.5])
+def test_worker_limits_rejected_before_model_load(field: str, value: int) -> None:
+    with pytest.raises(ValueError, match="worker limits"):
+        kokoro.KokoroInt8TTS(Path("missing"), **{field: value})
+
+
+def test_chunk_validation_and_bounds() -> None:
+    chunks = kokoro.kokoro_chunks("A" * 480 + "; another clause, and a sentence.")
+    assert all(0 < len(chunk) <= 240 for chunk in chunks)
+    assert chunks[-1].endswith("another clause, and a sentence.")
+    for invalid in [" ", "A" * 2001, "Hello\x00"]:
+        with pytest.raises(ValueError):
+            kokoro.kokoro_chunks(invalid)
+
+
+def test_short_acknowledgement_stays_whole_and_long_clauses_are_meaningful() -> None:
+    assert kokoro.kokoro_chunks("Certainly, I can help.") == ["Certainly, I can help."]
+    sentence = (
+        "Please tell me which day works best for your appointment, "
+        "and whether you prefer the morning or afternoon, "
+        "so that our team can find an available time and confirm the details with you."
+    )
+    chunks = kokoro.kokoro_chunks(sentence)
+    assert len(chunks) == 3
+    assert all(len(chunk.split()) >= 5 and len(chunk) <= 240 for chunk in chunks)
+    assert " ".join(chunks) == sentence
+
+
+def test_long_sentence_does_not_emit_a_tiny_introductory_clause() -> None:
+    sentence = (
+        "Yes, please tell me which day works best for your appointment, "
+        "and whether you prefer the morning or afternoon, "
+        "so that our team can find an available time and confirm the details with you."
+    )
+    chunks = kokoro.kokoro_chunks(sentence)
+    assert chunks[0].startswith("Yes, please tell me")
+    assert all(len(chunk.split()) >= 5 and len(chunk) <= 120 for chunk in chunks)
+    assert " ".join(chunks) == sentence
+
+
+def test_corrupt_assets_and_phonemizer_fail_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    model = tmp_path / "model.int8.onnx"
+    model.write_bytes(b"verified")
+    monkeypatch.setattr(
+        kokoro, "KOKORO_INT8_FILES", {model.name: hashlib.sha256(b"verified").hexdigest()}
+    )
+    data = tmp_path / "espeak-ng-data"
+    data.mkdir()
+    monkeypatch.setattr(kokoro, "ESPEAK_TREE_SHA256", hashlib.sha256().hexdigest())
+    kokoro.verify_kokoro_int8(tmp_path)
+    model.write_bytes(b"corrupt")
+    with pytest.raises(RuntimeError, match="invalid"):
+        kokoro.verify_kokoro_int8(tmp_path)
+    model.write_bytes(b"verified")
+    (data / "rogue").write_bytes(b"corrupt")
+    with pytest.raises(RuntimeError, match="invalid"):
+        kokoro.verify_kokoro_int8(tmp_path)
+    (data / "rogue").unlink()
+    (data / "link").symlink_to(model)
+    with pytest.raises(RuntimeError, match="invalid"):
+        kokoro.verify_kokoro_int8(tmp_path)
+
+
+@pytest.mark.parametrize("samples", [[], [float("nan")], [[0.1]]])
+async def test_invalid_native_output_fails(
+    monkeypatch: pytest.MonkeyPatch, samples: list[Any]
+) -> None:
+    provider, _ = fake_provider(
+        monkeypatch, lambda *args, **kwargs: SimpleNamespace(sample_rate=16000, samples=samples)
+    )
+    try:
+        with pytest.raises(RuntimeError, match="Invalid native"):
+            await anext(provider.synthesize("Hello."))
+    finally:
+        await provider.aclose()
+
+
+async def test_callback_audio_is_playable_before_generate_returns_without_duplication(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    release = threading.Event()
+
+    def generate(_: str, **kwargs: Any) -> SimpleNamespace:
+        assert kwargs["callback"](np.full(480, 0.1, np.float32), 0.5) == 1
+        assert kwargs["callback"](np.full(480, 0.2, np.float32), 1.0) == 1
+        assert release.wait(2)
+        return SimpleNamespace(sample_rate=16000, samples=np.full(960, 0.9, np.float32))
+
+    provider, _ = fake_provider(monkeypatch, generate)
+    output = cast(AsyncGenerator[AudioFrame, None], provider.synthesize("Hello."))
+    try:
+        first = await asyncio.wait_for(anext(output), 1)
+        assert len(first.pcm) == 1920
+        assert np.frombuffer(first.pcm, dtype="<i2")[0] == 3276
+        assert np.frombuffer(first.pcm, dtype="<i2")[480] == 6553
+        assert provider._slot.locked()
+        release.set()
+        assert [frame async for frame in output] == []
+    finally:
+        release.set()
+        await output.aclose()
+        await provider.aclose()
+
+
+async def test_callback_backpressure_is_bounded_and_close_unblocks_producer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    finished = threading.Event()
+    accepted: list[int] = []
+
+    def generate(_: str, **kwargs: Any) -> SimpleNamespace:
+        for _ in range(100):
+            value = kwargs["callback"](np.ones(960, np.float32), 0.5)
+            accepted.append(value)
+            if value == 0:
+                break
+        finished.set()
+        return SimpleNamespace(sample_rate=16000, samples=np.ones(960, np.float32))
+
+    provider, _ = fake_provider(monkeypatch, generate, queue_frames=2)
+    output = cast(AsyncGenerator[AudioFrame, None], provider.synthesize("Certainly, I can help."))
+    try:
+        await anext(output)
+        await asyncio.sleep(0.1)
+        assert not finished.is_set() and len(accepted) <= 3
+        await asyncio.wait_for(output.aclose(), 0.2)
+        await asyncio.wait_for(provider.aclose(), 1)
+        assert finished.is_set() and accepted[-1] == 0
+        assert provider._cache_size == 0
+    finally:
+        await output.aclose()
+        await provider.aclose()
+
+
+async def test_cache_is_generic_only_bounded_and_avoids_native_work(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    texts: list[str] = []
+
+    def generate(text: str, **_: Any) -> SimpleNamespace:
+        texts.append(text)
+        return SimpleNamespace(sample_rate=16000, samples=np.ones(960, np.float32))
+
+    provider, _ = fake_provider(monkeypatch, generate, cache_bytes=1920)
+    try:
+        for text in [
+            "Thank you.",
+            "Thank you.",
+            "Private booking 124.",
+            "Private booking 124.",
+            "One moment, please.",
+        ]:
+            async for _ in provider.synthesize(text):
+                pass
+        assert texts.count("Thank you.") == 1
+        assert texts.count("Private booking 124.") == 2
+        assert list(provider._cache) == ["One moment, please."]
+        assert provider._cache_size == 1920
+        async for _ in provider.synthesize("Thank you."):
+            pass
+        assert texts.count("Thank you.") == 2
+    finally:
+        await provider.aclose()
+
+
+def test_custom_business_text_cannot_be_added_to_shared_cache() -> None:
+    with pytest.raises(ValueError, match="server-owned"):
+        kokoro.KokoroInt8TTS(
+            Path("missing"), cache_phrases=["Your account balance is ten dollars."]
+        )

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "scope": "Synthetic native CPU component stress; no live provider or phone capacity claim",
+  "runner": "python -m scripts.benchmark_capacity",
+  "cases": [
+    {"id": "ten_shared_native_utterances", "concurrency": 10, "rounds": 3, "frame_ms": 60, "deadline_seconds_per_round": 120, "acceptance": "Every utterance yields nonempty native recognition and valid mono 16 kHz PCM16 output"},
+    {"id": "repeated_native_cancellation", "concurrency": 10, "rounds": 3, "cancellations_per_task": 2, "deadline_seconds": 10, "acceptance": "All native synthesis/recognition tasks cancel; later round remains usable"},
+    {"id": "native_pool_cleanup", "deadline_seconds": 10, "acceptance": "No residual call tasks or vasa-stt/vasa-tts worker threads"}
+  ],
+  "latency_threshold_claim": null,
+  "unobserved": ["WhatsApp delivery and playback", "real LLM first token", "remote dropped frames", "internal queue depth"]
+}

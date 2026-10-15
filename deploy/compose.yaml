@@ -1,0 +1,186 @@
+name: vasa-vps
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17@sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d
+    user: "999:999"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Set POSTGRES_USER in .local/vps.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .local/vps.env}
+      POSTGRES_DB: ${POSTGRES_DB:?Set POSTGRES_DB in .local/vps.env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 20s
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 2g
+    cpus: 2
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine@sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499
+    user: "999:999"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .local/vps.env}
+    command:
+      - /bin/sh
+      - -c
+      - 'exec redis-server --requirepass "$${REDIS_PASSWORD}" --appendonly yes --maxmemory 128mb --maxmemory-policy noeviction'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", 'REDISCLI_AUTH="$${REDIS_PASSWORD}" redis-cli --no-auth-warning ping | grep -qx PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 24
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 256m
+    cpus: 1
+    restart: unless-stopped
+
+  evolution:
+    image: vasa-evolution-calls:e21ce0dd
+    build:
+      context: ../.local/evolution-source
+      dockerfile: ../../docker/evolution.Dockerfile
+    user: "1000:1000"
+    environment:
+      SERVER_PORT: "4000"
+      CLIENT_NAME: vasa
+      GLOBAL_API_KEY: ${GLOBAL_API_KEY:?Set GLOBAL_API_KEY in .local/vps.env}
+      CALL_STREAM_SIGNING_KEY: ${CALL_STREAM_SIGNING_KEY:?Set CALL_STREAM_SIGNING_KEY in .local/vps.env}
+      DATABASE_SAVE_MESSAGES: "false"
+      POSTGRES_AUTH_DB: postgresql://${POSTGRES_USER:?required}:${POSTGRES_PASSWORD:?required}@postgres:5432/vasa_evolution_auth?sslmode=disable
+      POSTGRES_USERS_DB: postgresql://${POSTGRES_USER:?required}:${POSTGRES_PASSWORD:?required}@postgres:5432/vasa_evolution_users?sslmode=disable
+      WADEBUG: WARN
+      LOGTYPE: console
+      LOG_DIRECTORY: /app/logs
+      WEBHOOK_FILES: "false"
+      WEBHOOK_URL: ""
+      CONNECT_ON_STARTUP: "false"
+      MINIO_ENABLED: "false"
+      AMQP_GLOBAL_ENABLED: "false"
+      NATS_GLOBAL_ENABLED: "false"
+      OS_NAME: VASA
+      TZ: UTC
+      NO_PROXY: localhost,127.0.0.1,evolution,postgres,redis
+      # Set both forms: urllib prefers injected lowercase proxy configuration.
+      no_proxy: localhost,127.0.0.1,evolution,postgres,redis
+    ports:
+      - "127.0.0.1:${EVOLUTION_PORT:-18080}:4000"
+    volumes:
+      - evolution-data:/app/dbdata
+      - evolution-logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:4000/server/ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 20s
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 2g
+    cpus: 2
+    restart: unless-stopped
+
+  vasa:
+    image: vasa-app:pinned
+    build:
+      context: ..
+      dockerfile: docker/vasa.Dockerfile
+    user: "1000:1000"
+    env_file:
+      - path: ../.local/llm.env
+        required: false
+    environment: &vasa-environment
+      VASA_ENVIRONMENT: production
+      VASA_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?required}:${POSTGRES_PASSWORD:?required}@postgres:5432/${POSTGRES_DB:?required}
+      VASA_REDIS_URL: redis://:${REDIS_PASSWORD:?required}@redis:6379/0
+      VASA_EVOLUTION_BASE_URL: http://evolution:4000
+      VASA_EVOLUTION_ADMIN_KEY: ${GLOBAL_API_KEY:?required}
+      VASA_EVOLUTION_STREAM_KEY: ${CALL_STREAM_SIGNING_KEY:?required}
+      VASA_EVOLUTION_INSTANCE_KEY: ${VASA_EVOLUTION_INSTANCE_KEY:?Set VASA_EVOLUTION_INSTANCE_KEY in .local/vps.env}
+      PYTHONDONTWRITEBYTECODE: "1"
+      NO_PROXY: localhost,127.0.0.1,evolution,postgres,redis
+      # Set both forms: urllib prefers injected lowercase proxy configuration.
+      no_proxy: localhost,127.0.0.1,evolution,postgres,redis
+    ports:
+      - "127.0.0.1:${VASA_API_PORT:-18081}:8080"
+    volumes:
+      # Verified CPU models and diagnostic reports; no caller recording.
+      - vasa-diagnostics:/opt/vasa/.local
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      evolution:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health/ready', timeout=2).close()"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 20s
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    cpus: 1
+    restart: unless-stopped
+
+  voice:
+    image: vasa-app:pinned
+    profiles: ["voice"]
+    user: "1000:1000"
+    command: ["python", "-m", "vasa.voice_worker", "--all"]
+    env_file:
+      - path: ../.local/llm.env
+        required: false
+    environment:
+      <<: *vasa-environment
+      VASA_MAX_ACTIVE_CALLS: ${VASA_MAX_ACTIVE_CALLS:-2}
+      VASA_TTS_PROVIDER: ${VASA_TTS_PROVIDER:-deepgram}
+      VASA_DEEPGRAM_MODEL: ${VASA_DEEPGRAM_MODEL:-aura-2-thalia-en}
+      VASA_SPEECHIFY_VOICE_ID: ${VASA_SPEECHIFY_VOICE_ID:-geffen_32}
+      VASA_KITTEN_MODEL_DIR: /opt/vasa/.local/speech/kitten-micro
+      VASA_KITTEN_NUM_THREADS: ${VASA_KITTEN_NUM_THREADS:-1}
+      VASA_KOKORO_MODEL_DIR: /opt/vasa/.local/speech/kokoro-int8
+      VASA_KOKORO_NUM_THREADS: ${VASA_KOKORO_NUM_THREADS:-1}
+      VASA_STT_NUM_THREADS: ${VASA_STT_NUM_THREADS:-1}
+    volumes:
+      - vasa-diagnostics:/opt/vasa/.local:ro
+    depends_on:
+      vasa:
+        condition: service_healthy
+    # Worker has no HTTP server. Process supervision and call admission are separate.
+    healthcheck:
+      disable: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 1g
+    cpus: 2
+    restart: unless-stopped
+
+volumes:
+  # Retain these across restart/redeployment. Never use `down --volumes` to troubleshoot.
+  # Evolution auth/users databases (including runtime_configs license state) share postgres-data.
+  postgres-data:
+  redis-data:
+  evolution-data:
+  evolution-logs:
+  vasa-diagnostics:

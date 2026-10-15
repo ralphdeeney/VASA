@@ -1,0 +1,18 @@
+{
+  "status": "pending_secure_key_and_live_validation",
+  "actual_vps": false,
+  "live_requests": 0,
+  "model": "aura-2-thalia-en",
+  "default_changed": false,
+  "first_playable_p50_seconds": null,
+  "first_playable_p90_seconds": null,
+  "first_playable_p95_seconds": null,
+  "effective_rtf": null,
+  "cpu_seconds": null,
+  "peak_rss_mib": null,
+  "cancellation_seconds": null,
+  "max_starvation_seconds": null,
+  "human_listening": "pending",
+  "production_default": "kokoro-int8",
+  "recommendation": "No promotion; secure DEEPGRAM_API_KEY gate precedes live validation"
+}

@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "artifacts": {
+    "kokoro-int8": {
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_1.tar.bz2",
+      "sha256": "a1e94694776049035c4f2c6529f003aaece993c76aae9a78995831c3c4dcafc6",
+      "files": {
+        "model.int8.onnx": "bda15858163726a492d02a9a727bc263551b86ac77f90812c4b30ff41d380e26",
+        "voices.bin": "e64a5a581d8c2a350d848f51c3121657cd83aa07ed6109172177345874a7244c",
+        "tokens.txt": "931ab2df2400cd65d580a22402024c2347ced8ae9ea300e545144b1aacc48e14",
+        "lexicon-us-en.txt": "7daaab53a181be9885b853a8582bf1838186317e5dadacbcef9c426d6fa0da14",
+        "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    },
+    "piper-libritts": {
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-libritts_r-medium.tar.bz2",
+      "sha256": "10dc268f3e371696d721486123e2705a9fc1faa113491979fde4d88dba1f1b1c",
+      "files": {
+        "en_US-libritts_r-medium.onnx": "8cce84cee4060bc3c2194bf95d33253c48dc8ff15e197b3b7a00b334ee0017f4",
+        "tokens.txt": "620e1aecf1a68fea3ba5850d137b0138fa2037c9b372dad13b95a2a215d0849a",
+        "MODEL_CARD": "0ccde6927e5bb4d743f4ea39618a9387ba18cca3351220a8a9cfdbc68b30fcb9"
+      }
+    }
+  }
+}

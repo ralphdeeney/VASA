@@ -1,0 +1,52 @@
+{
+  "default_provider": "kokoro-int8",
+  "asr": {
+    "source": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-20M-2023-02-17/resolve/d42f2d9f7ca24806fb667456a18a9f1b60f70d16/",
+    "commit": "d42f2d9f7ca24806fb667456a18a9f1b60f70d16",
+    "sha256": {
+      "encoder-epoch-99-avg-1.int8.onnx": "3810755ce7c3ab26b42a8bcf39d191308fa27fb0f53358823ba46141d03b7eb3",
+      "decoder-epoch-99-avg-1.onnx": "45a7f940ecfb53d89fa270ad11b88b961e53a317203eb24b1c8e95ed208b0f30",
+      "joiner-epoch-99-avg-1.int8.onnx": "e085d73b593cf9b0707f370dbd656d58327d3fe36d80d849202ef81df02cb01e",
+      "tokens.txt": "49e3c2646595fd907228b3c6787069658f67b17377c60aeb8619c4551b2316fb",
+      "README.md": "505f6b0e8a39f066a0794c4fb0b5689533d3bcd9d1dc5e5f47ccffeef1af9877"
+    },
+    "license": "Apache-2.0 model; LibriSpeech public-domain recordings"
+  },
+  "tts": {
+    "provider": "piper",
+    "source": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-libritts_r-medium.tar.bz2",
+    "archive_sha256": "10dc268f3e371696d721486123e2705a9fc1faa113491979fde4d88dba1f1b1c",
+    "sha256": {
+      "en_US-libritts_r-medium.onnx": "8cce84cee4060bc3c2194bf95d33253c48dc8ff15e197b3b7a00b334ee0017f4",
+      "tokens.txt": "620e1aecf1a68fea3ba5850d137b0138fa2037c9b372dad13b95a2a215d0849a",
+      "MODEL_CARD": "0ccde6927e5bb4d743f4ea39618a9387ba18cca3351220a8a9cfdbc68b30fcb9"
+    },
+    "espeak_tree_sha256": "e9c56f8c7cc79f16b1a2dc482074ed777e5b881da2a215a6f99630284dc4b3b8",
+    "model_card": "piper/MODEL_CARD",
+    "dataset_license": "LibriTTS-R CC BY 4.0; see model card",
+    "phonemizer_license": "espeak-ng GPL-3.0-or-later"
+  },
+  "kokoro-int8": {
+    "source": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_1.tar.bz2",
+    "archive_sha256": "a1e94694776049035c4f2c6529f003aaece993c76aae9a78995831c3c4dcafc6",
+    "sha256": {
+      "model.int8.onnx": "bda15858163726a492d02a9a727bc263551b86ac77f90812c4b30ff41d380e26",
+      "voices.bin": "e64a5a581d8c2a350d848f51c3121657cd83aa07ed6109172177345874a7244c",
+      "tokens.txt": "931ab2df2400cd65d580a22402024c2347ced8ae9ea300e545144b1aacc48e14",
+      "lexicon-us-en.txt": "7daaab53a181be9885b853a8582bf1838186317e5dadacbcef9c426d6fa0da14",
+      "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "espeak_tree_sha256": "e9c56f8c7cc79f16b1a2dc482074ed777e5b881da2a215a6f99630284dc4b3b8",
+    "license": "Apache-2.0 model; eSpeak phonemizer GPL-3.0-or-later"
+  },
+  "fixtures": {
+    "source": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-en-20M-2023-02-17/resolve/d42f2d9f7ca24806fb667456a18a9f1b60f70d16/test_wavs/",
+    "sha256": {
+      "0.wav": "6bc58a4efdf20daac252b6b1502632601a71efe0308f6757dc1eda34891a7e4f",
+      "1.wav": "5143a6ba93c4b274e2c4ac22deb75c2c48936c853f0519add1de828b6c79cc5a",
+      "8k.wav": "f6f3c8b33e2534cdc154fe773ad2750f1f6a2ca5096179cdf037ae782456613e",
+      "trans.txt": "b9ac44e7b794abb1a2d5faf0005e98a665971e7ac2ed15435832cc34edaa9100"
+    },
+    "license": "LibriSpeech recordings from public-domain audiobooks"
+  }
+}

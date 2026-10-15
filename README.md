@@ -137,3 +137,81 @@ VASA V1 focuses on one thing:
 > **Reliable AI-powered inbound WhatsApp voice conversations with business tool execution.**
 
 Advanced billing, outbound calling, regional infrastructure, enterprise analytics and other communication channels are intentionally left for later versions.
+
+
+## Development status
+
+VASA is under construction. The authoritative build instructions are in
+[docs/BUILD_HARNESS.md](docs/BUILD_HARNESS.md), with progress in
+[CURRENT_STATE.md](CURRENT_STATE.md) and the wave sequence in
+[BUILD_PLAN.md](BUILD_PLAN.md). The real bidirectional media gate has passed on user-confirmed call evidence.
+CPU speech and the conversation worker are implemented; see
+[voice runtime setup](docs/VOICE_RUNTIME.md). Live LLM conversation acceptance
+and the concurrency target remain unverified.
+
+### Local development
+
+Requirements: Python 3.12+, uv 0.12.19+, and access to a Docker/Compose runtime
+permitted to manage only the dedicated `vasa-dev` project. Ports bind to loopback.
+The Compose database password is a local-only example, never a deployment secret.
+
+```bash
+bash scripts/setup.sh
+bash scripts/check.sh
+uv run --frozen uvicorn vasa.app:app --host 127.0.0.1 --port 8080
+```
+
+`GET /health/live` checks the API process. `GET /health/ready` executes database
+and Redis checks and returns 503 if either fails. Migrations run explicitly;
+the application does not create or alter tables on startup.
+
+Optional overrides can be placed in an ignored `.env` using `.env.example` as a
+starting point. Never commit credentials. Tests require real local PostgreSQL and
+Redis; they do not silently skip when dependencies are missing.
+
+To stop only these development services, run `docker compose down`. Omitting
+`--volumes` preserves the dedicated database data. Application processes must be
+restarted after a cloud environment restore. An isolated rootless VPS deployment
+package is prepared.
+
+
+### WhatsApp transport preparation
+
+The Calls integration pins the reviewed PR #1 commit rather than the fork's
+main branch. See [the verified contracts and blockers](docs/EVOLUTION_TRANSPORT.md).
+After network settings permit the required downloads:
+
+```bash
+bash scripts/evolution-setup.sh
+uv run --frozen python scripts/evolution_status.py
+```
+
+Evolution vendor license activation precedes pairing. Generated service keys live
+in ignored `.local/` files with restrictive permissions; they are not printed or
+committed. Once services are available, create a client login without putting its
+password on the command line:
+
+```bash
+uv run --frozen python -m vasa.control.bootstrap --email owner@example.com --tenant "My business"
+```
+
+The command prompts securely. The API serves a login page and an authenticated
+WhatsApp connection dashboard; provider credentials never reach the browser.
+
+VASA uses Evolution Go Calls, an Evolution Foundation-based fork, for WhatsApp
+transport. The dependency source, notices and manager branding are retained;
+its license/activation conditions apply. CPU speech and conversation orchestration
+use this proven transport. Tenant-owned tool execution, call/transcript storage,
+CPU knowledge retrieval and the authenticated dashboard are integrated; see
+[their contracts and integration limits](docs/TOOL_PREPARATION.md). Live provider
+behavior, business action delivery and phone acceptance still require external
+gates.
+
+### VPS deployment preparation
+
+The isolated rootless deployment package and activation tunnel commands are in
+[docs/VPS_DEPLOYMENT.md](docs/VPS_DEPLOYMENT.md). It generates private credentials,
+builds the pinned source automatically and preserves project database/license
+state. Evolution and VASA bind to localhost ports 18080 and 18081 by default;
+occupied ports are refused. No successful VPS connection or deployment has been
+performed yet.

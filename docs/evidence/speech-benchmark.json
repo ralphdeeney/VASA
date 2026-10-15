@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "measured_at_utc": "2026-10-08T23:14:34.853360+00:00",
+  "scope": "Sequential native CPU component benchmark; no WhatsApp or LLM latency measured",
+  "concurrency_claim": null,
+  "iterations": 5,
+  "environment": {
+    "platform": "Linux",
+    "architecture": "x86_64",
+    "python": "3.12.14",
+    "logical_cpu_count": 5,
+    "cpu_affinity_count": 5,
+    "native_threads_per_model": 2,
+    "native_workers_per_model": 1,
+    "versions": {
+      "sherpa-onnx": "1.13.8",
+      "sherpa-onnx-core": "1.13.8",
+      "numpy": "2.5.3",
+      "scipy": "1.18.1"
+    }
+  },
+  "models": {
+    "asr_commit": "d42f2d9f7ca24806fb667456a18a9f1b60f70d16",
+    "tts_archive_sha256": "24dc3bd77dd48c291e52c297878d3437c9492f245d823d7f6a06c4bbb67f4b6b",
+    "tts_noise_scale": 0.0,
+    "tts_noise_scale_w": 0.0
+  },
+  "measurement_policy": {
+    "cold_load": "First constructor in this process; OS file cache was not flushed",
+    "stt": "Transcribe includes model warmup/final tail; WAV decode/resampling excluded",
+    "tts": "Includes synthesis, 22050-to-16000 resampling and PCM framing; playback unpaced",
+    "percentile_method": "linear interpolation",
+    "os_file_cache_flushed": false
+  },
+  "cold_load_seconds": {
+    "stt": 0.4037191839997831,
+    "tts": 1.900092505999055
+  },
+  "stt": {
+    "processing_seconds": {
+      "count": 15,
+      "p50": 0.3003880019969074,
+      "p95": 0.8235813204984878,
+      "minimum": 0.21092365600270568,
+      "maximum": 0.9156855180008279
+    },
+    "real_time_factor": {
+      "count": 15,
+      "p50": 0.046145842694725665,
+      "p95": 0.05385359962607955,
+      "minimum": 0.038914104905484664,
+      "maximum": 0.05478226251874531
+    },
+    "aggregate_word_error_rate": 0.07792207792207792,
+    "word_errors": 30,
+    "reference_words": 385,
+    "wer_threshold": 0.15,
+    "acceptance_passed": true,
+    "samples": [
+      {
+        "iteration": 1,
+        "fixture": "0.wav",
+        "original_sample_rate": 16000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 6.625,
+        "processing_seconds": 0.3003880019969074,
+        "real_time_factor": 0.045341585207080363,
+        "update_count": 17,
+        "word_errors": 1,
+        "reference_words": 18,
+        "word_error_rate": 0.05555555555555555
+      },
+      {
+        "iteration": 1,
+        "fixture": "1.wav",
+        "original_sample_rate": 16000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 16.715,
+        "processing_seconds": 0.7493356820014014,
+        "real_time_factor": 0.04483013353283885,
+        "update_count": 46,
+        "word_errors": 2,
+        "reference_words": 48,
+        "word_error_rate": 0.041666666666666664
+      },
+      {
+        "iteration": 1,
+        "fixture": "8k.wav",
+        "original_sample_rate": 8000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 4.825,
+        "processing_seconds": 0.22364437999931397,
+        "real_time_factor": 0.046351166839236055,
+        "update_count": 11,
+        "word_errors": 3,
+        "reference_words": 11,
+        "word_error_rate": 0.2727272727272727
+      },
+      {
+        "iteration": 2,
+        "fixture": "0.wav",
+        "original_sample_rate": 16000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 6.625,
+        "processing_seconds": 0.343686770000204,
+        "real_time_factor": 0.05187724830191758,
+        "update_count": 17,
+        "word_errors": 1,
+        "reference_words": 18,
+        "word_error_rate": 0.05555555555555555
+      },
+      {
+        "iteration": 2,
+        "fixture": "1.wav",
+        "original_sample_rate": 16000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 16.715,
+        "processing_seconds": 0.9156855180008279,
+        "real_time_factor": 0.05478226251874531,
+        "update_count": 46,
+        "word_errors": 2,
+        "reference_words": 48,
+        "word_error_rate": 0.041666666666666664
+      },
+      {
+        "iteration": 2,
+        "fixture": "8k.wav",
+        "original_sample_rate": 8000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 4.825,
+        "processing_seconds": 0.21092365600270568,
+        "real_time_factor": 0.043714747358073715,
+        "update_count": 11,
+        "word_errors": 3,
+        "reference_words": 11,
+        "word_error_rate": 0.2727272727272727
+      },
+      {
+        "iteration": 3,
+        "fixture": "0.wav",
+        "original_sample_rate": 16000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 6.625,
+        "processing_seconds": 0.2578059449988359,
+        "real_time_factor": 0.038914104905484664,
+        "update_count": 17,
+        "word_errors": 1,
+        "reference_words": 18,
+        "word_error_rate": 0.05555555555555555
+      },
+      {
+        "iteration": 3,
+        "fixture": "1.wav",
+        "original_sample_rate": 16000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 16.715,
+        "processing_seconds": 0.6932915840006899,
+        "real_time_factor": 0.041477211127770856,
+        "update_count": 46,
+        "word_errors": 2,
+        "reference_words": 48,
+        "word_error_rate": 0.041666666666666664
+      },
+      {
+        "iteration": 3,
+        "fixture": "8k.wav",
+        "original_sample_rate": 8000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 4.825,
+        "processing_seconds": 0.22265369100205135,
+        "real_time_factor": 0.046145842694725665,
+        "update_count": 11,
+        "word_errors": 3,
+        "reference_words": 11,
+        "word_error_rate": 0.2727272727272727
+      },
+      {
+        "iteration": 4,
+        "fixture": "0.wav",
+        "original_sample_rate": 16000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 6.625,
+        "processing_seconds": 0.26863919899915345,
+        "real_time_factor": 0.040549313056475994,
+        "update_count": 17,
+        "word_errors": 1,
+        "reference_words": 18,
+        "word_error_rate": 0.05555555555555555
+      },
+      {
+        "iteration": 4,
+        "fixture": "1.wav",
+        "original_sample_rate": 16000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 16.715,
+        "processing_seconds": 0.7841080929974851,
+        "real_time_factor": 0.04691044528851242,
+        "update_count": 46,
+        "word_errors": 2,
+        "reference_words": 48,
+        "word_error_rate": 0.041666666666666664
+      },
+      {
+        "iteration": 4,
+        "fixture": "8k.wav",
+        "original_sample_rate": 8000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 4.825,
+        "processing_seconds": 0.2579232759999286,
+        "real_time_factor": 0.05345560124350852,
+        "update_count": 11,
+        "word_errors": 3,
+        "reference_words": 11,
+        "word_error_rate": 0.2727272727272727
+      },
+      {
+        "iteration": 5,
+        "fixture": "0.wav",
+        "original_sample_rate": 16000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 6.625,
+        "processing_seconds": 0.3320802680027555,
+        "real_time_factor": 0.050125323472114035,
+        "update_count": 17,
+        "word_errors": 1,
+        "reference_words": 18,
+        "word_error_rate": 0.05555555555555555
+      },
+      {
+        "iteration": 5,
+        "fixture": "1.wav",
+        "original_sample_rate": 16000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 16.715,
+        "processing_seconds": 0.7054713049983548,
+        "real_time_factor": 0.04220588124429284,
+        "update_count": 46,
+        "word_errors": 2,
+        "reference_words": 48,
+        "word_error_rate": 0.041666666666666664
+      },
+      {
+        "iteration": 5,
+        "fixture": "8k.wav",
+        "original_sample_rate": 8000,
+        "normalized_sample_rate": 16000,
+        "audio_duration_seconds": 4.825,
+        "processing_seconds": 0.24240268400171772,
+        "real_time_factor": 0.05023889823869797,
+        "update_count": 11,
+        "word_errors": 3,
+        "reference_words": 11,
+        "word_error_rate": 0.2727272727272727
+      }
+    ]
+  },
+  "tts": {
+    "text": "Hello. Your appointment is confirmed for tomorrow morning.",
+    "processing_seconds": {
+      "count": 5,
+      "p50": 0.7826167949970113,
+      "p95": 0.8127664439991349,
+      "minimum": 0.7567039360001218,
+      "maximum": 0.8202795719989808
+    },
+    "first_audio_seconds": {
+      "count": 5,
+      "p50": 0.1933107889999519,
+      "p95": 0.20207948539973586,
+      "minimum": 0.14281786600258783,
+      "maximum": 0.2027658650004014
+    },
+    "real_time_factor": {
+      "count": 5,
+      "p50": 0.26619618877449364,
+      "p95": 0.2764511714282772,
+      "minimum": 0.257382291156504,
+      "maximum": 0.2790066571425105
+    },
+    "samples": [
+      {
+        "iteration": 1,
+        "processing_seconds": 0.7826167949970113,
+        "first_audio_seconds": 0.2027658650004014,
+        "audio_duration_seconds": 2.94,
+        "real_time_factor": 0.26619618877449364,
+        "frame_count": 49
+      },
+      {
+        "iteration": 2,
+        "processing_seconds": 0.7827139319997514,
+        "first_audio_seconds": 0.15104950000022654,
+        "audio_duration_seconds": 2.94,
+        "real_time_factor": 0.266229228571344,
+        "frame_count": 49
+      },
+      {
+        "iteration": 3,
+        "processing_seconds": 0.7645659979971242,
+        "first_audio_seconds": 0.19933396699707373,
+        "audio_duration_seconds": 2.94,
+        "real_time_factor": 0.26005646190378373,
+        "frame_count": 49
+      },
+      {
+        "iteration": 4,
+        "processing_seconds": 0.8202795719989808,
+        "first_audio_seconds": 0.1933107889999519,
+        "audio_duration_seconds": 2.94,
+        "real_time_factor": 0.2790066571425105,
+        "frame_count": 49
+      },
+      {
+        "iteration": 5,
+        "processing_seconds": 0.7567039360001218,
+        "first_audio_seconds": 0.14281786600258783,
+        "audio_duration_seconds": 2.94,
+        "real_time_factor": 0.257382291156504,
+        "frame_count": 49
+      }
+    ]
+  }
+}

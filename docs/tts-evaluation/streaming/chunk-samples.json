@@ -1,0 +1,296 @@
+[
+  {
+    "wav": "legacy-comparison/sherpa-kokoro-solo-legacy-sentence-chunk-01.wav",
+    "text": "Hello.",
+    "generation_seconds": 0.5616606510011479,
+    "ready_seconds": 0.5616759139993519,
+    "sha256": "96efeee1b2d959d7403ab3393ecdc0e94eb12353b51b8a901882a618ef267adf"
+  },
+  {
+    "wav": "legacy-comparison/sherpa-kokoro-solo-legacy-sentence-chunk-02.wav",
+    "text": "Your appointment is confirmed for tomorrow morning.",
+    "generation_seconds": 1.3085675399997854,
+    "ready_seconds": 1.870275171000685,
+    "sha256": "9521eb864f7fc25cbf27ba849ecbbd80cb3abd08ec124bdf4b26c7f035f71e91"
+  },
+  {
+    "wav": "official-v10-solo-long-sentence-chunk-01.wav",
+    "text": "I can help you arrange an appointment.",
+    "generation_seconds": 1.1817507009982364,
+    "ready_seconds": 1.1817549480001617,
+    "sha256": "5eb5b70da059de6fc251d9a965b9f0b3cc38014556240ebb2c55c220d515b3b3"
+  },
+  {
+    "wav": "official-v10-solo-long-sentence-chunk-02.wav",
+    "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+    "generation_seconds": 2.7478369450000173,
+    "ready_seconds": 3.9296648609997646,
+    "sha256": "558c87622c376cc2ae4c05430b2c3ffe07fcce16a9d81e8443691ad13d1bd994"
+  },
+  {
+    "wav": "official-v10-solo-long-sentence-chunk-03.wav",
+    "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+    "generation_seconds": 2.76265439800045,
+    "ready_seconds": 6.692446717999701,
+    "sha256": "7d3e6102e5c6685be04ff114ca5a9a730024dd811e9939f218068c710116242b"
+  },
+  {
+    "wav": "official-v10-solo-long-sentence-chunk-04.wav",
+    "text": "If your plans change, you can contact our team to reschedule.",
+    "generation_seconds": 1.8613071290019434,
+    "ready_seconds": 8.553881226001977,
+    "sha256": "98e55c798396b238bc04def4e7ed89f47577983523753b7dc5fdf018254514b3"
+  },
+  {
+    "wav": "official-v10-stt-long-sentence-chunk-01.wav",
+    "text": "I can help you arrange an appointment.",
+    "generation_seconds": 1.7314240550003888,
+    "ready_seconds": 1.7314287420012988,
+    "sha256": "cbb232067a0b83b70624e015ee624b04c341089a252f39d6cbd577d3ae9dd2f1"
+  },
+  {
+    "wav": "official-v10-stt-long-sentence-chunk-02.wav",
+    "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+    "generation_seconds": 3.5647855249990243,
+    "ready_seconds": 5.2963532130015665,
+    "sha256": "292625aaf0a335444a7373d056646c3b0a12e72797336d632b1656a46f71968d"
+  },
+  {
+    "wav": "official-v10-stt-long-sentence-chunk-03.wav",
+    "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+    "generation_seconds": 3.523760273001244,
+    "ready_seconds": 8.820313833002729,
+    "sha256": "e74007d7d5c714fe346662824b875aaa8a1c5cb8d5d602f46421417e4e3ed979"
+  },
+  {
+    "wav": "official-v10-stt-long-sentence-chunk-04.wav",
+    "text": "If your plans change, you can contact our team to reschedule.",
+    "generation_seconds": 2.5187678030015377,
+    "ready_seconds": 11.339316454002983,
+    "sha256": "ad97864a419208f25fb4fe6e46803c977134c675417e80271baeda63313a2a90"
+  },
+  {
+    "wav": "official-v11-solo-long-sentence-chunk-01.wav",
+    "text": "I can help you arrange an appointment.",
+    "generation_seconds": 1.4190745870000683,
+    "ready_seconds": 1.4190786629987997,
+    "sha256": "704926fcd996887eb75b31335269883fad2767abbd052406402e5a7fc4231257"
+  },
+  {
+    "wav": "official-v11-solo-long-sentence-chunk-02.wav",
+    "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+    "generation_seconds": 2.941831069001637,
+    "ready_seconds": 4.36098359099924,
+    "sha256": "f7c8362585330823c33a8dfb341ca2ba5cf2ba18676cbbb10a5e045baffee048"
+  },
+  {
+    "wav": "official-v11-solo-long-sentence-chunk-03.wav",
+    "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+    "generation_seconds": 2.8622780250007054,
+    "ready_seconds": 7.223382525000488,
+    "sha256": "e67005b9013723b418bebd55832efbad5d643a7a390503657c3771fea033ebd2"
+  },
+  {
+    "wav": "official-v11-solo-long-sentence-chunk-04.wav",
+    "text": "If your plans change, you can contact our team to reschedule.",
+    "generation_seconds": 2.168857057000423,
+    "ready_seconds": 9.392421081000066,
+    "sha256": "e645d6be142658bf7c3d102df936b365bf2d5466babbf7da45a8f2fd070a81a6"
+  },
+  {
+    "wav": "official-v11-stt-long-sentence-chunk-01.wav",
+    "text": "I can help you arrange an appointment.",
+    "generation_seconds": 1.9927634400009993,
+    "ready_seconds": 1.9927690180011268,
+    "sha256": "36c8f6e8443082131e9d9adfb9594dfe114470bb15a446d374e13acce9774724"
+  },
+  {
+    "wav": "official-v11-stt-long-sentence-chunk-02.wav",
+    "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+    "generation_seconds": 3.385203099998762,
+    "ready_seconds": 5.378054140001041,
+    "sha256": "d287d7c80a6f2933c2f63b8d58d1238010f827426419b90c38daaa9cfc0afcef"
+  },
+  {
+    "wav": "official-v11-stt-long-sentence-chunk-03.wav",
+    "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+    "generation_seconds": 3.4058120289992075,
+    "ready_seconds": 8.784028269001283,
+    "sha256": "e3c0a136be29c6705cd4c05532b537d97e906c69dbf9300e3b068994a74faf9f"
+  },
+  {
+    "wav": "official-v11-stt-long-sentence-chunk-04.wav",
+    "text": "If your plans change, you can contact our team to reschedule.",
+    "generation_seconds": 2.5987408090004465,
+    "ready_seconds": 11.382921083000838,
+    "sha256": "aa99e2305928baf4b49fbe2bb647ee3583ed55fa07c029d85ffba27245d64677"
+  },
+  {
+    "wav": "one-thread/official-v10-stt-long-sentence-chunk-01.wav",
+    "text": "I can help you arrange an appointment.",
+    "generation_seconds": 1.9819513030015514,
+    "ready_seconds": 1.9819559899988235,
+    "sha256": "a37a7a2c941b3b7c8906cbe3b958235332efbdbfbe531e4aa50dc86e4488af0e"
+  },
+  {
+    "wav": "one-thread/official-v10-stt-long-sentence-chunk-02.wav",
+    "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+    "generation_seconds": 4.552607916000852,
+    "ready_seconds": 6.534672386998864,
+    "sha256": "3819d43409e422ce2549889ab52321e1cf7bb61fea54709182dce959239fb6cc"
+  },
+  {
+    "wav": "one-thread/official-v10-stt-long-sentence-chunk-03.wav",
+    "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+    "generation_seconds": 4.4986188290022255,
+    "ready_seconds": 11.033413277000363,
+    "sha256": "3e5ccb7fc7e4862145e1e5bc55a7e9385524540764c4f100abdbffbadcf9674a"
+  },
+  {
+    "wav": "one-thread/official-v10-stt-long-sentence-chunk-04.wav",
+    "text": "If your plans change, you can contact our team to reschedule.",
+    "generation_seconds": 3.238310414002626,
+    "ready_seconds": 14.271844159000466,
+    "sha256": "d768dfa58458d518f5bde5a3cacef5190b236b369aa6092adfe00f7d40eb16fa"
+  },
+  {
+    "wav": "one-thread/official-v11-stt-long-sentence-chunk-01.wav",
+    "text": "I can help you arrange an appointment.",
+    "generation_seconds": 2.0314990560000297,
+    "ready_seconds": 2.0315041129979363,
+    "sha256": "4b447c818969cd82e26997b1d603ecf0baf527ce9288ee2501d0d5fa5e293916"
+  },
+  {
+    "wav": "one-thread/official-v11-stt-long-sentence-chunk-02.wav",
+    "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+    "generation_seconds": 4.194407371000125,
+    "ready_seconds": 6.226002519000758,
+    "sha256": "29f534aceb24627e138b934aa28334784e9472a11edebb0140407e746ba111aa"
+  },
+  {
+    "wav": "one-thread/official-v11-stt-long-sentence-chunk-03.wav",
+    "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+    "generation_seconds": 4.095783647000644,
+    "ready_seconds": 10.321904981999978,
+    "sha256": "78aa98f173b089325939749bdf866352924e02c1768b3bd63dd33601fa7ba660"
+  },
+  {
+    "wav": "one-thread/official-v11-stt-long-sentence-chunk-04.wav",
+    "text": "If your plans change, you can contact our team to reschedule.",
+    "generation_seconds": 3.1355047990000458,
+    "ready_seconds": 13.457527586000651,
+    "sha256": "46b94982a756ab39614ce8b403a6256dc9ae9c00f06e4510cd37793d03620fce"
+  },
+  {
+    "wav": "piper-solo-long-sentence-chunk-01.wav",
+    "text": "I can help you arrange an appointment.",
+    "generation_seconds": 0.13526872799775447,
+    "ready_seconds": 0.13527258400063147,
+    "sha256": "39913c9b7f6221543067cac79efc85f0e525edc44f52adae0c38c0de97ff7438"
+  },
+  {
+    "wav": "piper-solo-long-sentence-chunk-02.wav",
+    "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+    "generation_seconds": 0.2267292920005275,
+    "ready_seconds": 0.3620504980026453,
+    "sha256": "e55ab0e3dde9597d55e3579497b721d30eef21ae0619ad251eba99e66b20d3b4"
+  },
+  {
+    "wav": "piper-solo-long-sentence-chunk-03.wav",
+    "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+    "generation_seconds": 0.25131521499861265,
+    "ready_seconds": 0.6134464930000831,
+    "sha256": "8f972b44f598a854231aede22941e26786b466479c4abbaf741d2487bb21dee9"
+  },
+  {
+    "wav": "piper-solo-long-sentence-chunk-04.wav",
+    "text": "If your plans change, you can contact our team to reschedule.",
+    "generation_seconds": 0.17928905000007944,
+    "ready_seconds": 0.7928270680022251,
+    "sha256": "9264ee49e19157a44b320b358b90f71e0b5c75341e098a84e80e3556071668af"
+  },
+  {
+    "wav": "piper-stt-long-sentence-chunk-01.wav",
+    "text": "I can help you arrange an appointment.",
+    "generation_seconds": 0.09306269800072187,
+    "ready_seconds": 0.09306635299799382,
+    "sha256": "39913c9b7f6221543067cac79efc85f0e525edc44f52adae0c38c0de97ff7438"
+  },
+  {
+    "wav": "piper-stt-long-sentence-chunk-02.wav",
+    "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+    "generation_seconds": 0.2767673689995718,
+    "ready_seconds": 0.3698823339982482,
+    "sha256": "e55ab0e3dde9597d55e3579497b721d30eef21ae0619ad251eba99e66b20d3b4"
+  },
+  {
+    "wav": "piper-stt-long-sentence-chunk-03.wav",
+    "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+    "generation_seconds": 0.3275279990011768,
+    "ready_seconds": 0.6974908119991596,
+    "sha256": "8f972b44f598a854231aede22941e26786b466479c4abbaf741d2487bb21dee9"
+  },
+  {
+    "wav": "piper-stt-long-sentence-chunk-04.wav",
+    "text": "If your plans change, you can contact our team to reschedule.",
+    "generation_seconds": 0.2457726909997291,
+    "ready_seconds": 0.9433769109964487,
+    "sha256": "9264ee49e19157a44b320b358b90f71e0b5c75341e098a84e80e3556071668af"
+  },
+  {
+    "wav": "sherpa-kokoro-solo-long-sentence-chunk-01.wav",
+    "text": "I can help you arrange an appointment.",
+    "generation_seconds": 0.8839964700018754,
+    "ready_seconds": 0.8840012969994859,
+    "sha256": "0b3a64016a88ec8ff1a65c86157bcd7ffd92f7c60ec9a6a43b39aa5c53bda6cc"
+  },
+  {
+    "wav": "sherpa-kokoro-solo-long-sentence-chunk-02.wav",
+    "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+    "generation_seconds": 2.113977741999406,
+    "ready_seconds": 2.9980374349979684,
+    "sha256": "916c7f5d79765a43d1c3c51b5d1f56ce16ea0866a410f9487cc9bdd381177dba"
+  },
+  {
+    "wav": "sherpa-kokoro-solo-long-sentence-chunk-03.wav",
+    "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+    "generation_seconds": 2.1927322470000945,
+    "ready_seconds": 5.190868167999724,
+    "sha256": "5291c041e5e07ecf0e3135e403944a031d91b21b52e7a653867a16228d027570"
+  },
+  {
+    "wav": "sherpa-kokoro-solo-long-sentence-chunk-04.wav",
+    "text": "If your plans change, you can contact our team to reschedule.",
+    "generation_seconds": 1.7612766769998416,
+    "ready_seconds": 6.95224728699759,
+    "sha256": "b30dfa6cc5e67761ef742799a2eb888bce678b24420d7ca861a3416c7ce9a8f9"
+  },
+  {
+    "wav": "sherpa-kokoro-stt-long-sentence-chunk-01.wav",
+    "text": "I can help you arrange an appointment.",
+    "generation_seconds": 1.154597968001326,
+    "ready_seconds": 1.1546024349991058,
+    "sha256": "07dc580aedb8d81c92521db61f2d80e69b208d698aea017c737e5cd136ecd453"
+  },
+  {
+    "wav": "sherpa-kokoro-stt-long-sentence-chunk-02.wav",
+    "text": "Please tell me which day works best for you and whether you prefer the morning or afternoon.",
+    "generation_seconds": 2.394294961999549,
+    "ready_seconds": 3.548950624997815,
+    "sha256": "70aba6b767f0aa344934e2c1e64b80022961238aa66cac1b93f6abc41957c14c"
+  },
+  {
+    "wav": "sherpa-kokoro-stt-long-sentence-chunk-03.wav",
+    "text": "Once I have checked the available times, I will read the details back so you can confirm them.",
+    "generation_seconds": 2.4128709039978276,
+    "ready_seconds": 5.961916639997071,
+    "sha256": "360b8efbfc3fa9db5d35fcc971d86c824dc3185c8fd148de2a2f5856ecea937f"
+  },
+  {
+    "wav": "sherpa-kokoro-stt-long-sentence-chunk-04.wav",
+    "text": "If your plans change, you can contact our team to reschedule.",
+    "generation_seconds": 2.1903710789993056,
+    "ready_seconds": 8.152384311997594,
+    "sha256": "51ae22447a147ee18b7b7d79534b5f2fbc89ed5ffe5edd625ccd935d2390e1f2"
+  }
+]

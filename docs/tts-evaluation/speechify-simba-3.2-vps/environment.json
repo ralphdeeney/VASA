@@ -1,0 +1,43 @@
+{
+  "status": "pending_actual_vps_run",
+  "actual_vps": false,
+  "measured_requests": 0,
+  "blockers": [
+    "SSH: connect to host 2.25.172.155 port 22: Connection refused",
+    "SPEECHIFY_API_KEY is not configured in cloud environment"
+  ],
+  "benchmark_environment": null,
+  "preparation_environment": {
+    "scope": "cloud-preparation-not-VPS",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+    "python": "3.12.14",
+    "httpx": "0.28.1",
+    "httpcore": "1.0.9",
+    "speechify_key_configured": false
+  },
+  "expected_protocol": {
+    "url": "https://api.speechify.ai/v1/audio/stream",
+    "model": "simba-3.2",
+    "output_format": "pcm_16000",
+    "api_version": "2026-09-30",
+    "channels": 1,
+    "sample_rate": 16000,
+    "sample_width_bytes": 2,
+    "byte_order": "little-endian",
+    "frame_ms": 60
+  },
+  "expected_run": {
+    "excluded_warmup_requests": 2,
+    "logical_responses_per_mode": 30,
+    "modes": [
+      "direct",
+      "buffered"
+    ],
+    "concurrency": 1,
+    "affinity_cpus": [
+      0,
+      1
+    ],
+    "optional_stt_threads": 1
+  }
+}

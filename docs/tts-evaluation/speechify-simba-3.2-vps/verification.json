@@ -1,0 +1,38 @@
+{
+  "status": "integration_verified_live_VPS_pending",
+  "full_suite_command": "UV_CACHE_DIR=/workspace/.cache/uv UV_NO_SYNC=1 bash scripts/check.sh --junitxml=reports/speechify-simba-final.xml -q",
+  "tests": 571,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "seconds": 56.838,
+  "ruff": "passed",
+  "format": "passed:185 files",
+  "strict_mypy": "passed:56 source files",
+  "compose_configuration": "passed:voice profile quiet validation",
+  "deploy_script_syntax": "passed",
+  "provider_and_real_TCP_checks": 20,
+  "benchmark_component_checks": 9,
+  "real_TCP_reuse": "3 completed requests on one actual loopback TCP connection",
+  "cancelled_stream_closure": "loopback peer EOF before full response, not live Speechify",
+  "live_API_requests": 0,
+  "actual_VPS_benchmark": "unrun:SSH connection refused",
+  "human_listening": "pending;no Speechify WAVs generated",
+  "production_default": "kokoro-int8",
+  "default_changed": false,
+  "dependencies": {
+    "httpx": "0.28.1",
+    "httpcore": "1.0.9",
+    "pydantic-settings": "2.15.0"
+  },
+  "uv_lock_sha256": "0369a7a487d9c14b9064b6cbf08c2fc99f4016b118c4cae39362118b6be20faa",
+  "source_files_sha256": {
+    "src/vasa/speech/speechify.py": "2313f5fcb9f9b5d0a67a1e4bc1acc269b72f52d0cb50ffc4e6e73d0f2a5e5650",
+    "scripts/benchmark_speechify_vps.py": "86c01749c00fe4f90207b36f3ac975b9ec391c686639d15e044b5b5313c0536b",
+    "src/vasa/config.py": "859e961631b27305e55550a43ee65e8d874373de7e9cc463d7f798d17ad4d5a0",
+    "src/vasa/voice_worker.py": "cf10ce6d50815016be29767083303a41c30fc912a04014d31c73ca7513d634de",
+    "src/vasa/runtime/conversation.py": "c7241ca22b6dfb0f62213855f4f71f3ff7b269b078263389f48c6996ab39aa68"
+  },
+  "junit": "verification.junit.xml",
+  "junit_sha256": "8a3933d84f6b60dfbe11818e0fc30270cd5e24b34e56a7971bd952667aa4e440"
+}
