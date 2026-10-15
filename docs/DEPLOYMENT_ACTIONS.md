@@ -1,5 +1,64 @@
 # Staging deployment through GitHub Actions
 
+## Normal development after successful bootstrap
+
+The operator confirmed the bridge and voice bootstrap succeeded. All five services
+now exist: postgres, redis, evolution, vasa, voice. Use `deploy` for code updates;
+it still refuses a missing voice service. Normal deploy and live provider tests
+remain pending actual VPS verification. Do not repeat bootstrap on this topology.
+
+1. Change code; run `bash scripts/check.sh` and Actionlint; commit and push
+   `build/vasa-foundation`.
+2. Dispatch the workflow against that branch; the dispatched SHA must still match
+   the fetched branch tip. No automatic push trigger is installed.
+3. Inspect sanitized results. API health, all five containers and stable voice
+   readiness are mandatory. Expected success: `VASA_DEPLOYMENT_OK`.
+
+```bash
+gh workflow run vasa-vps-deploy.yml --repo ralphdeeney/VASA \
+  --ref build/vasa-foundation -f mode=deploy -f provider_smoke=false
+```
+
+To explicitly enable paid live provider tests after the same health validation:
+
+```bash
+gh workflow run vasa-vps-deploy.yml --repo ralphdeeney/VASA \
+  --ref build/vasa-foundation -f mode=deploy -f provider_smoke=true
+```
+
+Smoke is refused in `check` or `bootstrap` modes. It is off by default, runs outside
+the call runtime, and uses the existing app container's private environment. A
+smoke failure fails deployment and invokes the existing app-only rollback; probes
+are not retried during rollback. No dependency service is restarted. Health is
+checked again after a successful smoke and private runtime hashes must match.
+
+Alternatively, an operator already on the VPS can run the standalone command
+after deploying this tooling (Codex must never SSH directly):
+
+```bash
+cd /opt/vasa
+docker compose --project-name vasa-vps --env-file .local/vps.env \
+  -f deploy/compose.yaml --profile voice exec -T vasa \
+  python scripts/live_provider_smoke.py
+```
+
+The script makes one bounded request to each provider, sequentially, even when the
+other fails. It uses `VASA_LLM_PRIMARY=openai`, `VASA_OPENAI_BASE_URL`,
+`VASA_OPENAI_MODEL`, `VASA_OPENAI_API_KEY`, `DEEPGRAM_API_KEY` and
+`VASA_DEEPGRAM_MODEL` from private runtime configuration. Never supply keys as CLI
+arguments. No models are loaded/downloaded, no tenant data queried, and no files
+or WAVs are saved. Exit status is nonzero if either probe fails.
+
+Success emits `LLM_SMOKE_OK`, `LLM_FIRST_TOKEN_MS`, `LLM_TOTAL_MS`,
+`DEEPGRAM_SMOKE_OK`, `DEEPGRAM_FIRST_AUDIO_MS`, `DEEPGRAM_TOTAL_MS` and
+`DEEPGRAM_AUDIO_MS`. Failure emits fixed `*_SMOKE_FAILED` codes locally; Actions
+withholds raw failed-command output. It prints only allowlisted success/timing
+lines, never arbitrary container output. No URLs, keys, prompts, response bodies
+or exception strings are printed. HTTP/provider logging is disabled in the smoke
+process. Generated audio duration includes final framing padding. This is a small
+availability test, not a throughput or percentile benchmark. Human voice review
+and a full live WhatsApp AI call remain separate pending gates.
+
 Codex Cloud must not SSH directly to this VPS. Only the manually dispatched
 `.github/workflows/vasa-vps-deploy.yml` connects. There is no push deployment
 trigger. Select branch `build/vasa-foundation`; default mode is `check`.

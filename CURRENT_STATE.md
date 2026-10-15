@@ -1,5 +1,24 @@
 # Current state
 
+2026-10-15 normal development phase:
+
+- GitHub Actions → VPS deployment bridge: VERIFIED (operator-confirmed).
+- Voice bootstrap: VERIFIED (operator-confirmed `VASA_BOOTSTRAP_OK`, readiness OK).
+- Normal deploy: pending live verification; five-service update path covered locally.
+- Live 9Router provider test: pending.
+- Live Deepgram provider test: pending.
+- Full AI WhatsApp call: pending.
+
+Normal updates use manual Actions `mode=deploy`, never bootstrap. Bootstrap remains
+a special one-time/recovery operation. Optional `provider_smoke=true` enables two
+bounded sequential paid requests after API/voice health passes; default false.
+The standalone container command is `python scripts/live_provider_smoke.py`.
+It uses trusted runtime configuration, prints fixed status/numeric timing markers,
+and never participates in the WhatsApp path. No live API calls or deployment
+dispatch were performed for this change. See docs/DEPLOYMENT_ACTIONS.md.
+
+Earlier bootstrap instructions below are historical; use normal deploy now.
+
 2026-10-15 target voice startup diagnostics are complete and verified. Each
 worker run emits fixed startup stages; exceptions emit only allowlisted failed
 stage/error codes, never exception strings, provider bodies or environment.

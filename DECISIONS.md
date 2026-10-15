@@ -1,5 +1,12 @@
 # Decisions
 
+2026-10-15 retain manual Actions-only deployment after successful bootstrap;
+do not install a push trigger or dispatch during implementation. Treat normal
+deploy/live providers/full AI call as pending until actual receipts. Add a
+default-off deploy-only provider_smoke boolean; failed opted-in probes invoke
+existing application rollback. The operator script uses private container env,
+fixed status codes and numeric timings, never provider content or exception text.
+
 2026-10-15 user confirms target b1cac8 reached voice health, restarted11 times,
 then rolled back; a manual worker run after rollback uses the old image and is
 not evidence of the target failure. Add fixed startup stage/error reporting,

@@ -1,5 +1,11 @@
 # Build plan
 
+2026-10-15 bridge and voice bootstrap VERIFIED by operator. Normal updates now
+use mode=deploy. Optional safe provider smoke and five-service deployment tests
+are complete (811 full checks). Next gates: manually validate normal deploy,
+then live 9Router and Deepgram probes, then full AI WhatsApp call. No workflow
+dispatch or direct VPS SSH from Codex; bootstrap remains special recovery only.
+
 2026-10-15 secret-safe worker lifecycle diagnostics and pre-rollback marker
 extraction are verified with791 full checks. The next manual bootstrap should
 capture the actual target image's failing stage; a manual worker run after

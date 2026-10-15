@@ -190,6 +190,36 @@ def test_targeted_deploy_and_receipt(rig, capsys) -> None:
     assert "VASA_DEPLOYMENT_OK" in capsys.readouterr().out
 
 
+def test_smoke_disabled_by_default(rig, monkeypatch):
+    monkeypatch.setattr(deployment, "provider_smoke", lambda: pytest.fail("paid request"))
+    deployment.deploy(TARGET, deployment.BRANCH, PREVIOUS)
+
+
+def test_opt_in_smoke_after_health(rig, monkeypatch):
+    def smoke():
+        assert rig.calls[-1] == ("health",)
+        rig.calls.append(("smoke",))
+
+    monkeypatch.setattr(deployment, "provider_smoke", smoke)
+    deployment.deploy(TARGET, deployment.BRANCH, PREVIOUS, smoke=True)
+    assert rig.calls[-2:] == [("smoke",), ("health",)]
+
+
+def test_smoke_failure_rolls_back_once(rig, monkeypatch, capsys):
+    calls = []
+
+    def smoke():
+        calls.append(True)
+        raise deployment.Refusal("Live provider smoke failed; raw output withheld.")
+
+    monkeypatch.setattr(deployment, "provider_smoke", smoke)
+    with pytest.raises(deployment.Refusal):
+        deployment.deploy(TARGET, deployment.BRANCH, PREVIOUS, smoke=True)
+    assert calls == [True]
+    assert rig.current == PREVIOUS
+    assert "VASA_ROLLBACK_OK" in capsys.readouterr().out
+
+
 def test_docs_only_update_does_not_restart(rig) -> None:
     rig.changes = ["docs/DEPLOYMENT_ACTIONS.md", ".github/workflows/vasa-vps-deploy.yml"]
     deployment.deploy(TARGET, deployment.BRANCH, PREVIOUS)

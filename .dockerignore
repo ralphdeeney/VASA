@@ -11,6 +11,7 @@
 !scripts/evolution_status.py
 !scripts/prepare_speech.py
 !scripts/prepare_knowledge.py
+!scripts/live_provider_smoke.py
 !docker/
 !docker/vasa.Dockerfile
 !.local/

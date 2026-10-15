@@ -1,5 +1,17 @@
 # Test results
 
+2026-10-15 normal deploy/optional provider smoke: **811 passed** in 66.60s;
+zero failures/errors/skips, one existing Starlette deprecation warning. Full
+unit/component/integration/native/eval suite ran through scripts/check.sh.
+Ruff and format (205 files), strict mypy (58 sources), Actionlint and shell syntax
+pass. JUnit: reports/live-provider-smoke.xml (ignored local test evidence).
+New coverage includes default-off paid probes, opt-in post-health sequencing,
+smoke-triggered rollback without repeat probes, configured model/base URL use,
+independent provider failures, missing credentials without requests, timeout and
+exception redaction, PCM validation, stream/client cleanup and Actions output
+allowlisting. Existing five-service update and bootstrap safety tests pass.
+No live provider request, Actions dispatch or direct VPS SSH was performed.
+
 2026-10-15 voice lifecycle diagnostics:791 full unit/component/integration/native/
 eval checks passed in68.02s, zero failures/errors/skips, one existing deprecation
 warning. Ruff/format202 files, strict mypy57 sources, Actionlint1.7.7 and bash

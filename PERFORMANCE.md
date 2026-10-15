@@ -1,5 +1,15 @@
 # Performance
 
+2026-10-15 safe provider smoke tooling: live 9Router and Deepgram timings remain
+pending. Explicit operator probes measure LLM first streamed text, Deepgram first
+playable 60 ms PCM frame, total stream completion, and framed audio duration
+(including final frame padding). One small request per provider runs sequentially,
+with a 45-second per-probe deadline and bounded client cleanup. These smoke values
+are availability checks, not percentile benchmarks or evidence of call capacity.
+No provider latency or quality results are claimed. Requests use the configured
+OpenAI-compatible base URL/model and selected Deepgram Aura model without printing
+their values. Existing provider adapters enforce SSE and mono PCM16/16 kHz framing.
+
 2026-10-14 Deepgram Aura2 integration/tooling is verified without a live key.
 No vendor/VPS latency, RTF, CPU/RSS or voice-quality figures exist; pending
 receipts use null metrics. Prepared tool measures native streamed16k PCM with

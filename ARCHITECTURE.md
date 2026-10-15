@@ -1,5 +1,12 @@
 # Architecture
 
+2026-10-15 operator provider smoke lives in vasa.provider_smoke, exposed through
+scripts/live_provider_smoke.py in the application image. It reuses configured
+OpenAI SSE/Deepgram PCM adapters outside the call path, with sequential bounded
+requests and no tenant database access. Manual Actions deploy can opt into it
+after mandatory health/readiness, with strict stdout filtering and app rollback
+on failure. Default deployment remains free of paid provider probes.
+
 2026-10-15 worker lifecycle observability uses per-run fixed stage reporting.
 Startup exceptions produce only allowlisted stage/error fields; CLI catches
 unexpected exception types without rendering bodies/tracebacks. A sticky ready

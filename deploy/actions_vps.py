@@ -88,6 +88,7 @@ def stage(mode, name):
             "vasa_update",
             "voice_create",
             "health",
+            "provider_smoke",
             "rollback",
             "rollback_health",
         ),
@@ -688,7 +689,25 @@ def signal_failure(_signum, _frame):
     raise Refusal("Deployment interrupted; attempting controlled rollback.")
 
 
-def deploy(target, branch, previous):
+def provider_smoke():
+    # Capture stdout/stderr even on failure; never forward arbitrary container logs.
+    result = compose("exec", "-T", "vasa", "python", "scripts/live_provider_smoke.py", timeout=105)
+    approved = []
+    for line in result.splitlines():
+        if re.fullmatch(r"(?:LLM|DEEPGRAM)_SMOKE_OK", line) or re.fullmatch(
+            r"(?:LLM_FIRST_TOKEN|LLM_TOTAL|DEEPGRAM_FIRST_AUDIO|DEEPGRAM_TOTAL|DEEPGRAM_AUDIO)_MS=[0-9]{1,8}\.[0-9]{2}",
+            line,
+        ):
+            approved.append(line)
+    for line in approved[:9]:
+        print(line, flush=True)
+    require(
+        "LLM_SMOKE_OK" in approved and "DEEPGRAM_SMOKE_OK" in approved,
+        "Live provider smoke failed; raw output withheld.",
+    )
+
+
+def deploy(target, branch, previous, *, smoke=False):
     stage("DEPLOY", "preflight")
     require(branch == BRANCH, "Staging checkout must already be on build/vasa-foundation.")
     require(re.fullmatch(r"[0-9a-f]{40}", target) is not None, "Invalid target commit.")
@@ -753,6 +772,7 @@ def deploy(target, branch, previous):
                 "scripts/evolution_status.py",
                 "scripts/prepare_speech.py",
                 "scripts/prepare_knowledge.py",
+                "scripts/live_provider_smoke.py",
             )
             for p in changed
         )
@@ -808,6 +828,12 @@ def deploy(target, branch, previous):
             print("Validating VASA health and worker startup.", flush=True)
             stage("DEPLOY", "health")
             health()
+            if smoke:
+                stage("DEPLOY", "provider_smoke")
+                provider_smoke()
+                stage("DEPLOY", "health")
+                health()
+            require(private_hashes() == hashes, "Runtime configuration was not preserved.")
             receipt.write_text(
                 json.dumps(
                     {
@@ -878,9 +904,12 @@ def deploy(target, branch, previous):
 def main():
     try:
         require(
-            len(sys.argv) == 3 and sys.argv[1] in ("check", "bootstrap", "deploy"),
+            len(sys.argv) in (3, 4) and sys.argv[1] in ("check", "bootstrap", "deploy"),
             "Invalid invocation.",
         )
+        smoke = sys.argv[3] if len(sys.argv) == 4 else "false"
+        require(smoke in ("true", "false"), "Invalid provider smoke option.")
+        require(smoke == "false" or sys.argv[1] == "deploy", "Smoke requires deploy mode.")
         branch, previous = preflight()
         if sys.argv[1] == "check":
             print("Read-only check: no fetch, checkout, writes, builds or restarts.", flush=True)
@@ -888,7 +917,10 @@ def main():
         elif sys.argv[1] == "bootstrap":
             bootstrap(sys.argv[2], branch, previous)
         else:
-            deploy(sys.argv[2], branch, previous)
+            if smoke == "true":
+                deploy(sys.argv[2], branch, previous, smoke=True)
+            else:
+                deploy(sys.argv[2], branch, previous)
     except (Refusal, OSError, ValueError, KeyError, subprocess.TimeoutExpired) as exc:
         # Only our fixed messages are safe; exception values from dependencies are not.
         print(

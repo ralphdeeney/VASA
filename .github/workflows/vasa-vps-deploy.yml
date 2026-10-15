@@ -9,6 +9,11 @@ on:
         options: [check, bootstrap, deploy]
         default: check
         required: true
+      provider_smoke:
+        description: Opt-in paid live provider validation after deploy (deploy mode only)
+        type: boolean
+        default: false
+        required: false
 
 permissions:
   contents: read
@@ -35,4 +40,5 @@ jobs:
           VASA_VPS_SSH_KEY: ${{ secrets.VASA_VPS_SSH_KEY }}
           VASA_VPS_HOST_KEY_SHA256: ${{ vars.VASA_VPS_HOST_KEY_SHA256 }}
           VASA_DEPLOY_MODE: ${{ inputs.mode }}
+          VASA_PROVIDER_SMOKE: ${{ inputs.provider_smoke }}
         run: bash deploy/actions-ssh.sh

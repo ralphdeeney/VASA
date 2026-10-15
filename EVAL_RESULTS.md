@@ -1,5 +1,10 @@
 # Eval results
 
+2026-10-15 existing evals pass within the 811-check full suite. Synthetic smoke
+and deployment failures establish local privacy/rollback behavior, not live
+provider availability. Operator confirms bridge/voice bootstrap; normal deploy,
+9Router streaming, Deepgram PCM and a full AI WhatsApp call remain live gates.
+
 2026-10-15 existing evals pass within the791-check suite after safe startup
 diagnostics. Local failure injection and stateful deployment fixtures prove
 marker privacy, phase classification and pre-rollback target capture. They do
