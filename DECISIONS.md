@@ -1,5 +1,11 @@
 # Decisions
 
+2026-10-15 VPS origin is intentionally git@github-vasa:ralphdeeney/VASA.git.
+Accept that exact SSH alias/repository string in addition to the four canonical
+origins; retain exact allowlist matching and the existing vasa-builder SSH
+configuration. Do not rewrite the remote, request GitHub credentials, or permit
+arbitrary aliases/repositories. GitHub Actions remains the only VPS SSH path.
+
 2026-10-15 user mandates GitHub Actions as staging SSH/deployment bridge; no
 further direct VPS SSH from Codex Cloud. Default manual mode is read-only check;
 deploy is separately dispatched. Reuse existing rootless Compose project and

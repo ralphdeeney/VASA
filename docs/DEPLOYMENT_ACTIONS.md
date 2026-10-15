@@ -17,6 +17,10 @@ Existing repository secrets (never print them): `VASA_VPS_HOST`,
 The SSH key must support noninteractive authentication on port 22. VPS Git
 authentication for `git fetch/pull` must already work as `vasa-builder`;
 the workflow does not copy a GitHub token or other credentials to the server.
+The existing VPS origin `git@github-vasa:ralphdeeney/VASA.git` is explicitly
+accepted alongside the canonical GitHub origins. The `github-vasa` SSH config
+alias remains under `vasa-builder`'s existing configuration; no remote rewrite,
+GitHub password or PAT is required. Other aliases/repositories are not accepted.
 
 Set repository **variable** `VASA_VPS_HOST_KEY_SHA256` to a trusted SSH host-key
 fingerprint, obtained through the VPS provider console, not a network scan:

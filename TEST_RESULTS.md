@@ -1,5 +1,12 @@
 # Test results
 
+2026-10-15 exact VPS SSH origin alias: full630 tests passed in62.25s with zero
+failures/errors/skips; one existing deprecation warning. All31 deployment checks
+pass, including real preflight allowlist-path tests for the exact github-vasa
+origin, all four canonical origins, and ten unrelated/malicious variants.
+Ruff/format197 files, strict mypy57 sources, Actionlint and bash syntax pass.
+JUnit: reports/actions-origin-alias.xml. No direct VPS SSH was attempted.
+
 2026-10-15 Actions deployment: full615 unit/component/integration/native/eval
 checks passed in63.29s, zero failures/errors/skips (one existing deprecation
 warning). Ruff/format197 files and strict mypy57 sources pass. Actionlint1.7.7

@@ -26,6 +26,7 @@ ORIGINS = {
     "https://github.com/ralphdeeney/VASA",
     "https://github.com/ralphdeeney/VASA.git",
     "git@github.com:ralphdeeney/VASA.git",
+    "git@github-vasa:ralphdeeney/VASA.git",
     "ssh://git@github.com/ralphdeeney/VASA.git",
 }
 READY_MARKER = "Voice worker ready for registered instances; caller audio is not recorded."

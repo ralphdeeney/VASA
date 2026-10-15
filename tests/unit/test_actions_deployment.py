@@ -14,6 +14,71 @@ TARGET = "b" * 40
 
 
 @pytest.fixture
+def origin_preflight(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
+    state = SimpleNamespace(origin="", rootless_checked=False)
+    monkeypatch.setattr(deployment, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        deployment.pwd, "getpwuid", lambda _: SimpleNamespace(pw_name="vasa-builder")
+    )
+    monkeypatch.setattr(deployment.os, "chdir", lambda _: None)
+    monkeypatch.setenv("GIT_OPTIONAL_LOCKS", "0")
+    monkeypatch.setenv("GIT_TERMINAL_PROMPT", "0")
+
+    def git(*args: str) -> str:
+        return {
+            ("rev-parse", "--show-toplevel"): str(tmp_path),
+            ("remote", "get-url", "origin"): state.origin,
+            ("branch", "--show-current"): deployment.BRANCH,
+            ("rev-parse", "HEAD"): PREVIOUS,
+        }[args]
+
+    def rootless() -> None:
+        state.rootless_checked = True
+
+    monkeypatch.setattr(deployment, "git", git)
+    monkeypatch.setattr(deployment, "rootless", rootless)
+    return state
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "git@github-vasa:ralphdeeney/VASA.git",
+        "https://github.com/ralphdeeney/VASA",
+        "https://github.com/ralphdeeney/VASA.git",
+        "git@github.com:ralphdeeney/VASA.git",
+        "ssh://git@github.com/ralphdeeney/VASA.git",
+    ],
+)
+def test_preflight_accepts_exact_vasa_origins(origin_preflight, origin: str) -> None:
+    origin_preflight.origin = origin
+    assert deployment.preflight() == (deployment.BRANCH, PREVIOUS)
+    assert origin_preflight.rootless_checked
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "git@github-vasa-evil:ralphdeeney/VASA.git",
+        "git@github-vasa:other-owner/VASA.git",
+        "git@github-vasa:ralphdeeney/other-repository.git",
+        "git@github-vasa:ralphdeeney/VASA",
+        "git@github-vasa:ralphdeeney/../VASA.git",
+        "git@github-vasa:ralphdeeney/VASA.git;echo malicious",
+        "git@github-vasa:ralphdeeney/VASA.git\nmalicious",
+        "git@github.com:other-owner/VASA.git",
+        "https://github.com.evil.invalid/ralphdeeney/VASA.git",
+        "https://github.com@evil.invalid/ralphdeeney/VASA.git",
+    ],
+)
+def test_preflight_rejects_unrelated_and_malicious_origins(origin_preflight, origin: str) -> None:
+    origin_preflight.origin = origin
+    with pytest.raises(deployment.Refusal, match="Unexpected repository identity"):
+        deployment.preflight()
+    assert not origin_preflight.rootless_checked
+
+
+@pytest.fixture
 def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
     (tmp_path / ".local").mkdir()
     monkeypatch.setattr(deployment, "ROOT", tmp_path)

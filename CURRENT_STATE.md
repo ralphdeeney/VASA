@@ -1,5 +1,11 @@
 # Current state
 
+2026-10-15 origin compatibility fix: exact git@github-vasa:ralphdeeney/VASA.git
+is accepted alongside the four canonical origins. No wildcard matching, remote
+rewrite, credential change or direct VPS SSH. All630 checks pass, including31
+deployment checks exercising canonical/alias acceptance and malicious remote
+rejection. Next operator action: VASA staging VPS -> mode=check.
+
 2026-10-15 staging deployment bridge: manual Actions workflow supports default
 read-only check and explicit deploy. Codex Cloud must never SSH to the VPS;
 this supersedes earlier direct-SSH authorization. Existing rootless Compose
