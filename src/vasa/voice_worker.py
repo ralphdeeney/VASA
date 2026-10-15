@@ -54,6 +54,87 @@ from vasa.tools.concrete import (
 )
 from vasa.tools.gateway import ToolBinding, ToolGateway
 
+VOICE_STAGES = frozenset(
+    {
+        "settings",
+        "speech_verify",
+        "database",
+        "redis",
+        "evolution_client",
+        "resolve_instances",
+        "instance_status",
+        "persisted_config",
+        "knowledge_init",
+        "tools_config",
+        "llm_provider",
+        "stt_init",
+        "tts_init",
+        "runtime_init",
+        "ready",
+        "supervision",
+    }
+)
+VOICE_ERRORS = frozenset(
+    {
+        "invalid_configuration",
+        "invalid_assets",
+        "missing_assets",
+        "dependency_unavailable",
+        "initialization_failed",
+        "operation_failed",
+        "internal_error",
+    }
+)
+
+
+@dataclass
+class StartupReport:
+    current: str = "settings"
+    ready: bool = False
+    failed: bool = False
+    emitted: bool = False
+
+    def enter(self, stage: str) -> None:
+        if stage not in VOICE_STAGES:
+            raise ValueError("Invalid voice diagnostic stage")
+        if self.emitted and self.current == stage:
+            return
+        self.current, self.emitted = stage, True
+        # Track later reconciliation stages without a continuous runtime log
+        # stream. A later failure reports the current stage with RUNTIME keys.
+        if self.ready:
+            return
+        print(f"VOICE_STARTUP_STAGE={stage}", flush=True)
+        if stage == "ready":
+            self.ready = True
+
+    def failure(self, error: Exception) -> None:
+        if self.failed:
+            return
+        self.failed = True
+        # Never stringify exceptions, inspect response bodies, or read request
+        # headers/URLs. Only fixed codes selected by type and trusted stage.
+        if isinstance(error, ValueError):
+            code = "invalid_configuration"
+        elif isinstance(error, FileNotFoundError):
+            code = "missing_assets"
+        elif isinstance(error, (RedisError, SQLAlchemyError, EvolutionError, OSError, ImportError)):
+            code = "dependency_unavailable"
+        elif isinstance(error, RuntimeError):
+            code = (
+                "invalid_assets"
+                if self.current in {"speech_verify", "knowledge_init"}
+                else ("initialization_failed")
+            )
+        else:
+            code = "internal_error"
+        if self.ready and code == "initialization_failed":
+            code = "operation_failed"
+        safe_stage = self.current if self.current in VOICE_STAGES else "settings"
+        prefix = "VOICE_RUNTIME" if self.ready else "VOICE_STARTUP"
+        print(f"{prefix}_FAILED={safe_stage}", flush=True)
+        print(f"{prefix}_ERROR={code}", flush=True)
+
 
 async def resolve_instance(
     database: Database, email: str, instance: UUID
@@ -396,8 +477,39 @@ async def run(
     greeting_override: bool = False,
     instructions_override: bool = False,
     all_instances: bool = False,
+    _startup_report: StartupReport | None = None,
+) -> None:
+    report = _startup_report if _startup_report is not None else StartupReport()
+    report.enter("settings")
+    try:
+        await _run(
+            email,
+            instance,
+            config,
+            once=once,
+            greeting_override=greeting_override,
+            instructions_override=instructions_override,
+            all_instances=all_instances,
+            startup=report,
+        )
+    except Exception as error:
+        report.failure(error)
+        raise
+
+
+async def _run(
+    email: str,
+    instance: UUID,
+    config: RuntimeConfig,
+    *,
+    once: bool,
+    greeting_override: bool,
+    instructions_override: bool,
+    all_instances: bool,
+    startup: StartupReport,
 ) -> None:
     settings = Settings()
+    startup.enter("speech_verify")
     models = SpeechModels(settings.speech_model_root)
     await asyncio.to_thread(
         models.verify_runtime,
@@ -405,6 +517,7 @@ async def run(
         kokoro_dir=settings.kokoro_model_dir,
         kitten_dir=settings.kitten_model_dir,
     )
+    startup.enter("settings")
     if settings.tts_provider == "deepgram" and not settings.deepgram_api_key.get_secret_value():
         raise ValueError("Configure DEEPGRAM_API_KEY securely before starting the voice worker")
     if settings.tts_provider == "speechify" and not settings.speechify_api_key.get_secret_value():
@@ -414,13 +527,16 @@ async def run(
     if not openai_key and not anthropic_key:
         raise ValueError("Configure a provider key securely before starting the voice worker")
     async with AsyncExitStack() as resources:
+        startup.enter("database")
         database = Database(settings.database_url.get_secret_value())
         resources.push_async_callback(database.aclose)
+        startup.enter("resolve_instances")
         if all_instances:
             mappings = await resolve_all(database)
         else:
             context, external_id = await resolve_instance(database, email, instance)
             mappings = [(context, instance, external_id)]
+        startup.enter("redis")
         cache = Redis.from_url(
             settings.redis_url.get_secret_value(),
             socket_timeout=3,
@@ -430,6 +546,7 @@ async def run(
         )
         resources.push_async_callback(cache.aclose)
         await cache.ping()
+        startup.enter("evolution_client")
         client = EvolutionCalls(
             settings.evolution_base_url,
             settings.evolution_admin_key.get_secret_value(),
@@ -437,6 +554,7 @@ async def run(
             settings.evolution_instance_key.get_secret_value(),
         )
         resources.push_async_callback(client.aclose)
+        startup.enter("knowledge_init")
         from vasa.knowledge.service import KnowledgeService
         from vasa.tools.webhooks_config import load_webhooks
 
@@ -450,6 +568,7 @@ async def run(
         async def collect_targets() -> list[WorkerTarget]:
             nonlocal mappings, stt, tts
             if all_instances:
+                startup.enter("resolve_instances")
                 mappings = await resolve_all(database)
             paired: list[WorkerTarget] = []
             status_slots = asyncio.Semaphore(4)
@@ -463,6 +582,7 @@ async def run(
                         raise
                     return None
 
+            startup.enter("instance_status")
             statuses = await asyncio.gather(*(fetch_status(row[2]) for row in mappings))
             for (context, owned_instance, external_id), status in zip(
                 mappings, statuses, strict=True
@@ -481,6 +601,7 @@ async def run(
                     if all_instances:
                         continue
                     raise ValueError("Selected instance is not paired")
+                startup.enter("persisted_config")
                 saved_config = await persisted_config(
                     database,
                     context,
@@ -495,6 +616,7 @@ async def run(
                     owned_instance,
                 ):
                     assert stt is not None and tts is not None
+                    startup.enter("runtime_init")
                     target = replace(
                         existing,
                         runtime=ConversationRuntime(
@@ -508,6 +630,7 @@ async def run(
                     continue
                 target_resources = AsyncExitStack()
                 try:
+                    startup.enter("tools_config")
                     tool_specs = [
                         {
                             "name": "knowledge_search",
@@ -524,6 +647,7 @@ async def run(
                     if webhook is not None:
                         target_resources.push_async_callback(webhook.aclose)
                     tool_specs.extend(webhook_specs)
+                    startup.enter("llm_provider")
                     providers: dict[str, OpenAIProvider | AnthropicProvider] = {}
                     if openai_key:
                         providers["openai"] = OpenAIProvider(
@@ -551,10 +675,12 @@ async def run(
                             allow_tools=True,
                         )
                     if stt is None or tts is None:
+                        startup.enter("stt_init")
                         stt = await asyncio.to_thread(
                             SherpaSTT, models.stt_dir, num_threads=settings.stt_num_threads
                         )
                         resources.push_async_callback(stt.aclose)
+                        startup.enter("tts_init")
                         if settings.tts_provider == "deepgram":
                             tts = DeepgramTTS(
                                 settings.deepgram_api_key.get_secret_value(),
@@ -587,6 +713,7 @@ async def run(
                         else:
                             tts = await asyncio.to_thread(SherpaTTS, models.tts_dir, num_threads=1)
                             resources.push_async_callback(tts.aclose)
+                    startup.enter("runtime_init")
                     runtime = ConversationRuntime(stt, tts, llm, config=saved_config)
                     target = WorkerTarget(
                         context, owned_instance, external_id, runtime, webhook, target_resources
@@ -602,7 +729,12 @@ async def run(
 
         try:
             targets = await collect_targets()
-            print("Voice worker ready for registered instances; caller audio is not recorded.")
+            startup.enter("ready")
+            print(
+                "Voice worker ready for registered instances; caller audio is not recorded.",
+                flush=True,
+            )
+            startup.enter("supervision")
             await supervise_calls(
                 client,
                 registry,
@@ -619,8 +751,10 @@ async def run(
                     await target.resources.aclose()
 
 
-async def run_all(config: RuntimeConfig) -> None:
-    await run("", UUID(int=0), config, once=False, all_instances=True)
+async def run_all(config: RuntimeConfig, *, _startup_report: StartupReport | None = None) -> None:
+    await run(
+        "", UUID(int=0), config, once=False, all_instances=True, _startup_report=_startup_report
+    )
 
 
 def main() -> None:
@@ -642,6 +776,8 @@ def main() -> None:
         parser.error("--all uses saved agent configuration and cannot be combined with overrides")
     if not options.all and (not options.email or options.instance is None):
         parser.error("provide --all or both --email and --instance")
+    report = StartupReport()
+    report.enter("settings")
     try:
         config = RuntimeConfig(
             greeting="Hello, how can I help?" if options.greeting is None else options.greeting
@@ -651,7 +787,7 @@ def main() -> None:
                 raise ValueError("Instructions exceed limit")
             config = replace(config, system_prompt=options.instructions.read_text(encoding="utf-8"))
         asyncio.run(
-            run_all(config)
+            run_all(config, _startup_report=report)
             if options.all
             else run(
                 options.email,
@@ -660,11 +796,13 @@ def main() -> None:
                 once=options.once,
                 greeting_override=options.greeting is not None,
                 instructions_override=options.instructions is not None,
+                _startup_report=report,
             )
         )
     except KeyboardInterrupt:
         pass
-    except (ValueError, RuntimeError, EvolutionError, OSError, RedisError, SQLAlchemyError):
+    except Exception as error:
+        report.failure(error)
         parser.exit(
             1, "Voice worker unavailable: check models, private keys, services and mapping.\n"
         )

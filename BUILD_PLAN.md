@@ -1,5 +1,10 @@
 # Build plan
 
+2026-10-15 secret-safe worker lifecycle diagnostics and pre-rollback marker
+extraction are verified with791 full checks. The next manual bootstrap should
+capture the actual target image's failing stage; a manual worker run after
+rollback remains an old-image observation. Deployment stays Actions-only/manual.
+
 2026-10-15 provider-aware speech verification/persisted voice handling is
 verified with754 full checks. Run Actions bootstrap again for local Sherpa STT
 plus configured Deepgram TTS; unused local TTS/fixture assets no longer block

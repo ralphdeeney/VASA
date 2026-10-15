@@ -1,5 +1,11 @@
 # Eval results
 
+2026-10-15 existing evals pass within the791-check suite after safe startup
+diagnostics. Local failure injection and stateful deployment fixtures prove
+marker privacy, phase classification and pre-rollback target capture. They do
+not identify the VPS b1cac8 failure; that requires a new manual target run.
+Provider-aware speech validation and provider/deployment settings are unchanged.
+
 2026-10-15 existing evals pass within the754-check suite after provider-aware
 speech verification. Checksum fixtures and worker stubs establish asset selection
 and no-download behavior; real SQL tests establish persisted voice isolation.

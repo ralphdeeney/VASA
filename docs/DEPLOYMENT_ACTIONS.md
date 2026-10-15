@@ -149,6 +149,44 @@ server settings, never tenant voice strings. English-language validation and
 the existing fixed local-provider voice allowlist remain enforced. This changes
 neither Deepgram/9Router configuration nor the deployment topology.
 
+## Target worker startup diagnostics
+
+Manual `compose run voice` after rollback starts the restored **old** pinned
+image. Its traceback cannot diagnose the failed target image. The controller
+therefore extracts bounded, secret-safe lifecycle markers from the owned target
+voice container **before** removing it or resetting Git/image tags.
+
+The worker flushes fixed `VOICE_STARTUP_STAGE=<stage>` lines around settings,
+provider-aware speech verification, database, Redis, Evolution client, instance
+resolution/status, persisted config, knowledge/tool initialization, LLM provider,
+STT/TTS initialization, runtime construction and readiness. Startup failures emit
+only fixed stage/code fields (plus the existing generic CLI message). Example
+format, not a diagnosis of the current VPS failure:
+
+```text
+VOICE_STARTUP_STAGE=llm_provider
+VOICE_STARTUP_FAILED=llm_provider
+VOICE_STARTUP_ERROR=invalid_configuration
+```
+
+Failure codes are limited to `invalid_configuration`, `invalid_assets`,
+`missing_assets`, `dependency_unavailable`, `initialization_failed`,
+`operation_failed` and `internal_error`. Exception messages, response bodies,
+prompts, keys, auth headers, credentials/URLs and caller identifiers are never
+serialized into these fields. Unexpected exception types are also caught by
+the CLI without a raw traceback. Failures after readiness use
+`VOICE_RUNTIME_FAILED`/`VOICE_RUNTIME_ERROR`, including later reconciliation;
+routine runtime stage transitions are tracked without continuous stage logging.
+
+Pre-rollback diagnostics read the last 200 stdout/stderr lines across container
+restarts (not only the latest `StartedAt` interval). Only exact ASCII lifecycle
+markers with known keys and allowlisted values are reconstructed and printed,
+limited to the last 64 markers. Other lines, malformed fields and suffixes are
+discarded. Health validation rejects known lifecycle failure markers even when
+a readiness marker appeared earlier in that attempt. Post-rollback diagnostics
+do not emit lifecycle markers from the restored old worker image. An empty or
+unreadable log cannot supply a diagnosis; raw logs are never dumped as fallback.
+
 ## Deploy
 
 Only after the check passes, manually select `deploy`:

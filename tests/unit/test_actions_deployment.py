@@ -140,7 +140,9 @@ def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
     monkeypatch.setattr(deployment, "health", health)
     monkeypatch.setattr(deployment, "private_hashes", lambda: {"env": "unchanged"})
     monkeypatch.setattr(deployment, "container", lambda _: ("c" * 64, {"image": "old-image"}))
-    monkeypatch.setattr(deployment, "diagnostics", lambda: state.calls.append(("diagnostics",)))
+    monkeypatch.setattr(
+        deployment, "diagnostics", lambda **kwargs: state.calls.append(("diagnostics",))
+    )
 
     def run(*args, **kwargs):
         state.calls.append(args)

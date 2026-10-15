@@ -1,5 +1,16 @@
 # Test results
 
+2026-10-15 voice lifecycle diagnostics:791 full unit/component/integration/native/
+eval checks passed in68.02s, zero failures/errors/skips, one existing deprecation
+warning. Ruff/format202 files, strict mypy57 sources, Actionlint1.7.7 and bash
+syntax pass. All120 focused checks pass, covering precise startup failure-stage
+injection, exceptions whose __str__ must not be called, CLI unexpected errors,
+post-ready/reconciliation distinction, marker allowlist parity/malformed-line
+rejection/history bounds, and target voice capture before removal/Git rollback.
+Actions stdout never includes synthetic secrets/provider bodies/credential URLs;
+post-rollback diagnostics suppress old-image markers. JUnit:
+reports/voice-startup-diagnostics.xml. No direct VPS SSH or live deployment ran.
+
 2026-10-15 provider-aware speech:754 full unit/component/integration/native/
 eval checks passed in67.35s, zero failures/errors/skips, one existing deprecation
 warning. Ruff/format200 files, strict mypy57 sources, Actionlint1.7.7 and bash

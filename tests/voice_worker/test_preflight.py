@@ -543,7 +543,8 @@ def test_cli_reports_fixed_error_without_exception_details(
         worker.main()
     assert exit_status.value.code == 1
     output = capsys.readouterr()
-    assert output.out == ""
+    assert "VOICE_STARTUP_FAILED=settings" in output.out
+    assert "VOICE_STARTUP_ERROR=initialization_failed" in output.out
     assert "Voice worker unavailable" in output.err
     assert PRIVATE_DETAIL not in output.err and "Traceback" not in output.err
 

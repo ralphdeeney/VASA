@@ -1,5 +1,19 @@
 # Current state
 
+2026-10-15 target voice startup diagnostics are complete and verified. Each
+worker run emits fixed startup stages; exceptions emit only allowlisted failed
+stage/error codes, never exception strings, provider bodies or environment.
+CLI also sanitizes unexpected exceptions. Readiness is sticky: later failures
+use VOICE_RUNTIME_FAILED/ERROR even during reconciliation. Actions capture a
+bounded target voice log tail across restarts before rollback/removal, print
+only exact allowlisted markers, and suppress restored-image lifecycle markers
+after rollback. Health rejects lifecycle failure codes despite an earlier ready
+marker. All791 checks pass, including120 focused deployment/diagnostic checks;
+static/type, Actionlint and shell validation pass. b1cac8 provider-aware asset
+checks and provider settings/topology remain unchanged. No direct VPS SSH,
+deployment dispatch or live diagnosis was attempted. Next operator bootstrap
+can now report the target worker's sanitized failing stage before rollback.
+
 2026-10-15 provider-aware speech startup fix is complete and verified. Worker
 calls SpeechModels.verify_runtime, always checking ASR and only the configured
 local TTS provider's assets; Deepgram/Speechify need no local TTS or fixtures.

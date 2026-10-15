@@ -31,6 +31,37 @@ ORIGINS = {
 }
 READY_MARKER = "Voice worker ready for registered instances; caller audio is not recorded."
 BAD_LOG = re.compile(r"Traceback \(most recent call last\)|\b(?:ERROR|CRITICAL|FATAL)\b")
+VOICE_STAGES = frozenset(
+    {
+        "settings",
+        "speech_verify",
+        "database",
+        "redis",
+        "evolution_client",
+        "resolve_instances",
+        "instance_status",
+        "persisted_config",
+        "knowledge_init",
+        "tools_config",
+        "llm_provider",
+        "stt_init",
+        "tts_init",
+        "runtime_init",
+        "ready",
+        "supervision",
+    }
+)
+VOICE_ERRORS = frozenset(
+    {
+        "invalid_configuration",
+        "invalid_assets",
+        "missing_assets",
+        "dependency_unavailable",
+        "initialization_failed",
+        "operation_failed",
+        "internal_error",
+    }
+)
 ACTIVE_STAGE = "VASA_STAGE=preflight"
 
 
@@ -268,19 +299,51 @@ def state_ok(value):
     )
 
 
-def log_health(cid, started, worker=False):
+def voice_marker_lines(logs):
+    markers = []
+    for line in logs.split("\n"):
+        if len(line) > 96:
+            continue
+        match = re.fullmatch(
+            r"VOICE_(STARTUP|RUNTIME)_(STAGE|FAILED|ERROR)=([a-z_]+)", line, flags=re.ASCII
+        )
+        if match is None:
+            continue
+        phase, kind, value = match.groups()
+        allowed = VOICE_ERRORS if kind == "ERROR" else VOICE_STAGES
+        if value in allowed:
+            markers.append(f"VOICE_{phase}_{kind}={value}")
+    return markers[-64:]
+
+
+def read_container_logs(cid, *, since=None):
     # Docker writes stderr logs to stderr even on success: capture both streams.
     # No raw log line reaches Actions.
+    args = ["docker", "logs", "--tail", "200"]
+    if since is not None:
+        args.extend(["--since", since])
+    args.append(cid)
     result = subprocess.run(
-        ["docker", "logs", "--since", started, "--tail", "200", cid],
+        args,
         stdin=subprocess.DEVNULL,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=30,
         check=False,
     )
     require(result.returncode == 0, "Cannot inspect VASA startup logs.")
-    logs = result.stdout + "\n" + result.stderr
+    return result.stdout + "\n" + result.stderr
+
+
+def log_health(cid, started, worker=False):
+    logs = read_container_logs(cid, since=started)
+    markers = voice_marker_lines(logs) if worker else []
+    require(
+        not any("_FAILED=" in line or "_ERROR=" in line for line in markers),
+        "Voice lifecycle failure markers found; raw logs withheld.",
+    )
     failures = len(BAD_LOG.findall(logs))
     require(failures == 0, "VASA startup failure markers found; raw logs withheld.")
     return not worker or READY_MARKER in logs
@@ -579,7 +642,7 @@ def bootstrap(target, branch, previous):
                     print("VASA_BOOTSTRAP_ROLLBACK_OK; bootstrap remains failed.", flush=True)
             except BaseException:
                 print("VASA_BOOTSTRAP_ROLLBACK_FAILED; operator intervention required.", flush=True)
-                diagnostics()
+                diagnostics(report_voice_markers=False)
             raise Refusal("Bootstrap failed; see sanitized VASA status above.") from None
 
 
@@ -592,7 +655,7 @@ def private_hashes():
     return result
 
 
-def diagnostics():
+def diagnostics(*, report_voice_markers=True):
     for service in SERVICES:
         try:
             cid, value = container(service)
@@ -602,15 +665,22 @@ def diagnostics():
                 f"oom={bool(state.get('OOMKilled'))}, restarts={value['restarts']}",
                 flush=True,
             )
+            if service == "voice" and report_voice_markers:
+                # Capture the target container BEFORE rollback/removal, across
+                # restarts rather than only the most recent StartedAt window.
+                for marker in voice_marker_lines(read_container_logs(cid)):
+                    print(marker, flush=True)
             try:
                 log_health(cid, state["StartedAt"], service == "voice")
-                print(service + ": no startup failure markers in recent bounded logs", flush=True)
+                print(
+                    service + ": current-attempt log scan complete (content withheld)", flush=True
+                )
             except Refusal:
                 print(
                     service + ": startup log failure markers detected (content withheld)",
                     flush=True,
                 )
-        except (Refusal, ValueError, KeyError, subprocess.TimeoutExpired):
+        except (Refusal, ValueError, KeyError, OSError, subprocess.TimeoutExpired):
             print(service + ": container diagnostic unavailable", flush=True)
 
 
@@ -801,7 +871,7 @@ def deploy(target, branch, previous):
                     print("VASA_ROLLBACK_OK; deployment remains failed.", flush=True)
             except BaseException:
                 print("VASA_ROLLBACK_FAILED; operator intervention required.", flush=True)
-                diagnostics()
+                diagnostics(report_voice_markers=False)
             raise Refusal("Deployment failed; see sanitized VASA status above.") from None
 
 

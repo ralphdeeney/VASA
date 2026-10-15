@@ -1,5 +1,13 @@
 # Architecture
 
+2026-10-15 worker lifecycle observability uses per-run fixed stage reporting.
+Startup exceptions produce only allowlisted stage/error fields; CLI catches
+unexpected exception types without rendering bodies/tracebacks. A sticky ready
+flag distinguishes later runtime/reconciliation failures. Actions diagnostics
+filter bounded target-container log history before rollback, reconstruct only
+approved lifecycle markers and suppress restored-image markers after rollback.
+Provider-aware verification, provider settings and service topology are unchanged.
+
 2026-10-15 worker speech preflight is provider-aware and read-only. Every
 provider requires pinned local ASR; Deepgram/Speechify require no local TTS or
 fixtures. Piper/Kokoro/Kitten additionally verify only their selected assets,

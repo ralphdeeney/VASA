@@ -60,6 +60,7 @@ def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
         fail_rollback_inspect=False,
         rollback_builds=[],
         fail_up_once=False,
+        original_diagnostics=controller.diagnostics,
     )
 
     def git(*args: str) -> str:
@@ -185,7 +186,9 @@ def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
     monkeypatch.setattr(controller, "container", container)
     monkeypatch.setattr(controller, "config", config)
     monkeypatch.setattr(controller, "health", health)
-    monkeypatch.setattr(controller, "diagnostics", lambda: state.calls.append(("diagnostics",)))
+    monkeypatch.setattr(
+        controller, "diagnostics", lambda **kwargs: state.calls.append(("diagnostics",))
+    )
     return state
 
 
@@ -616,3 +619,40 @@ def test_rollback_helper_refuses_unrelated_image_tags_before_any_commands(rig):
     with pytest.raises(controller.Refusal, match="Invalid VASA rollback image target"):
         controller.acquire_rollback_image(OLD_IMAGE, PREVIOUS, "unrelated-app:latest")
     assert rig.calls == []
+
+
+def test_failed_bootstrap_reports_target_voice_markers_before_removal_and_git_rollback(
+    rig,
+    monkeypatch,
+    capsys,
+):
+    rig.fail_voice = True
+    monkeypatch.setattr(controller, "diagnostics", rig.original_diagnostics)
+
+    def logs(cid, *, since=None):
+        if cid != "f" * 64:
+            return ""
+        assert rig.current == TARGET
+        assert rig.containers["voice"][1]["image"] == NEW_IMAGE
+        rig.calls.append(("target_voice_logs", cid, rig.current))
+        return (
+            "VOICE_STARTUP_STAGE=llm_provider\nVOICE_STARTUP_FAILED=llm_provider\n"
+            "VOICE_STARTUP_ERROR=invalid_configuration\n"
+            + FAKE_KEY
+            + "\nAuthorization: Bearer private-header\nhttps://user:password@example.invalid"
+        )
+
+    monkeypatch.setattr(controller, "read_container_logs", logs)
+    with pytest.raises(controller.Refusal, match="Bootstrap failed"):
+        controller.bootstrap(TARGET, controller.BRANCH, PREVIOUS)
+    output = capsys.readouterr().out
+    assert output.index("VOICE_STARTUP_FAILED=llm_provider") < output.index(
+        "BOOTSTRAP_STAGE=rollback\n"
+    )
+    assert "VASA_BOOTSTRAP_ROLLBACK_OK" in output
+    for secret in (FAKE_KEY, "private-header", "https://user:password@example.invalid"):
+        assert secret not in output
+    capture = rig.calls.index(("target_voice_logs", "f" * 64, TARGET))
+    removal = rig.calls.index(("docker", "container", "rm", "--force", "f" * 64))
+    reset = rig.calls.index(("git", "reset", "--hard", PREVIOUS))
+    assert capture < removal < reset

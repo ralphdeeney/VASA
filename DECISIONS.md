@@ -1,5 +1,15 @@
 # Decisions
 
+2026-10-15 user confirms target b1cac8 reached voice health, restarted11 times,
+then rolled back; a manual worker run after rollback uses the old image and is
+not evidence of the target failure. Add fixed startup stage/error reporting,
+including knowledge/tools initialization, without exception rendering or env/
+response inspection. Distinguish post-ready failures with RUNTIME markers.
+Extract only known exact marker lines from the target container before rollback,
+including prior restart attempts; never dump arbitrary logs or restored-image
+startup markers. Keep b1cac8 provider-aware validation and all provider/deployment
+configuration intact. Do not infer the actual target failure until a new run.
+
 2026-10-15 replace unconditional full-bundle worker verification with explicit
 ASR/selected-TTS runtime verification. Do not require unused Piper/Kokoro/Kitten
 or benchmark fixtures for cloud TTS. Keep complete provisioning/benchmark checks
