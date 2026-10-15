@@ -182,7 +182,9 @@ def test_event_parser_requires_bound_instance_token(calls: EvolutionCalls) -> No
         "ABC123",
         "12345@lid",
     )
-    assert calls.parse_event(event_payload(calls, event="CallTerminate"), INSTANCE_ID) is None
+    terminate = json.loads(event_payload(calls, event="CallTerminate"))
+    terminate["queue"] = INSTANCE_ID + ".callterminate"
+    assert calls.parse_event(json.dumps(terminate), INSTANCE_ID) is None
 
 
 @pytest.mark.parametrize(

@@ -1,5 +1,13 @@
 # Architecture
 
+2026-10-15 Evolution adapter tracks authenticated terminate only for active,
+instance/call-scoped streams (bounded to ten, removed on context exit). Stream
+state distinguishes remote terminate, upstream stop and local close. Worker
+skips redundant hangup for known upstream end and still runs registry/durable
+cleanup; true local failures retain their error. No transport event cancels
+media. Read timeout remains unchanged. Fixed continuity markers and a stdlib
+operator log filter expose no identifiers/payloads. See call transport analysis.
+
 2026-10-15 OpenAIProvider supports both DONE and clean EOF after a validated stop
 or tool_calls terminal choice. Shared finalization checks terminal state and
 validates complete approved tool calls. SSE framing remains unchanged; iterator

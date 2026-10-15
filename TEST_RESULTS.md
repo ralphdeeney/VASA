@@ -1,5 +1,18 @@
 # Test results
 
+2026-10-15 live-call lifecycle cleanup/diagnostics: **885 passed** in 64.96s,
+zero failures/errors/skips; one existing Starlette deprecation warning. Full
+unit/component/integration/native/eval suite via scripts/check.sh, Ruff/format
+(214 files), strict mypy (59 sources), Actionlint and shell syntax pass. Added
+actual local-WebSocket sequence tests for media continuity, duplicate/scoped/
+authenticated terminate, upstream stop, socket-close-without-stop, normal and
+failed/racing hangup cleanup, plus fixed log filter privacy/oversized input.
+Existing cancellation, durable finalization and genuine local error tests pass.
+Pinned public Go dependencies were source-reviewed and h1-verified against
+Evolution go.sum; no Go code changed and no Go tests were run. Tests establish
+cleanup semantics, not a fix for live reconnect. JUnit: reports/call-lifecycle.xml.
+No VPS SSH, workflow dispatch, live call or provider request performed by Codex.
+
 2026-10-15 terminal clean-EOF compatibility: **872 passed** in 67.67s, zero
 failures/errors/skips; one existing Starlette warning. Full unit/component/
 integration/native/eval suite via scripts/check.sh passed. Ruff/format (210

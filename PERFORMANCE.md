@@ -1,5 +1,12 @@
 # Performance
 
+2026-10-15 operator reports real WhatsApp calls with heard greeting and nonzero
+inbound/outbound frames, ending after roughly 10–30 seconds with zero completed
+turns and no container restarts. These are observations, not local benchmarks.
+Existing media read deadline remains 10 seconds. New fixed markers expose observed
+receive gaps over one second and subsequent frame recovery; they do not claim
+successful relay renegotiation. No provider/STT/TTS performance settings changed.
+
 2026-10-15 safe provider smoke tooling: live 9Router and Deepgram timings remain
 pending. Explicit operator probes measure LLM first streamed text, Deepgram first
 playable 60 ms PCM frame, total stream completion, and framed audio duration

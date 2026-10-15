@@ -1,5 +1,13 @@
 # Decisions
 
+2026-10-15 do not interpret Evolution's Unhandled CallTransport warning as proof
+of missing transport handling: pinned meowcaller already consumes that event.
+Do not add guessed type-3 acknowledgments/socket resets. Correct the proven
+cleanup error independently, require verified terminate/upstream stop evidence
+before suppressing redundant hangup, and preserve genuine failures. Existing raw
+upstream log configuration remains untouched; provide a bounded allowlist filter
+for operator sharing. Remote end evidence never excuses malformed media payloads.
+
 2026-10-15 accept clean SSE EOF only after an already validated terminal choice,
 based on operator-confirmed 9Router stream evidence. Share the same finalizer
 with DONE and validate all tools before emitting any; never catch framing or

@@ -210,6 +210,14 @@ async def handle_call(
     report: dict[str, object] = {"session_id": str(session.id), "error": None}
     durable: DurableCall | None = None
     end_call = EndCall(context, session, client, registry)
+    media_connection: object | None = None
+
+    def termination_source() -> str | None:
+        if getattr(media_connection, "remote_terminated", False) is True:
+            return "remote_terminate"
+        if getattr(media_connection, "upstream_stopped", False) is True:
+            return "upstream_stop"
+        return None
 
     async def state(value: CallState) -> None:
         nonlocal session
@@ -229,6 +237,7 @@ async def handle_call(
         await client.answer(instance_id, incoming.call_id, incoming.caller_jid)
         await state(CallState.CONNECTED)
         async with client.open_media(instance_id, incoming.call_id) as media:
+            media_connection = media
             if durable is None:
                 result = await runtime.run(context, media, on_state=state)
             else:
@@ -284,13 +293,28 @@ async def handle_call(
 
         async def finish_cleanup() -> None:
             try:
-                async with asyncio.timeout(5):
-                    if not end_call.end_requested.is_set():
-                        await client.hangup(instance_id, incoming.call_id)
-                report["hangup_acknowledged"] = True
+                source = termination_source()
+                if source is not None:
+                    report["termination_source"] = source
+                    report["hangup_acknowledged"] = False
+                    report["hangup_required"] = False
+                else:
+                    async with asyncio.timeout(5):
+                        if not end_call.end_requested.is_set():
+                            print("CALL_LIFECYCLE=local_hangup", flush=True)
+                            await client.hangup(instance_id, incoming.call_id)
+                    report["hangup_acknowledged"] = True
+                    report["hangup_required"] = True
             except Exception:
                 report["hangup_acknowledged"] = False
-                report["error"] = report["error"] or "hangup_failed"
+                # A validated remote event may race an already pending request.
+                source = termination_source()
+                if source is not None:
+                    report["termination_source"] = source
+                    report["hangup_required"] = False
+                else:
+                    print("CALL_LIFECYCLE=local_hangup_failed", flush=True)
+                    report["error"] = report["error"] or "hangup_failed"
             try:
                 async with asyncio.timeout(5):
                     await registry.delete(context, session.id)

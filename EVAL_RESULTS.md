@@ -1,5 +1,11 @@
 # Eval results
 
+2026-10-15 existing evals pass within 885 full checks. Local WebSocket and
+cleanup regressions establish idempotent upstream-end handling and preserved
+failure/security boundaries. Operator confirmed partial live WhatsApp media
+but zero completed turns before disconnect. Actual reconnect cause remains
+unconfirmed; no transport recovery success or stable full AI call is claimed.
+
 2026-10-15 existing evals pass within 872 full checks. Operator-confirmed
 9Router terminal EOF shape now succeeds locally alongside OpenAI DONE streams;
 shared complete-tool finalization and malformed/truncated rejection are covered.

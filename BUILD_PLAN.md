@@ -1,5 +1,11 @@
 # Build plan
 
+2026-10-15 next live gate: normal Actions deploy of call lifecycle correction,
+then stable 90-second call, caller network-switch call, caller-ended and locally
+ended controls. Gather only fixed sanitized transport/media/lifecycle markers.
+Prove completed turns and unchanged container restart counts. Reconnect root
+cause remains pending relay-change/keepalive evidence; no blind transport fix.
+
 2026-10-15 observed 9Router missing-DONE compatibility fix implemented with
 strict terminal EOF regression coverage. Next live step: normal Actions deploy
 and opt-in provider smoke, then full AI WhatsApp call. No automatic deployment.

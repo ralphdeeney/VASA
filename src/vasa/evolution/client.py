@@ -22,7 +22,7 @@ from vasa.evolution.models import (
     PairingQR,
     validate_id,
 )
-from vasa.evolution.stream import MediaStream
+from vasa.evolution.stream import CallLifecycle, MediaStream
 
 EVENT_PING_INTERVAL_SECONDS = 20.0
 EVENT_PING_TIMEOUT_SECONDS = 20.0
@@ -77,6 +77,7 @@ class EvolutionCalls:
         self._admin_key = admin_key
         self._stream_key = stream_key
         self._instance_key = instance_key
+        self._media_lifecycles: dict[tuple[str, str], CallLifecycle] = {}
         # websockets DEBUG logging prints signed query strings. A private disabled
         # logger prevents credential disclosure even when host logging enables DEBUG.
         self._ws_logger = logging.Logger("vasa.evolution.transport")
@@ -234,6 +235,11 @@ class EvolutionCalls:
         token = hmac.new(
             self._stream_key.encode(), f"{instance_id}|{call_id}|{exp}".encode(), hashlib.sha256
         ).hexdigest()
+        key = (instance_id, call_id)
+        if key in self._media_lifecycles or len(self._media_lifecycles) >= 10:
+            raise EvolutionError("unavailable")
+        lifecycle = CallLifecycle()
+        self._media_lifecycles[key] = lifecycle
         uri = (
             self._ws_url
             + "/call/stream/"
@@ -258,7 +264,7 @@ class EvolutionCalls:
                 proxy=None,
                 logger=self._ws_logger,
             ) as connection:
-                stream = MediaStream(connection, call_id)
+                stream = MediaStream(connection, call_id, lifecycle)
                 try:
                     await stream.start()
                     yield stream
@@ -268,6 +274,8 @@ class EvolutionCalls:
             raise websocket_failure(error) from None
         except (WebSocketException, TimeoutError, OSError):
             raise EvolutionError("unavailable") from None
+        finally:
+            self._media_lifecycles.pop(key, None)
 
     def parse_event(self, raw: str | bytes, instance_id: str) -> IncomingCall | None:
         validate_id(instance_id)
@@ -289,6 +297,21 @@ class EvolutionCalls:
             )
         ):
             raise EvolutionError("invalid_response")
+        if payload.get("event") == "CallTerminate":
+            data = payload.get("data")
+            if not isinstance(data, dict) or not isinstance(data.get("CallID"), str):
+                raise EvolutionError("invalid_response")
+            try:
+                validate_id(data["CallID"])
+            except ValueError:
+                raise EvolutionError("invalid_response") from None
+            if envelope.get("queue") != f"{instance_id}.callterminate".lower():
+                raise EvolutionError("invalid_response")
+            lifecycle = self._media_lifecycles.get((instance_id, data["CallID"]))
+            if lifecycle is not None and not lifecycle.remote_terminated:
+                lifecycle.remote_terminated = True
+                print("CALL_LIFECYCLE=remote_terminate", flush=True)
+            return None
         if payload.get("event") != "CallOffer":
             return None
         data = payload.get("data")

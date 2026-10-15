@@ -1,5 +1,19 @@
 # Current state
 
+2026-10-15 live WhatsApp partial integration VERIFIED by operator: inbound
+answer, caller frames and audible opening greeting; calls then reconnect/end
+after roughly 10–30 seconds, with no container restart and no completed turn.
+Disconnection root cause remains unconfirmed. docs/CALL_TRANSPORT_ANALYSIS.md
+traces the pinned sources: CallTransport is handled independently by meowcaller;
+Evolution's separate warning does not prove an ignored reconnect. Subtype 3 has
+no documented reconnect semantics in the pin. No speculative relay change made.
+Confirmed redundant hangup cleanup corrected: authenticated remote terminate or
+upstream stop prevents duplicate REST hangup and misleading hangup_failed.
+Socket shutdown after verified termination is normal; other read failures and
+genuine local hangup failures remain errors. Added bounded safe log filter and
+fixed media continuity/lifecycle markers. Providers/schema/topology/security
+configuration unchanged. No deployment or live call performed by Codex.
+
 2026-10-15 exact 9Router mismatch confirmed by operator: valid terminal stop
 choice then clean EOF, no DONE sentinel. OpenAIProvider now shares terminal
 finalization between DONE and clean SSE exhaustion; EOF requires prior valid
