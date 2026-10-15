@@ -1,5 +1,14 @@
 # Decisions
 
+2026-10-15 user mandates GitHub Actions as staging SSH/deployment bridge; no
+further direct VPS SSH from Codex Cloud. Default manual mode is read-only check;
+deploy is separately dispatched. Reuse existing rootless Compose project and
+target only app/worker. Require a trusted host fingerprint rather than trusting
+ssh-keyscan alone. Refuse dirty trees, schema/dependency topology changes and
+missing healthy baseline. Preserve runtime secrets; rollback only known prior
+app revision/image and health-check again. Register the manual workflow on main
+through a separate small reviewable PR; keep implementation on requested branch.
+
 2026-10-14 user explicitly changes the interim TTS default to Deepgram Aura2
 (aura-2-thalia-en), superseding the earlier Kokoro default. Preserve all provider
 options and fail-fast missing-key behavior; no silent fallback or claimed live

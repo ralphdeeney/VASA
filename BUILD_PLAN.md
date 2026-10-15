@@ -1,5 +1,10 @@
 # Build plan
 
+2026-10-15 Actions deployment implementation complete:615 checks pass, plus
+Actionlint and shell syntax. Register manual workflow on main, configure trusted
+VASA_VPS_HOST_KEY_SHA256 repository variable, then dispatch mode=check against
+build/vasa-foundation. Deploy remains manual; no direct Codex-to-VPS SSH.
+
 2026-10-14 Deepgram Aura is now the explicit user-selected interim default;
 all599 checks pass. Configure a replacement DEEPGRAM_API_KEY securely and update
 any existing VASA_TTS_PROVIDER override before operator restart/live validation.

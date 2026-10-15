@@ -1,5 +1,13 @@
 # Architecture
 
+2026-10-15 staging deployments use GitHub Actions as the exclusive SSH bridge.
+The manual workflow reuses deploy/compose.yaml (vasa-vps), builds vasa's shared
+app image and updates only vasa/voice with --no-deps. Dependencies, existing
+runtime environment, volumes and unrelated projects remain under operator
+control. A trusted host-key fingerprint pins SSH; deploy mode serializes with
+Actions concurrency and an owned project lock, validates health, and restores
+the recorded prior app revision/image on failure. No push deployment trigger.
+
 2026-10-14 current default: user-selected interim Deepgram Aura2 TTS. Settings
 and deployment fallback select deepgram; explicit environment overrides still
 take precedence. A securely configured DEEPGRAM_API_KEY is required. Local STT,

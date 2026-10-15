@@ -1,5 +1,14 @@
 # Test results
 
+2026-10-15 Actions deployment: full615 unit/component/integration/native/eval
+checks passed in63.29s, zero failures/errors/skips (one existing deprecation
+warning). Ruff/format197 files and strict mypy57 sources pass. Actionlint1.7.7
+and bash syntax validation pass. Sixteen focused tests exercise read-only mode,
+dirty/schema refusals, targeted updates, docs-only nonrestart, rollback/failure,
+offline image fallback, secret-safe logs/errors, pinned host trust and temporary
+key cleanup. JUnit: reports/actions-deployment.xml. All SSH in these tests uses
+local stubs; no direct VPS SSH or deployment was attempted.
+
 2026-10-14 user-selected Deepgram default: full599 checks passed in62.24s,
 zero failures/errors/skips. Ruff/format194 files and strict mypy57 sources pass.
 JUnit: reports/deepgram-default.xml. Settings defaults, provider overrides and

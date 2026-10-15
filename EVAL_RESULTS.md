@@ -1,5 +1,10 @@
 # Eval results
 
+2026-10-15 existing evals remain passing in the615-check suite after adding the
+Actions staging path. Deployment controller failures/rollback are locally stubbed
+evidence, not VPS acceptance. No live connectivity, deployment, phone or TTS
+benchmark is inferred. Only GitHub Actions may perform future VPS SSH.
+
 2026-10-14 all existing evals pass within the599-check combined suite after
 optional Aura TTS integration. No STT provider, default, tenant/runtime policy
 or media wire contract changes. Mock/loopback evidence does not establish

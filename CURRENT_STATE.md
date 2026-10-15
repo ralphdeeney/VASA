@@ -1,5 +1,18 @@
 # Current state
 
+2026-10-15 staging deployment bridge: manual Actions workflow supports default
+read-only check and explicit deploy. Codex Cloud must never SSH to the VPS;
+this supersedes earlier direct-SSH authorization. Existing rootless Compose
+project vasa-vps/app services vasa+voice are reused with targeted updates,
+secret preservation, health checks and controlled app-only rollback. Full615
+checks pass; workflow Actionlint1.7.7 and shell syntax pass. No VPS deployment
+or connectivity success is claimed. Registration on default branch main and
+trusted repository variable VASA_VPS_HOST_KEY_SHA256 are prerequisites.
+API access to repository Actions variables is denied to the connected GitHub
+integration (403); no secret values were requested or exposed. Manual runbook:
+docs/DEPLOYMENT_ACTIONS.md. Deepgram test configuration remains local/ignored;
+the workflow does not transfer provider credentials to the VPS.
+
 2026-10-14 user explicitly selected Deepgram Aura as the interim default.
 Settings, deployment Compose fallback and example environment now select deepgram
 with aura-2-thalia-en. Kokoro INT8, Piper, Kitten and Speechify remain selectable.
