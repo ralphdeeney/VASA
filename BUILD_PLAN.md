@@ -1,5 +1,11 @@
 # Build plan
 
+2026-10-15 shared missing-image rollback acquisition is verified (682 checks).
+Operator can rerun bootstrap for the healthy four-service/no-worker topology.
+Rollback construction occurs before target checkout and preserves healthy
+containers on failure; normal deploy gets the same protection and stage markers.
+No direct Codex SSH or deployment dispatch is performed.
+
 2026-10-15 one-time Actions voice bootstrap is code-complete and verified with
 666 full checks. Operator should run mode=bootstrap on build/vasa-foundation for
 the confirmed healthy four-service/no-worker VPS state. Require private VPS

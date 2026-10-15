@@ -103,7 +103,7 @@ nonsecret receipt is `.local/actions-bootstrap.json`.
 
 On failure, rollback removes only the newly attempted voice container after
 validating its single-ID ownership. It restores the prior Git revision under
-the clean-tree check and the exact saved prior API image. Only an API whose
+the clean-tree check and the verified rollback image described below. Only an API whose
 update was attempted is restored with a targeted `up --no-deps vasa`. It never
 recreates database, Redis or Evolution. Health validation runs for the original
 four-service topology, with no worker expected, and checks unchanged dependencies
@@ -166,9 +166,9 @@ Readiness does not establish live phone/media or vendor API acceptance.
 Deployment failures return a nonzero job result even when rollback succeeds.
 The controller prints sanitized VASA-only diagnostics, checks that no concurrent
 local edits appeared, and performs the sole allowed `git reset --hard` to the
-recorded `PREVIOUS_SHA` under the lock. It rebuilds the prior app image and
-restarts only the same selected services. A saved VASA-only rollback image tag
-is used if the rollback build fails (for example, registry/network failure).
+recorded `PREVIOUS_SHA` under the lock. It retags the preverified VASA-only
+rollback image and restores only the selected app services if an update was
+attempted. Recovery needs no image rebuild or registry access.
 All health checks run again. Markers: `VASA_ROLLBACK_OK` or
 `VASA_ROLLBACK_FAILED`. The latest nonsecret receipt is
 `/opt/vasa/.local/actions-deployment.json`; rollback images are retained, not
@@ -179,3 +179,44 @@ signals invoke rollback. Host power loss, SIGKILL, a killed runner, or Docker
 daemon failure cannot guarantee automatic recovery; consult the receipt and
 restore the recorded app commit/image through the provider console. Never
 cancel an in-progress deployment to start a second one.
+
+## Acquiring a rollback image when the running image is unavailable
+
+Both `bootstrap` and `deploy` acquire and verify a rollback image before target
+checkout/pull, target build, or any container update. The normal path inspects
+the running container's image ID, tags it, and inspects the rollback tag.
+
+A running container can remain healthy even though its image ID is no longer
+available in Docker's local image store. If inspection or tagging fails, the
+controller verifies that the checkout is still clean at `PREVIOUS_SHA`, then
+builds from that source using the existing Compose build definition. An in-memory
+Compose override changes only `vasa`'s output image name:
+
+- Bootstrap: `vasa-app:bootstrap-rollback-<PREVIOUS_SHA>`
+- Deploy: `vasa-app:rollback-<PREVIOUS_SHA>`
+
+The existing context, Dockerfile, dependency lockfile, build arguments and trust
+inputs are reused. The fallback build does not overwrite `vasa-app:pinned`, stop
+or recreate the healthy API, or touch dependency containers. It does not use
+`docker commit` or inspect container environment. Private runtime files remain
+excluded from the build context by the existing Dockerignore allowlist.
+
+The resulting rollback image is inspected successfully and the source revision,
+clean tree and private hashes are checked again before proceeding. A failed
+fallback build or verification aborts without changing the Git checkout or
+running containers. A source rebuild can have a different image ID from the
+unavailable original; its actual verified ID is retained for rollback validation.
+
+Recovery retags the verified image to `vasa-app:pinned` without a second build or
+registry dependency. App services are restored only if their update was attempted.
+If target build failed before any app update, existing healthy containers keep
+running and only the image tag/Git checkout are restored. Bootstrap still removes
+only its newly created worker. Dependency containers are never restarted.
+
+Secret-safe stage markers precede important operations, for example
+`BOOTSTRAP_STAGE=rollback_image`, `BOOTSTRAP_STAGE=git_fetch`,
+`BOOTSTRAP_STAGE=checkout`, `BOOTSTRAP_STAGE=target_build`,
+`BOOTSTRAP_STAGE=vasa_update`, `BOOTSTRAP_STAGE=voice_create`, and
+`BOOTSTRAP_STAGE=health`. Deploy uses `DEPLOY_STAGE=...`; recovery uses
+`rollback`/`rollback_health`. Command failures identify the active stage while
+withholding raw commands, build logs, credentials and environment values.

@@ -1,5 +1,14 @@
 # Architecture
 
+2026-10-15 rollback-image acquisition is shared by bootstrap/deploy. Prefer the
+running image when locally inspectable/taggable; otherwise build clean
+PREVIOUS_SHA source through the same Compose build with an in-memory image-tag
+override. Verify the rollback tag before checkout or app/container mutation.
+Never snapshot a running container or inspect its environment. Recovery retags
+that verified image, which may differ from the unavailable original image ID;
+healthy app containers are left running if their update never began. Fixed
+BOOTSTRAP_STAGE/DEPLOY_STAGE markers identify secret-safe failure stages.
+
 2026-10-15 manual Actions modes are check/bootstrap/deploy (default check).
 Bootstrap accepts exactly four healthy owned existing services with no voice;
 normal deploy still requires all five. Bootstrap health explicitly excludes the

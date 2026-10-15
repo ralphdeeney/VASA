@@ -1,5 +1,16 @@
 # Test results
 
+2026-10-15 rollback-image recovery:682 full unit/component/integration/native/
+eval checks passed in62.73s, zero failures/errors/skips, one existing deprecation
+warning. Ruff/format198 files and strict mypy57 sources pass; Actionlint1.7.7
+and bash syntax pass. All83 deployment checks pass. New coverage exercises
+inspect/tag success, untaggable/missing running images, previous-source build
+and verification before checkout, acquisition failure preserving Git/containers,
+image-only Compose stdin override, verified fallback-ID rollback, no app restart
+before an attempted update, no docker commit/container-env inspection, and
+secret-safe stage diagnostics for bootstrap and normal deploy. JUnit:
+reports/actions-rollback-image.xml. No direct VPS SSH or live bootstrap ran.
+
 2026-10-15 explicit voice bootstrap:666 full unit/component/integration/native/
 eval checks passed in62.50s, zero failures/errors/skips; one existing deprecation
 warning. Ruff/format198 files, strict mypy57 sources, Actionlint1.7.7 and bash

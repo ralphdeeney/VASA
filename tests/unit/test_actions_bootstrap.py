@@ -11,6 +11,7 @@ PREVIOUS = "a" * 40
 TARGET = "b" * 40
 OLD_IMAGE = "sha256:" + "1" * 64
 NEW_IMAGE = "sha256:" + "2" * 64
+ROLLBACK_IMAGE = "sha256:" + "3" * 64
 FAKE_KEY = "FAKE-BOOTSTRAP-SECRET-DO-NOT-PRINT"
 
 
@@ -53,6 +54,12 @@ def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
         dependency_restart=False,
         config_change=False,
         secret_change=False,
+        image_available=True,
+        fail_image_tag=False,
+        fail_rollback_build=False,
+        fail_rollback_inspect=False,
+        rollback_builds=[],
+        fail_up_once=False,
     )
 
     def git(*args: str) -> str:
@@ -78,10 +85,21 @@ def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
         if args[:3] == ("docker", "ps", "--all"):
             return "\n".join(value[0] for value in state.containers.values())
         if args[:3] == ("docker", "image", "tag"):
+            if args[3] == OLD_IMAGE and (not state.image_available or state.fail_image_tag):
+                raise controller.Refusal("Running image cannot be tagged")
             state.tags[args[4]] = state.tags.get(args[3], args[3])
             return ""
         if args[:3] == ("docker", "image", "inspect"):
-            return state.tags[args[-1]]
+            reference = args[-1]
+            if reference == OLD_IMAGE and not state.image_available:
+                raise controller.Refusal("Running image no longer exists")
+            if state.fail_rollback_inspect and "rollback-" in reference:
+                raise controller.Refusal("Rollback image cannot be verified")
+            if reference in state.tags:
+                return state.tags[reference]
+            if reference in state.tags.values():
+                return reference
+            raise controller.Refusal("Missing image")
         if args[:4] == ("docker", "container", "rm", "--force"):
             assert args[4] == state.containers["voice"][0]
             del state.containers["voice"]
@@ -93,27 +111,38 @@ def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
         if args[:4] == ("ps", "--all", "--quiet", "voice"):
             return state.containers["voice"][0] if "voice" in state.containers else ""
         if args == ("build", "vasa"):
+            if kwargs.get("image_override"):
+                tag = kwargs["image_override"]
+                state.calls.append(("rollback_build", tag, state.current))
+                state.rollback_builds.append((tag, state.current))
+                if state.fail_rollback_build:
+                    raise controller.Refusal("Rollback source build failed")
+                state.tags[tag] = ROLLBACK_IMAGE
+                return ""
             state.tags["vasa-app:pinned"] = state.built_image
             if state.fail_build:
                 raise controller.Refusal("Simulated failed build")
             return ""
         if args[0] == "up":
-            assert args[1:-1] == ("-d", "--no-deps", "--wait", "--wait-timeout", "150")
-            service = args[-1]
-            assert service in ("vasa", "voice")
-            state.containers[service] = item(
-                "d" if service == "vasa" else "f", state.tags["vasa-app:pinned"]
-            )
-            if service == "voice":
-                if state.dependency_restart:
-                    state.containers["redis"][1]["restarts"] += 1
-                if state.secret_change:
-                    (tmp_path / ".local/llm.env").write_text("changed-private-environment")
-                if state.fail_voice:
-                    raise controller.Refusal("Simulated creation followed by failed start")
-            if service == "vasa" and state.fail_app:
-                state.fail_app = False
-                raise controller.Refusal("Simulated failed app restart")
+            assert args[1:6] == ("-d", "--no-deps", "--wait", "--wait-timeout", "150")
+            for service in args[6:]:
+                assert service in ("vasa", "voice")
+                state.containers[service] = item(
+                    "d" if service == "vasa" else "f", state.tags["vasa-app:pinned"]
+                )
+                if service == "voice":
+                    if state.dependency_restart:
+                        state.containers["redis"][1]["restarts"] += 1
+                    if state.secret_change:
+                        (tmp_path / ".local/llm.env").write_text("changed-private-environment")
+                    if state.fail_voice:
+                        raise controller.Refusal("Simulated creation followed by failed start")
+                if service == "vasa" and state.fail_app:
+                    state.fail_app = False
+                    raise controller.Refusal("Simulated failed app restart")
+            if state.fail_up_once:
+                state.fail_up_once = False
+                raise controller.Refusal("Simulated failed app start")
             return ""
         pytest.fail("Unexpected Compose operation: " + repr(args))
 
@@ -388,3 +417,202 @@ def test_bootstrap_topology_refuses_foreign_dependency(monkeypatch, label) -> No
     monkeypatch.setattr(controller, "run", lambda *args, **kwargs: json.dumps({"labels": labels}))
     with pytest.raises(controller.Refusal, match="ownership"):
         controller.bootstrap_topology()
+
+
+def test_existing_running_image_is_verified_and_tagged_without_source_build(rig) -> None:
+    before = copy.deepcopy(rig.containers)
+    tag = "vasa-app:bootstrap-rollback-" + PREVIOUS
+    assert controller.acquire_rollback_image(OLD_IMAGE, PREVIOUS, tag) == OLD_IMAGE
+    assert rig.tags[tag] == OLD_IMAGE and rig.tags["vasa-app:pinned"] == OLD_IMAGE
+    assert rig.rollback_builds == [] and rig.containers == before
+    assert ("docker", "image", "inspect", "--format", "{{.Id}}", OLD_IMAGE) in rig.calls
+    assert ("docker", "image", "tag", OLD_IMAGE, tag) in rig.calls
+    assert ("docker", "image", "inspect", "--format", "{{.Id}}", tag) in rig.calls
+
+
+def test_inspectable_but_untaggable_running_image_also_uses_previous_source(rig) -> None:
+    rig.fail_image_tag = True
+    tag = "vasa-app:bootstrap-rollback-" + PREVIOUS
+    assert controller.acquire_rollback_image(OLD_IMAGE, PREVIOUS, tag) == ROLLBACK_IMAGE
+    assert rig.rollback_builds == [(tag, PREVIOUS)]
+    assert rig.tags["vasa-app:pinned"] == OLD_IMAGE
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "deploy"])
+def test_missing_old_image_builds_and_verifies_previous_source_before_checkout(rig, mode, capsys):
+    rig.image_available = False
+    if mode == "deploy":
+        rig.containers["voice"] = item("f")
+    dependencies = controller.snapshot_services(controller.DEPENDENCIES)
+    hashes = controller.private_hashes()
+    getattr(controller, mode)(TARGET, controller.BRANCH, PREVIOUS)
+    tag = "vasa-app:" + ("bootstrap-" if mode == "bootstrap" else "") + "rollback-" + PREVIOUS
+    assert rig.rollback_builds == [(tag, PREVIOUS)]
+    build = rig.calls.index(("rollback_build", tag, PREVIOUS))
+    verify = rig.calls.index(("docker", "image", "inspect", "--format", "{{.Id}}", tag))
+    checkout = rig.calls.index(("git", "checkout", controller.BRANCH))
+    assert build < verify < checkout
+    assert rig.tags[tag] == ROLLBACK_IMAGE
+    assert rig.containers["vasa"][1]["image"] == NEW_IMAGE
+    assert controller.snapshot_services(controller.DEPENDENCIES) == dependencies
+    assert controller.private_hashes() == hashes
+    assert not any(c[0] == "docker" and "commit" in c for c in rig.calls)
+    assert not any(".Config.Env" in str(c) for c in rig.calls)
+    output = capsys.readouterr().out
+    for name in (
+        "git_fetch",
+        "rollback_image",
+        "checkout",
+        "target_build",
+        "vasa_update",
+        "health",
+    ):
+        assert mode.upper() + "_STAGE=" + name in output
+    assert FAKE_KEY not in output
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "deploy"])
+@pytest.mark.parametrize("failure", ["fail_rollback_build", "fail_rollback_inspect"])
+def test_failed_rollback_acquisition_never_changes_checkout_or_running_services(
+    rig, mode, failure, capsys
+):
+    rig.image_available = False
+    setattr(rig, failure, True)
+    if mode == "deploy":
+        rig.containers["voice"] = item("f")
+    before = copy.deepcopy(rig.containers)
+    hashes = controller.private_hashes()
+    with pytest.raises(controller.Refusal):
+        getattr(controller, mode)(TARGET, controller.BRANCH, PREVIOUS)
+    assert rig.current == PREVIOUS and rig.containers == before
+    assert rig.tags["vasa-app:pinned"] == OLD_IMAGE
+    assert controller.private_hashes() == hashes
+    assert not any(
+        c[:2]
+        in (
+            ("git", "checkout"),
+            ("git", "pull"),
+            ("git", "reset"),
+            ("compose", "up"),
+            ("docker", "container"),
+        )
+        for c in rig.calls
+    )
+    assert not any(c[0] == "docker" and "commit" in c for c in rig.calls)
+    output = capsys.readouterr().out
+    assert mode.upper() + "_STAGE=rollback_image" in output
+    assert mode.upper() + "_STAGE=checkout" not in output
+    assert FAKE_KEY not in output
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "deploy"])
+def test_rollback_restores_verified_fallback_image_after_target_start_failure(rig, mode, capsys):
+    rig.image_available = False
+    if mode == "deploy":
+        rig.containers["voice"] = item("f")
+        rig.fail_up_once = True
+    else:
+        rig.fail_voice = True
+    dependencies = controller.snapshot_services(controller.DEPENDENCIES)
+    hashes = controller.private_hashes()
+    with pytest.raises(controller.Refusal):
+        getattr(controller, mode)(TARGET, controller.BRANCH, PREVIOUS)
+    assert rig.current == PREVIOUS
+    assert rig.tags["vasa-app:pinned"] == ROLLBACK_IMAGE
+    assert rig.containers["vasa"][1]["image"] == ROLLBACK_IMAGE
+    if mode == "deploy":
+        assert rig.containers["voice"][1]["image"] == ROLLBACK_IMAGE
+    else:
+        assert "voice" not in rig.containers
+    assert controller.snapshot_services(controller.DEPENDENCIES) == dependencies
+    assert controller.private_hashes() == hashes
+    output = capsys.readouterr().out
+    marker = "VASA_BOOTSTRAP_ROLLBACK_OK" if mode == "bootstrap" else "VASA_ROLLBACK_OK"
+    assert marker in output and FAKE_KEY not in output
+    assert mode.upper() + "_STAGE=rollback_health" in output
+    assert not any(c[0] == "docker" and "commit" in c for c in rig.calls)
+    for path in (controller.ROOT / ".local").glob("actions-*.json"):
+        assert FAKE_KEY not in path.read_text()
+
+
+@pytest.mark.parametrize("mode", ["bootstrap", "deploy"])
+def test_target_build_failure_leaves_original_containers_running_after_source_fallback(
+    rig, mode, capsys
+):
+    rig.image_available = False
+    rig.fail_build = True
+    if mode == "deploy":
+        rig.containers["voice"] = item("f")
+    before = copy.deepcopy(rig.containers)
+    with pytest.raises(controller.Refusal):
+        getattr(controller, mode)(TARGET, controller.BRANCH, PREVIOUS)
+    assert rig.current == PREVIOUS and rig.containers == before
+    assert rig.tags["vasa-app:pinned"] == ROLLBACK_IMAGE
+    assert not any(c[:2] == ("compose", "up") for c in rig.calls)
+    marker = "VASA_BOOTSTRAP_ROLLBACK_OK" if mode == "bootstrap" else "VASA_ROLLBACK_OK"
+    assert marker in capsys.readouterr().out
+
+
+def test_rollback_build_overrides_only_image_and_reuses_compose_inputs(monkeypatch):
+    calls = []
+    tag = "vasa-app:bootstrap-rollback-" + PREVIOUS
+    monkeypatch.setattr(
+        controller, "run", lambda *args, **kwargs: calls.append((args, kwargs)) or ""
+    )
+    controller.compose("build", "vasa", timeout=900, image_override=tag)
+    args, kwargs = calls[0]
+    assert args == (
+        "docker",
+        "compose",
+        "--project-name",
+        "vasa-vps",
+        "--env-file",
+        ".local/vps.env",
+        "-f",
+        "deploy/compose.yaml",
+        "-f",
+        "-",
+        "--profile",
+        "voice",
+        "build",
+        "vasa",
+    )
+    assert json.loads(kwargs["input_text"]) == {"services": {"vasa": {"image": tag}}}
+    assert kwargs["timeout"] == 900
+    assert FAKE_KEY not in kwargs["input_text"]
+
+
+def test_stage_failure_diagnostic_does_not_include_subprocess_output(monkeypatch, capsys):
+    monkeypatch.setattr(
+        controller.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(returncode=1, stdout=FAKE_KEY, stderr=FAKE_KEY),
+    )
+    controller.stage("BOOTSTRAP", "rollback_image")
+    with pytest.raises(controller.Refusal) as error:
+        controller.run("docker", "build")
+    assert "BOOTSTRAP_STAGE=rollback_image" in str(error.value)
+    assert FAKE_KEY not in str(error.value) + capsys.readouterr().out
+
+
+def test_compose_override_is_passed_to_subprocess_stdin_without_environment_values(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        controller.subprocess,
+        "run",
+        lambda *args, **kwargs: (
+            calls.append((args, kwargs)) or SimpleNamespace(returncode=0, stdout="", stderr="")
+        ),
+    )
+    tag = "vasa-app:bootstrap-rollback-" + PREVIOUS
+    controller.compose("build", "vasa", image_override=tag)
+    _, kwargs = calls[0]
+    assert "stdin" not in kwargs
+    assert json.loads(kwargs["input"]) == {"services": {"vasa": {"image": tag}}}
+    assert "env" not in kwargs
+
+
+def test_rollback_helper_refuses_unrelated_image_tags_before_any_commands(rig):
+    with pytest.raises(controller.Refusal, match="Invalid VASA rollback image target"):
+        controller.acquire_rollback_image(OLD_IMAGE, PREVIOUS, "unrelated-app:latest")
+    assert rig.calls == []

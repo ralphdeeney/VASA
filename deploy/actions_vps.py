@@ -31,6 +31,7 @@ ORIGINS = {
 }
 READY_MARKER = "Voice worker ready for registered instances; caller audio is not recorded."
 BAD_LOG = re.compile(r"Traceback \(most recent call last\)|\b(?:ERROR|CRITICAL|FATAL)\b")
+ACTIVE_STAGE = "VASA_STAGE=preflight"
 
 
 class Refusal(RuntimeError):
@@ -42,20 +43,43 @@ def require(condition, message):
         raise Refusal(message)
 
 
-def run(*args, timeout=60):
+def stage(mode, name):
+    global ACTIVE_STAGE
+    require(mode in ("BOOTSTRAP", "DEPLOY"), "Invalid deployment stage mode.")
+    require(
+        name
+        in (
+            "preflight",
+            "git_fetch",
+            "rollback_image",
+            "checkout",
+            "target_build",
+            "vasa_update",
+            "voice_create",
+            "health",
+            "rollback",
+            "rollback_health",
+        ),
+        "Invalid deployment stage identifier.",
+    )
+    ACTIVE_STAGE = mode + "_STAGE=" + name
+    print(ACTIVE_STAGE, flush=True)
+
+
+def run(*args, timeout=60, input_text=None):
     """Never include command output/arguments in exceptions (may contain secrets)."""
     try:
         result = subprocess.run(
             args,
-            stdin=subprocess.DEVNULL,
+            **({"stdin": subprocess.DEVNULL} if input_text is None else {"input": input_text}),
             capture_output=True,
             text=True,
             timeout=timeout,
             check=False,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
-        raise Refusal("A required command failed or timed out; raw output withheld.") from exc
-    require(result.returncode == 0, "A required command failed; raw output withheld.")
+        raise Refusal(ACTIVE_STAGE + " failed or timed out; raw output withheld.") from exc
+    require(result.returncode == 0, ACTIVE_STAGE + " failed; raw output withheld.")
     return result.stdout.strip()
 
 
@@ -63,7 +87,20 @@ def git(*args):
     return run("git", "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", *args)
 
 
-def compose(*args, timeout=180):
+def compose(*args, timeout=180, image_override=None):
+    extra = ()
+    override = None
+    if image_override is not None:
+        require(args == ("build", "vasa"), "Image override is restricted to rollback builds.")
+        require(
+            re.fullmatch(r"vasa-app:(?:bootstrap-)?rollback-[0-9a-f]{40}", image_override)
+            is not None,
+            "Invalid rollback image tag.",
+        )
+        extra = ("-f", "-")
+        # Only override the output image tag, never context, Dockerfile, build
+        # arguments, secrets, or runtime environment. Nothing is written to disk.
+        override = json.dumps({"services": {"vasa": {"image": image_override}}})
     return run(
         "docker",
         "compose",
@@ -73,11 +110,62 @@ def compose(*args, timeout=180):
         ".local/vps.env",
         "-f",
         "deploy/compose.yaml",
+        *extra,
         "--profile",
         "voice",
         *args,
         timeout=timeout,
+        input_text=override,
     )
+
+
+def acquire_rollback_image(running_image, previous, backup_tag):
+    """Verify a rollback image before checkout or any app/container mutation."""
+    require(
+        re.fullmatch(r"[0-9a-f]{40}", previous) is not None
+        and backup_tag
+        in (
+            "vasa-app:rollback-" + previous,
+            "vasa-app:bootstrap-rollback-" + previous,
+        ),
+        "Invalid VASA rollback image target.",
+    )
+    require(git("rev-parse", "HEAD") == previous, "Previous source revision changed unexpectedly.")
+    require(
+        not git("status", "--porcelain", "--untracked-files=all"),
+        "Rollback image acquisition requires a clean previous-source checkout.",
+    )
+    hashes = private_hashes()
+    expected = None
+    try:
+        require(
+            run("docker", "image", "inspect", "--format", "{{.Id}}", running_image)
+            == running_image,
+            "Running image is not locally inspectable.",
+        )
+        run("docker", "image", "tag", running_image, backup_tag)
+        expected = running_image
+    except Refusal:
+        print(
+            "Running image unavailable; building rollback from clean previous source.", flush=True
+        )
+        # Compose reads the existing build definition and dependency inputs. The
+        # output goes straight to the rollback tag, leaving vasa-app:pinned alone.
+        compose("build", "vasa", timeout=900, image_override=backup_tag)
+    rollback_image = run("docker", "image", "inspect", "--format", "{{.Id}}", backup_tag)
+    require(
+        bool(rollback_image) and (expected is None or rollback_image == expected),
+        "Rollback image verification failed.",
+    )
+    require(
+        git("rev-parse", "HEAD") == previous
+        and not git("status", "--porcelain", "--untracked-files=all"),
+        "Previous-source checkout changed during rollback image acquisition.",
+    )
+    require(
+        private_hashes() == hashes, "Private environment changed during rollback image acquisition."
+    )
+    return rollback_image
 
 
 def rootless():
@@ -341,6 +429,7 @@ def write_bootstrap_receipt(path, previous, target, status):
 
 
 def bootstrap(target, branch, previous):
+    stage("BOOTSTRAP", "preflight")
     require(branch == BRANCH, "Staging checkout must already be on build/vasa-foundation.")
     require(re.fullmatch(r"[0-9a-f]{40}", target) is not None, "Invalid target commit.")
     local = ROOT / ".local"
@@ -373,6 +462,7 @@ def bootstrap(target, branch, previous):
             flush=True,
         )
         print("PREVIOUS_SHA=" + previous + "\nTARGET_SHA=" + target, flush=True)
+        stage("BOOTSTRAP", "git_fetch")
         git("fetch", "origin")
         require(
             git("rev-parse", "origin/" + BRANCH) == target,
@@ -390,13 +480,17 @@ def bootstrap(target, branch, previous):
         )
         old_image = baseline["vasa"]["image"]
         backup_tag = "vasa-app:bootstrap-rollback-" + previous
-        run("docker", "image", "tag", old_image, backup_tag)
+        stage("BOOTSTRAP", "rollback_image")
+        rollback_image = acquire_rollback_image(old_image, previous, backup_tag)
+        assert_unchanged(baseline)
+        require(private_hashes() == hashes, "Private environment files changed unexpectedly.")
         receipt = local / "actions-bootstrap.json"
         write_bootstrap_receipt(receipt, previous, target, "in_progress")
         changed_checkout = app_attempted = voice_attempted = False
         for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
             signal.signal(sig, signal_failure)
         try:
+            stage("BOOTSTRAP", "checkout")
             changed_checkout = True
             git("checkout", BRANCH)
             git("pull", "--ff-only", "origin", BRANCH)
@@ -411,12 +505,14 @@ def bootstrap(target, branch, previous):
                 "Voice appeared concurrently; bootstrap refused.",
             )
             print("Building the shared VASA app image for bootstrap.", flush=True)
+            stage("BOOTSTRAP", "target_build")
             compose("build", "vasa", timeout=900)
             new_image = run("docker", "image", "inspect", "--format", "{{.Id}}", "vasa-app:pinned")
             if new_image != old_image or (
                 before_config["services"]["vasa"] != after_config["services"]["vasa"]
             ):
                 app_attempted = True
+                stage("BOOTSTRAP", "vasa_update")
                 up_services("vasa")
             # Recheck immediately before creation; rollback is allowed to remove
             # voice only once this invocation has attempted its creation.
@@ -425,6 +521,7 @@ def bootstrap(target, branch, previous):
                 "Voice appeared concurrently; bootstrap refused.",
             )
             voice_attempted = True
+            stage("BOOTSTRAP", "voice_create")
             up_services("voice")
             require(
                 container("voice")[1]["image"] == new_image,
@@ -434,6 +531,7 @@ def bootstrap(target, branch, previous):
                 container("vasa")[1]["image"] == new_image,
                 "API and voice do not share the built app image.",
             )
+            stage("BOOTSTRAP", "health")
             health()
             assert_unchanged({s: baseline[s] for s in DEPENDENCIES})
             if not app_attempted:
@@ -447,6 +545,7 @@ def bootstrap(target, branch, previous):
             print("VASA bootstrap failed; inspecting only VASA app/worker.", flush=True)
             diagnostics()
             try:
+                stage("BOOTSTRAP", "rollback")
                 if voice_attempted:
                     remove_bootstrapped_voice()
                 if changed_checkout:
@@ -459,15 +558,17 @@ def bootstrap(target, branch, previous):
                     require(
                         config() == before_config, "Previous Compose configuration not restored."
                     )
-                    # Restore the exact running pre-bootstrap image, avoiding a
-                    # dependency on registries or nondeterministic rebuilds.
+                    # Restore the verified image: exact original when available,
+                    # otherwise the clean PREVIOUS_SHA source build.
                     run("docker", "image", "tag", backup_tag, "vasa-app:pinned")
                     if app_attempted:
                         up_services("vasa")
+                    stage("BOOTSTRAP", "rollback_health")
                     health(include_voice=False)
                     restored = bootstrap_topology()
                     require(
-                        restored["vasa"]["image"] == old_image,
+                        restored["vasa"]["image"]
+                        == (rollback_image if app_attempted else old_image),
                         "Previous API image was not restored.",
                     )
                     assert_unchanged({s: baseline[s] for s in DEPENDENCIES})
@@ -518,6 +619,7 @@ def signal_failure(_signum, _frame):
 
 
 def deploy(target, branch, previous):
+    stage("DEPLOY", "preflight")
     require(branch == BRANCH, "Staging checkout must already be on build/vasa-foundation.")
     require(re.fullmatch(r"[0-9a-f]{40}", target) is not None, "Invalid target commit.")
     local = ROOT / ".local"
@@ -544,6 +646,7 @@ def deploy(target, branch, previous):
         old_images = {container(s)[1]["image"] for s in SERVICES}
         require(len(old_images) == 1, "App/worker do not share the expected existing image.")
         print("Preflight healthy; fetching the staging branch.", flush=True)
+        stage("DEPLOY", "git_fetch")
         git("fetch", "origin")
         require(
             git("rev-parse", "origin/" + BRANCH) == target,
@@ -560,7 +663,9 @@ def deploy(target, branch, previous):
             "Target attempts to track private runtime environment files.",
         )
         backup_tag = "vasa-app:rollback-" + previous
-        run("docker", "image", "tag", next(iter(old_images)), backup_tag)
+        stage("DEPLOY", "rollback_image")
+        rollback_image = acquire_rollback_image(next(iter(old_images)), previous, backup_tag)
+        require(private_hashes() == hashes, "Private environment files changed unexpectedly.")
         print("PREVIOUS_SHA=" + previous + "\nTARGET_SHA=" + target, flush=True)
         receipt = local / "actions-deployment.json"
         receipt.write_text(
@@ -582,10 +687,12 @@ def deploy(target, branch, previous):
             for p in changed
         )
         changed_checkout = False
+        app_update_attempted = False
         touched = []
         for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
             signal.signal(sig, signal_failure)
         try:
+            stage("DEPLOY", "checkout")
             changed_checkout = True
             git("checkout", BRANCH)
             git("pull", "--ff-only", "origin", BRANCH)
@@ -611,9 +718,12 @@ def deploy(target, branch, previous):
             if needs_build:
                 # Only vasa has a build definition; voice uses that same image.
                 print("Building the VASA app image (shared by API and worker).", flush=True)
+                stage("DEPLOY", "target_build")
                 compose("build", "vasa", timeout=900)
             if touched:
                 print("Updating only VASA app services: " + ", ".join(touched), flush=True)
+                stage("DEPLOY", "vasa_update")
+                app_update_attempted = True
                 compose(
                     "up",
                     "-d",
@@ -626,6 +736,7 @@ def deploy(target, branch, previous):
                 )
             require(private_hashes() == hashes, "Private environment files changed unexpectedly.")
             print("Validating VASA health and worker startup.", flush=True)
+            stage("DEPLOY", "health")
             health()
             receipt.write_text(
                 json.dumps(
@@ -646,6 +757,7 @@ def deploy(target, branch, previous):
             print("VASA deployment failed; inspecting only VASA app/worker.", flush=True)
             diagnostics()
             try:
+                stage("DEPLOY", "rollback")
                 if changed_checkout:
                     require(
                         not git("status", "--porcelain", "--untracked-files=all"),
@@ -656,12 +768,8 @@ def deploy(target, branch, previous):
                     git("reset", "--hard", previous)
                     require(private_hashes() == hashes, "Runtime configuration was not preserved.")
                     config()
-                    if needs_build:
-                        try:
-                            compose("build", "vasa", timeout=900)
-                        except Refusal:
-                            run("docker", "image", "tag", backup_tag, "vasa-app:pinned")
-                    if touched:
+                    run("docker", "image", "tag", backup_tag, "vasa-app:pinned")
+                    if app_update_attempted:
                         compose(
                             "up",
                             "-d",
@@ -672,7 +780,14 @@ def deploy(target, branch, previous):
                             *touched,
                             timeout=210,
                         )
+                    stage("DEPLOY", "rollback_health")
                     health()
+                    require(
+                        all(container(s)[1]["image"] == rollback_image for s in touched)
+                        if app_update_attempted
+                        else all(container(s)[1]["image"] in old_images for s in SERVICES),
+                        "Verified rollback app image was not restored.",
+                    )
                     receipt.write_text(
                         json.dumps(
                             {

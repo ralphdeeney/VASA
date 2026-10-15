@@ -1,5 +1,20 @@
 # Current state
 
+2026-10-15 rollback-image recovery fix: user reports the healthy VPS API image
+ID is unavailable in the local rootless Docker image store, causing bootstrap
+backup tagging to fail. Shared bootstrap/deploy helper now inspects/tags when
+possible, otherwise builds clean PREVIOUS_SHA source directly to the rollback
+tag through the existing Compose build with an image-only stdin override. It
+verifies the result/source/private hashes before checkout or container updates.
+Failed acquisition leaves Git checkout/running containers unchanged. Recovery
+uses the verified image ID (not the unavailable original); apps whose update
+never started are not recreated. Fixed stage identifiers replace opaque command
+errors without raw logs/secrets. No docker commit or container-env inspection.
+All682 checks pass, including83 deployment-focused checks; static/type,
+Actionlint and shell validation pass. No direct VPS SSH or live bootstrap ran.
+Next operator action: rerun VASA staging VPS on build/vasa-foundation with
+mode=bootstrap; expected success marker VASA_BOOTSTRAP_OK.
+
 2026-10-15 explicit missing-worker bootstrap is implemented and verified locally.
 User confirms the Actions bridge works and VPS postgres/redis/evolution/API are
 healthy, with no voice container. Workflow modes are check/bootstrap/deploy,

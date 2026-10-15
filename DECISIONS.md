@@ -1,5 +1,16 @@
 # Decisions
 
+2026-10-15 user diagnosed a healthy VPS API referencing a locally unavailable
+image ID. Missing rollback-image tagging must not cause an immediate hard stop
+when clean PREVIOUS_SHA source can provide recovery. A shared helper first
+inspects/tags, then falls back to a direct rollback-tag Compose build before any
+target checkout, verifying source cleanliness/revision and private hashes. No
+docker commit, container-environment inspection, pinned-tag overwrite during
+acquisition, or healthy-container recreation to repair image availability.
+Bootstrap/deploy restore the verified backup without a second registry-dependent
+build. Retain nonzero failure exits, dependency isolation and exact topology
+guards; add fixed safe stage diagnostics. All VPS work remains Actions-only.
+
 2026-10-15 add explicit one-time Actions bootstrap for the user-confirmed
 healthy postgres/redis/evolution/API topology with zero voice containers.
 Normal deploy stays update-only and requires its existing worker. Bootstrap

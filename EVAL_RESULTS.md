@@ -1,5 +1,11 @@
 # Eval results
 
+2026-10-15 existing evals pass in the682-check suite after rollback-image recovery
+and stage diagnostics. Local stateful Docker/Git stubs exercise the user-reported
+missing-image condition, preserving running topology before target updates and
+recovering with a verified previous-source image. Actual VPS bootstrap remains
+the operator's next run through Actions; no live deployment success is inferred.
+
 2026-10-15 all existing evals pass in the666-check suite after explicit staging
 bootstrap support. Local controller evidence proves bounded service selection,
 secret-safe refusals and rollback orchestration, not live VPS/phone acceptance.
