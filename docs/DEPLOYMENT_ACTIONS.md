@@ -1,5 +1,13 @@
 # Staging deployment through GitHub Actions
 
+2026-10-15 private ingress: VASA publishes exactly 172.16.2.1:18081 to 8080/tcp
+for the host-private public Caddy path. Evolution stays 127.0.0.1:18080 to
+4000/tcp. Target config and actual container bindings are checked, rejecting
+wildcards/additional publications. Host checks use the private /login=200,
+assets=200 and /dashboard=401. Rootless operation, health/readiness, private env
+hashes, dependency identity and rollback remain required. No root-owned proxy
+changes. References to VASA loopback below describe the earlier phase.
+
 2026-10-15 push automation: every push to build/vasa-foundation now resolves
 mode=deploy and provider_smoke=false. Manual check/bootstrap/deploy and opt-in
 smoke remain available. Both triggers use the same SSH wrapper/controller.

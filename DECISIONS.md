@@ -1,5 +1,10 @@
 # Decisions
 
+2026-10-15 use the operator-confirmed gateway 172.16.2.1 for VASA staging port
+18081. Fix the exact bind rather than permit environment overrides; validate
+desired/running ports without inspecting container environments. Preserve
+Evolution loopback, private runtime files and unrelated/root-owned services.
+
 2026-10-15 replace only active inbound media's 10-second hard cutoff with a
 1-second observation/24-second maximum gap policy, grounded in observed recovery
 and pinned 12-second relay connection timeout. Keep the same pending recv, not

@@ -1,5 +1,15 @@
 # Test results
 
+2026-10-15 private bridge web publication: **925 passed** in 66.40s; zero
+failures/errors/skips and one existing Starlette warning. Full checks include
+Ruff/format (221 files), strict mypy (60 sources), Actionlint and shell syntax.
+120 focused bind/deployment checks pass. New tests accept only the exact VASA
+bridge and Evolution loopback endpoints, reject wildcard/wrong/extra/UDP/host
+network bindings, verify actual Docker selected port metadata without Env, and
+prove host checks use private login/dashboard/assets and unchanged Evolution.
+JUnit: reports/private-web-bind.xml. Push is authorized for automatic staging;
+actual reachability must be established by that workflow's post-deploy checks.
+
 2026-10-15 bounded media recovery: **908 passed** in 67.94s, zero failures/
 errors/skips; one existing Starlette warning. Full unit/component/integration/
 native/eval suite, Ruff/format (219 files), strict mypy (60 sources), Actionlint

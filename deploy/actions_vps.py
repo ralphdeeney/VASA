@@ -286,6 +286,44 @@ def config():
     return data
 
 
+def validate_web_bind(data):
+    for service, address, published, target in (
+        ("vasa", "172.16.2.1", "18081", 8080),
+        ("evolution", "127.0.0.1", "18080", 4000),
+    ):
+        value = data["services"][service]
+        ports = value.get("ports", [])
+        require(
+            isinstance(ports, list)
+            and len(ports) == 1
+            and isinstance(ports[0], dict)
+            and ports[0].get("host_ip") == address
+            and str(ports[0].get("published")) == published
+            and ports[0].get("target") == target
+            and ports[0].get("protocol", "tcp") == "tcp"
+            and value.get("network_mode") != "host",
+            "Staging web bind must match the exact private address/port.",
+        )
+
+
+def verify_running_web_bind():
+    for service, address, published, target in (
+        ("vasa", "172.16.2.1", "18081", "8080/tcp"),
+        ("evolution", "127.0.0.1", "18080", "4000/tcp"),
+    ):
+        cid, _ = container(service)
+        ports = json.loads(
+            run("docker", "inspect", "--format", "{{json .NetworkSettings.Ports}}", cid)
+        )
+        require(
+            isinstance(ports, dict)
+            and ports.get(target) == [{"HostIp": address, "HostPort": published}]
+            and all(not binding for key, binding in ports.items() if key != target),
+            "Running staging web bind differs from the required private address/port.",
+        )
+    print("STAGING_PRIVATE_BIND_OK", flush=True)
+
+
 def container(service):
     ids = compose("ps", "--all", "--quiet", service).splitlines()
     require(
@@ -760,10 +798,10 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 def host_web_checks():
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
     for url, status in (
-        ("http://127.0.0.1:18081/login", 200),
-        ("http://127.0.0.1:18081/dashboard", 401),
-        ("http://127.0.0.1:18081/dashboard/assets/styles.css", 200),
-        ("http://127.0.0.1:18081/dashboard/assets/login.js", 200),
+        ("http://172.16.2.1:18081/login", 200),
+        ("http://172.16.2.1:18081/dashboard", 401),
+        ("http://172.16.2.1:18081/dashboard/assets/styles.css", 200),
+        ("http://172.16.2.1:18081/dashboard/assets/login.js", 200),
         ("http://127.0.0.1:18080/server/ok", 200),
     ):
         try:
@@ -778,6 +816,7 @@ def host_web_checks():
 
 def post_validation(target):
     require(git("rev-parse", "HEAD") == target, "Post-deploy checkout SHA mismatch.")
+    verify_running_web_bind()
     sanitizer = ROOT / "scripts/sanitize_call_diagnostics.py"
     require(sanitizer.is_file() and not sanitizer.is_symlink(), "Call sanitizer is missing.")
     output = run(
@@ -911,6 +950,7 @@ def deploy(target, branch, previous, *, smoke=False):
             after_config = config()
             require(private_hashes() == hashes, "Private environment files changed unexpectedly.")
             # Never alter dependency topology, networks, volumes or other services.
+            validate_web_bind(after_config)
             require(
                 {k: v for k, v in before_config.items() if k != "services"}
                 == {k: v for k, v in after_config.items() if k != "services"},

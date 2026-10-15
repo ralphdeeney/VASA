@@ -121,11 +121,16 @@ def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
         return {
             "name": "vasa-vps",
             "services": {
-                "vasa": {},
+                "vasa": {
+                    "ports": [{"host_ip": "172.16.2.1", "published": "18081", "target": 8080}]
+                },
                 "voice": {},
                 "postgres": {},
                 "redis": {},
-                "evolution": {"changed": state.current == TARGET and state.foreign_config},
+                "evolution": {
+                    "changed": state.current == TARGET and state.foreign_config,
+                    "ports": [{"host_ip": "127.0.0.1", "published": "18080", "target": 4000}],
+                },
             },
         }
 

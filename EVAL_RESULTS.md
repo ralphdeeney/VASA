@@ -1,5 +1,9 @@
 # Eval results
 
+2026-10-15 existing evals pass within 925 checks after private web publication.
+No provider/media behavior changed. Exact bind and host HTTP checks will run on
+staging through the existing Actions bridge; root-owned ingress remains untouched.
+
 2026-10-15 existing evals pass within 908 full checks after bounded active-media
 recovery. Local socket fixtures prove recoverable waiting and finite failure,
 not live WhatsApp continuity or intelligibility. Observed human barge-in worked;

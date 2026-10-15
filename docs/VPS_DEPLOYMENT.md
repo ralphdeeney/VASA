@@ -109,7 +109,7 @@ Inspect status without rendering the secret-containing Compose configuration:
 ```bash
 docker compose --env-file .local/vps.env -f deploy/compose.yaml ps
 docker compose --env-file .local/vps.env -f deploy/compose.yaml exec -T vasa python scripts/evolution_status.py
-curl --fail --silent http://127.0.0.1:18081/health/ready
+curl --fail --silent http://172.16.2.1:18081/health/ready
 ```
 
 Substitute configured ports in curl/tunnel commands when using different ones.
@@ -201,7 +201,7 @@ WhatsApp pairing and the real inbound-call diagnostic remain human gates.
 For private VASA dashboard access from the same computer, forward its port too:
 
 ```bash
-ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:18081:127.0.0.1:18081 vasa-builder@2.25.172.155
+ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:18081:172.16.2.1:18081 vasa-builder@2.25.172.155
 ```
 
 Open `http://localhost:18081/login`. Modern browsers permit Secure cookies on

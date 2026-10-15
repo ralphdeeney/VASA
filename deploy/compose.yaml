@@ -114,7 +114,8 @@ services:
       # Set both forms: urllib prefers injected lowercase proxy configuration.
       no_proxy: localhost,127.0.0.1,evolution,postgres,redis
     ports:
-      - "127.0.0.1:${VASA_API_PORT:-18081}:8080"
+      # Host-private public-proxy bridge; never publish this on a wildcard address.
+      - "172.16.2.1:18081:8080"
     volumes:
       # Verified CPU models and diagnostic reports; no caller recording.
       - vasa-diagnostics:/opt/vasa/.local

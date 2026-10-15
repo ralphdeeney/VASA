@@ -159,8 +159,13 @@ def rig(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> SimpleNamespace:
             "services": {
                 "postgres": {},
                 "redis": {},
-                "evolution": {},
-                "vasa": {"config": state.config_change and state.current == TARGET},
+                "evolution": {
+                    "ports": [{"host_ip": "127.0.0.1", "published": "18080", "target": 4000}]
+                },
+                "vasa": {
+                    "config": state.config_change and state.current == TARGET,
+                    "ports": [{"host_ip": "172.16.2.1", "published": "18081", "target": 8080}],
+                },
                 "voice": {"environment": {"DEEPGRAM_API_KEY": state.key}},
             },
         }

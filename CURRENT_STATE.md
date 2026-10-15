@@ -1,5 +1,13 @@
 # Current state
 
+2026-10-15 private ingress: operator confirms public Caddy n8n-docker-caddy-1,
+network n8n-docker_default (172.16.2.0/24), gateway 172.16.2.1. VASA publication
+changes from loopback to exactly 172.16.2.1:18081; Evolution stays 127.0.0.1:18080.
+Target Compose and actual container ports must match; host /login, assets and
+dashboard auth checks use the private endpoint. Push is authorized to deploy
+through Actions. No Caddy/n8n/root Docker, provider, migration, bootstrap or
+private runtime environment changes.
+
 2026-10-15 operator reports 30–36 second reconnecting calls, distorted audio,
 working barge-in, recovered gaps and active read timeout. Confirmed local causal
 path: 10-second receive timeout closes WebSocket; Evolution then calls Hangup.

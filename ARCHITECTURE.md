@@ -1,5 +1,11 @@
 # Architecture
 
+2026-10-15 rootless VASA web publishes at host-private gateway 172.16.2.1:18081
+to 8080/tcp. Public Caddy is separately operated; no shared-network attachment
+or root-owned proxy change. Evolution stays loopback. Target ports and actual
+Docker port metadata are validated; host web checks use the private endpoint.
+The previous loopback checkout remains allowed for preflight/controlled rollback.
+
 2026-10-15 active media receives now retain one pending recv through a one-second
 gap observation and a 24-second absolute maximum since the last frame/start.
 CallLifecycle has a termination Event to wake an idle reader immediately after

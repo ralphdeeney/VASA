@@ -1,5 +1,10 @@
 # Build plan
 
+2026-10-15 staging bind transition: run full checks, push the exact private
+172.16.2.1:18081 publication, inspect automatic deployment, require private bind
+and host HTTP/auth validation plus VASA_DEPLOYMENT_OK. Do not alter the root-owned
+Caddy/n8n infrastructure or Evolution's existing loopback publication.
+
 2026-10-15 bounded active-media recovery: test, push for automatic normal staging
 deployment, inspect its health/web/instance markers, then stop at the human live
 call gate. Measure receive_recovered_ms and recovery_grace_expired on a stable

@@ -107,6 +107,7 @@ def test_controller_filters_validation_output_even_nonzero(tmp_path, monkeypatch
     monkeypatch.setattr(deploy, "git", lambda *a: "a" * 40)
     monkeypatch.setattr(deploy, "run", lambda *a, **k: "CALL_MEDIA=receive_recovered")
     monkeypatch.setattr(deploy, "host_web_checks", lambda: None)
+    monkeypatch.setattr(deploy, "verify_running_web_bind", lambda: None)
     markers = staging.MARKERS if not failed else {"STAGING_VALIDATION_FAILED=instances"}
     monkeypatch.setattr(
         deploy,
