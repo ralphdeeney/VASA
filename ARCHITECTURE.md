@@ -1,5 +1,11 @@
 # Architecture
 
+2026-10-15 explicit scripts/diagnose_llm_sse.py uses the bounded SSE framing
+reader without the semantic OpenAI choice parser, so malformed choice shapes can
+be described safely. One matching smoke request emits only structural JSON with
+fixed field/value allowlists. It is not part of deployment health or call runtime
+and does not alter the provider's validation or streaming/tool behavior.
+
 2026-10-15 operator provider smoke lives in vasa.provider_smoke, exposed through
 scripts/live_provider_smoke.py in the application image. It reuses configured
 OpenAI SSE/Deepgram PCM adapters outside the call path, with sequential bounded

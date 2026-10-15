@@ -29,6 +29,7 @@ COPY --chmod=0644 --chown=0:0 scripts/evolution_status.py /opt/vasa/scripts/evol
 COPY --chmod=0644 --chown=0:0 scripts/prepare_speech.py /opt/vasa/scripts/prepare_speech.py
 COPY --chmod=0644 --chown=0:0 scripts/prepare_knowledge.py /opt/vasa/scripts/prepare_knowledge.py
 COPY --chmod=0644 --chown=0:0 scripts/live_provider_smoke.py /opt/vasa/scripts/live_provider_smoke.py
+COPY --chmod=0644 --chown=0:0 scripts/diagnose_llm_sse.py /opt/vasa/scripts/diagnose_llm_sse.py
 RUN find /opt/vasa/migrations -type f -exec chmod 0644 {} + \
     && chmod 0755 /opt/vasa/scripts \
     && mkdir /opt/vasa/.local && chown 1000:1000 /opt/vasa/.local \

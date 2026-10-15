@@ -1,5 +1,15 @@
 # Test results
 
+2026-10-15 safe SSE diagnostic: **843 passed** in 65.70s; zero failures/errors/
+skips, one existing Starlette deprecation warning. Full scripts/check.sh suite,
+Ruff/format (208 files), strict mypy (59 sources), Actionlint and shell syntax
+pass. 21 new tests cover structural redaction (including malicious key names,
+event names, indices, finish reasons and headers), single-request/cleanup,
+standard text/tool compatibility, and rejection of synthetic missing/string
+indices, empty choices, invalid delta and missing finish/DONE. No actual 9Router
+response was available; these fixtures are not live gateway evidence. Parser
+unchanged pending structural receipt. JUnit: reports/llm-sse-diagnostic.xml.
+
 2026-10-15 nonzero smoke diagnostic fix: **822 passed** in 68.13s, zero
 failures/errors/skips and one existing Starlette deprecation warning. Full unit,
 component, integration, native and eval suite passed via scripts/check.sh;

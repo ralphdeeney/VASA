@@ -1,5 +1,10 @@
 # Build plan
 
+2026-10-15 next LLM gate: operator runs docs/LLM_SSE_DIAGNOSTICS.md after deploying
+tooling with provider_smoke=false. Actual 9Router SSE shape is still unavailable;
+add its regression fixture and minimal compatibility change only after observing
+the sanitized structural output. No direct VPS SSH or automatic deployment.
+
 2026-10-15 bridge and voice bootstrap VERIFIED by operator. Normal updates now
 use mode=deploy. Optional safe provider smoke and five-service deployment tests
 are complete (811 full checks). Next gates: manually validate normal deploy,

@@ -1,5 +1,10 @@
 # Eval results
 
+2026-10-15 all existing evals pass within the 843-check suite after isolated
+structural SSE diagnostics. This does not establish the live gateway mismatch;
+standard text/tools work locally and malformed hypotheses remain rejected.
+Actual 9Router structural receipt and a narrowly scoped fix remain pending.
+
 2026-10-15 existing evals pass within the 811-check full suite. Synthetic smoke
 and deployment failures establish local privacy/rollback behavior, not live
 provider availability. Operator confirms bridge/voice bootstrap; normal deploy,

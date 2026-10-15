@@ -1,5 +1,13 @@
 # Current state
 
+2026-10-15 operator confirms gateway auth/model/chat/streaming HTTP 200 and SSE,
+but VASA LLM smoke still reports provider_error. Added one-request structural
+SSE diagnostic, packaged in the app image; see docs/LLM_SSE_DIAGNOSTICS.md.
+Exact mismatch remains pending operator structural output. No captured 9Router
+fixture exists yet and no production parser compatibility change was guessed.
+Existing strict text/tool parsing is preserved. Deploy tooling with smoke off,
+then run the explicit diagnostic on the VPS. No direct SSH or live request here.
+
 2026-10-15 operator reports normal deploy reached healthy API/voice and failed
 only at optional provider_smoke. Fix diagnostic capture: a nonzero smoke exit now
 preserves stdout/stderr in memory, prints only exact approved provider status/error

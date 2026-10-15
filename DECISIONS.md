@@ -1,5 +1,12 @@
 # Decisions
 
+2026-10-15 HTTP 200/SSE alone cannot identify a strict OpenAI parser mismatch.
+Add bounded structural inspection before relaxing validation. Unknown property
+names/header values/event names are untrusted too, so render only fixed known
+names or redacted classifications. Preserve current parser until actual gateway
+metadata establishes the exact issue; synthetic cases are hypotheses, not live
+evidence. Request budget remains identical to smoke for faithful diagnosis.
+
 2026-10-15 preserve nonzero provider smoke diagnostics through a capture-only
 Compose option restricted to the exact smoke exec command. All ordinary commands
 retain fail-fast behavior. Only fixed provider status/error markers and numeric

@@ -807,6 +807,7 @@ def deploy(target, branch, previous, *, smoke=False):
                 "scripts/prepare_speech.py",
                 "scripts/prepare_knowledge.py",
                 "scripts/live_provider_smoke.py",
+                "scripts/diagnose_llm_sse.py",
             )
             for p in changed
         )
