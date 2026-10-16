@@ -7,6 +7,70 @@ import stat
 import sys
 from pathlib import Path
 
+DIAGNOSTIC_CODES = {
+    "LIVE_SAAS_FIXTURE_DATABASE_CLASS": {
+        "dbapi",
+        "integrity",
+        "interface",
+        "operational",
+        "programming",
+    },
+    "LIVE_SAAS_FIXTURE_DRIVER_CLASS": {
+        "connection_failure",
+        "connection_limit",
+        "connection_missing",
+        "duplicate_statement",
+        "foreign_key",
+        "insufficient_privilege",
+        "interface",
+        "invalid_catalog",
+        "invalid_password",
+        "unavailable",
+        "unclassified",
+        "undefined_column",
+        "undefined_table",
+        "unique_constraint",
+        "unsupported_feature",
+    },
+    "LIVE_SAAS_FIXTURE_ERROR": {"invalid_configuration", "internal_error", "database_error"},
+    "LIVE_SAAS_FIXTURE_SQLSTATE": {
+        "08001",
+        "08003",
+        "08004",
+        "08006",
+        "0A000",
+        "23503",
+        "23505",
+        "23514",
+        "28P01",
+        "3D000",
+        "40001",
+        "40P01",
+        "42501",
+        "42703",
+        "42P01",
+        "42P05",
+        "53300",
+        "57014",
+        "57P03",
+    },
+    "LIVE_SAAS_FIXTURE_STAGE": {
+        "cleanup_database",
+        "cleanup_ownership",
+        "cleanup_sessions",
+        "database_commit",
+        "database_connection",
+        "database_open",
+        "database_select_users",
+        "discover_pending",
+        "input",
+        "pending_connection",
+        "prepare_database",
+        "settings",
+    },
+    "LIVE_SAAS_TASK_FAILED": {"preflight", "fixture", "health"},
+}
+
 
 def build(path: Path) -> str:
     info = path.lstat()
@@ -53,11 +117,10 @@ try:
     )
     expected = "LIVE_SAAS_FIXTURE_" + data["action"].upper() + "_OK"
     if result.returncode != 0 or result.stdout.strip() != expected:
+        approved = {DIAGNOSTIC_CODES!r}
         for line in result.stdout.splitlines():
-            if namespace["re"].fullmatch(
-                r"LIVE_SAAS_FIXTURE_(?:STAGE=(?:input|settings|discover_pending|database_open|prepare_database|cleanup_ownership|cleanup_database|database_commit|cleanup_sessions)|ERROR=(?:invalid_configuration|database_error|internal_error)|SQLSTATE=(?:23503|23505|23514|40001|40P01|57014|08006))",
-                line,
-            ):
+            name, separator, value = line.partition("=")
+            if separator and value in approved.get(name, set()):
                 print(line, flush=True)
         raise ValueError()
     print(expected, flush=True)

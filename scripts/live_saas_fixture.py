@@ -8,8 +8,14 @@ from hashlib import sha256
 from uuid import NAMESPACE_URL, uuid5
 
 from redis.asyncio import Redis
-from sqlalchemy import String, cast, delete, select
-from sqlalchemy.exc import DBAPIError
+from sqlalchemy import String, cast, delete, select, text
+from sqlalchemy.exc import (
+    DBAPIError,
+    IntegrityError,
+    InterfaceError,
+    OperationalError,
+    ProgrammingError,
+)
 
 from vasa.config import Settings
 from vasa.control.auth import hash_password
@@ -64,6 +70,9 @@ async def execute(data: dict[str, object], settings: Settings | None = None) -> 
         pending_db = Database(configuration.database_url.get_secret_value())
         try:
             async with pending_db.session() as session:
+                stage("pending_connection")
+                await session.execute(text("SELECT 1"))
+                stage("discover_pending")
                 emails = list(
                     (
                         await session.scalars(
@@ -100,6 +109,9 @@ async def execute(data: dict[str, object], settings: Settings | None = None) -> 
     try:
         stage("database_open")
         async with database.session() as session, session.begin():
+            stage("database_connection")
+            await session.execute(text("SELECT 1"))
+            stage("database_select_users")
             existing = list(
                 (await session.scalars(select(User).where(User.id.in_(user_ids)))).all()
             )
@@ -249,10 +261,70 @@ def main() -> None:
         if isinstance(error, (ValueError, json.JSONDecodeError)):
             code = "invalid_configuration"
         if isinstance(error, DBAPIError):
-            state = getattr(error.orig, "sqlstate", None)
-            approved_states = {"23503", "23505", "23514", "40001", "40P01", "57014", "08006"}
+            approved_states = {
+                "23503",
+                "23505",
+                "23514",
+                "40001",
+                "40P01",
+                "57014",
+                "08006",
+                "42P01",
+                "42703",
+                "42501",
+                "28P01",
+                "53300",
+                "3D000",
+                "57P03",
+                "0A000",
+                "42P05",
+                "08001",
+                "08003",
+                "08004",
+            }
+            state = None
+            # Drivers can expose SQLSTATE on either the adapter or its cause.
+            # Never stringify either exception or report arbitrary attributes.
+            for original in (error.orig, getattr(error.orig, "__cause__", None)):
+                for attribute in ("sqlstate", "pgcode"):
+                    candidate = getattr(original, attribute, None)
+                    if isinstance(candidate, str) and candidate in approved_states:
+                        state = candidate
             if state in approved_states:
                 print("LIVE_SAAS_FIXTURE_SQLSTATE=" + state)
+            database_class = "dbapi"
+            for cls, label in (
+                (ProgrammingError, "programming"),
+                (OperationalError, "operational"),
+                (IntegrityError, "integrity"),
+                (InterfaceError, "interface"),
+            ):
+                if isinstance(error, cls):
+                    database_class = label
+                    break
+            print("LIVE_SAAS_FIXTURE_DATABASE_CLASS=" + database_class)
+            driver_codes = {
+                "UndefinedTableError": "undefined_table",
+                "UndefinedColumnError": "undefined_column",
+                "InsufficientPrivilegeError": "insufficient_privilege",
+                "InvalidPasswordError": "invalid_password",
+                "TooManyConnectionsError": "connection_limit",
+                "InvalidCatalogNameError": "invalid_catalog",
+                "CannotConnectNowError": "unavailable",
+                "FeatureNotSupportedError": "unsupported_feature",
+                "DuplicatePreparedStatementError": "duplicate_statement",
+                "ConnectionDoesNotExistError": "connection_missing",
+                "ConnectionFailureError": "connection_failure",
+                "InterfaceError": "interface",
+                "ForeignKeyViolationError": "foreign_key",
+                "UniqueViolationError": "unique_constraint",
+            }
+            driver_class = "unclassified"
+            for original in (error.orig, getattr(error.orig, "__cause__", None)):
+                approved = driver_codes.get(type(original).__name__)
+                if approved:
+                    driver_class = approved
+            print("LIVE_SAAS_FIXTURE_DRIVER_CLASS=" + driver_class)
             code = "database_error"
         print("LIVE_SAAS_FIXTURE_ERROR=" + code)
         raise SystemExit(1) from None

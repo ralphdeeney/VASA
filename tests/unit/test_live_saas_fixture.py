@@ -241,6 +241,48 @@ def test_database_error_only_exposes_approved_sqlstate(monkeypatch, capsys):
     output = capsys.readouterr()
     assert output.out == (
         "LIVE_SAAS_FIXTURE_FAILED\nLIVE_SAAS_FIXTURE_STAGE=cleanup_database\n"
-        "LIVE_SAAS_FIXTURE_SQLSTATE=23503\nLIVE_SAAS_FIXTURE_ERROR=database_error\n"
+        "LIVE_SAAS_FIXTURE_SQLSTATE=23503\nLIVE_SAAS_FIXTURE_DATABASE_CLASS=dbapi\nLIVE_SAAS_FIXTURE_DRIVER_CLASS=unclassified\nLIVE_SAAS_FIXTURE_ERROR=database_error\n"
     )
+    assert output.err == ""
+
+
+@pytest.mark.parametrize(
+    "state",
+    [
+        "42P01",
+        "42703",
+        "42501",
+        "28P01",
+        "53300",
+        "3D000",
+        "57P03",
+        "0A000",
+        "42P05",
+        "08001",
+        "08003",
+        "08004",
+    ],
+)
+def test_extended_database_states_and_safe_driver_class(monkeypatch, capsys, state):
+    from sqlalchemy.exc import ProgrammingError
+
+    class UndefinedTableError(Exception):
+        sqlstate = state
+
+    async def fail(data):
+        cause = UndefinedTableError("private table/SQL credentials")
+        adapter = RuntimeError("private adapter")
+        adapter.__cause__ = cause
+        fixture.stage("discover_pending")
+        raise ProgrammingError("private SQL", {"password": "secret"}, adapter)
+
+    monkeypatch.setattr(fixture, "execute", fail)
+    monkeypatch.setattr(fixture.sys, "stdin", io.StringIO('{"action":"cleanup_pending"}'))
+    with pytest.raises(SystemExit):
+        fixture.main()
+    output = capsys.readouterr()
+    assert f"LIVE_SAAS_FIXTURE_SQLSTATE={state}\n" in output.out
+    assert "LIVE_SAAS_FIXTURE_DATABASE_CLASS=programming\n" in output.out
+    assert "LIVE_SAAS_FIXTURE_DRIVER_CLASS=undefined_table\n" in output.out
+    assert "private" not in output.out and "secret" not in output.out
     assert output.err == ""
