@@ -1,3 +1,13 @@
+2026-10-16 staging capacity finding (not an inference benchmark):
+Actions 38956286230 read-only inspection confirmed PostgreSQL max_connections=100
+and established sockets: Evolution 95, VASA API4, voice 1. New connections fail
+SQLSTATE 53300 while existing pooled API connections still serve readiness.
+Actions 38957178699 recycled only the web pool to permit exact test-fixture cleanup.
+This is bounded operational recovery, not a permanent capacity fix. Evolution
+source review found independently allocated reconnect SQL pools without lifecycle
+closure; pool remediation and a controlled no-call rollout require authorization.
+No STT/LLM/TTS performance measurements or provider configuration changed.
+
 # Performance
 
 2026-10-16 SaaS work adds control-plane identity/admin/database operations only.

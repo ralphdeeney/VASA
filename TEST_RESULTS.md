@@ -1,10 +1,27 @@
+2026-10-16 delivery verification (actual staging evidence):
+- Local full suite: 1,147 passed in 83.50s (reports/api-pool-recycle.xml).
+- Ruff lint/format, strict mypy69sources, actionlint, bash syntax and Node syntax pass.
+- GitHub Verify38956878164 passed for 1c22f5e.
+- Staging activation38953426795: restore-tested backup, approved 0007, app/voice
+  health, private binding/auth boundary, VASA_DEPLOYMENT_OK for 858b5f8.
+- Actual Chromium38954094961: all five live groups passed: login/session reload;
+  tenant/platform denial; admin directory/audit; mobile/desktop; logout revocation.
+  Job failed cleanup (not counted as overall acceptance success).
+- PostgreSQL capacity diagnosed without raw logs:53300;100 max,95 Evolution,4 API,1 voice.
+- Cleanup recovery38957178699 succeeded: API-only same-image/container recycle,
+  other services unchanged, all audited disposable fixtures removed.
+- Public HTTPS readiness/login 200; anonymous dashboard/auth-me 401; original
+  bad-login origin probe now 401invalid_credentials instead of 403invalid_origin.
+SMTP email flows remain UNRUN live. Evolution lifecycle fix is review-only pending
+separate authorization; no protected dependency changed. Full acceptance blocked.
+
 2026-10-16 live acceptance tooling: 1,103 full tests passed in81.05s
 (reports/live-saas-tooling.xml); Ruff/format/strict mypy, workflow/shell/Node
 validation pass. Private Actions payload and disposable fixture/runner tests
 cover malicious output, credential containment, cleanup ownership and failure
-paths. Actual staging release858b5f8 passed migration and VASA_DEPLOYMENT_OK
-in Actions38953426795; public origin login probe now401invalid_credentials
-instead of403invalid_origin. Authenticated live browser run remains pending.
+paths. Actual staging release 858b5f8 passed migration and VASA_DEPLOYMENT_OK
+in Actions 38953426795; public origin login probe now 401invalid_credentials
+instead of 403invalid_origin. Authenticated live browser run remains pending.
 
 2026-10-16 approved immutable activation controller: 1,072 full tests passed
 (reports/release-activation.xml), Ruff/format/strict mypy, actionlint and shell/JS

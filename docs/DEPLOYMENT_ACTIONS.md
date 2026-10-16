@@ -427,3 +427,20 @@ records the actual active source/image independently of the canonical checkout.
 Rollback restores verified previous app images; additive schema0007 remains,
 without destructive downgrade or restoring stale database data. SMTP absence does
 not block legacy login testing but keeps email-dependent flows unavailable.
+
+## Verified isolated staging delivery and cleanup
+
+Release `858b5f853957d719a34ea96f28b5ea726100d402` is active after approved
+Actions run 38953426795 (`VASA_DEPLOYMENT_OK`). The original checkout stays at
+502b8d8 with operator infrastructure files intact; normal automatic deploy keeps
+refusing that dirty checkout. Do not infer runtime version from canonicalHEAD.
+
+For an explicitly needed web-pool recycle followed only by audited test cleanup,
+dispatch `mode=check,recovery=none,provider_smoke=false,saas_acceptance=true,
+cleanup_only=true,recycle_api_pool=true`. This restarts only the exact existing
+VASA web container; it does not rebuild/reconfigure it, restart voice/dependencies,
+run migrations or provision more test users. Run38957178699 passed all preservation
+and health checks and emitted `LIVE_SAAS_CLEANUP_ONLY_OK`. Never treat this as a
+permanent fix for Evolution holding95 of 100 PostgreSQL connections. See the review-only
+Evolution pool recovery plan; protected dependency changes need separate scope
+authorization and an operator no-call window. SMTP-dependent live flows remain gated.

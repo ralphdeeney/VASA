@@ -1,7 +1,33 @@
-2026-10-16 LIVE staging recovery: Actions38953426795 successfully activated
-immutable release858b5f853957d719a34ea96f28b5ea726100d402, migrated0006→0007
+2026-10-16 delivery status — DEPLOYED, acceptance PARTIAL (not complete).
+Active immutable staging release: 858b5f853957d719a34ea96f28b5ea726100d402.
+Actions 38953426795 verified restored backup, approved 0007 migration, app/voice
+activation, readiness and VASA_DEPLOYMENT_OK. Canonical/opt/vasa remains 502b8d8;
+three operator-owned untracked edge/tunnel files and all private env hashes remain
+unchanged. Automatic normal pushes still refuse that canonical dirty checkout;
+this recovery uses detached immutable releases and a private active-release journal.
+Original login 403invalid_origin is fixed; syntheticbad credentials now 401 as expected.
+
+Actual browser run 38954094961 passed login/reload, tenant/platform boundaries,
+admin directory/audit, public/auth/admin layouts at 390/1440px and logout revocation. Its
+cleanup failed, so the job is not labelled successful. Investigation confirmed
+PostgreSQL 53300: configured 100 slots, Evolution 95,VASA web 4,voice 1. Source review found
+unmanaged SQL-store pools on Evolution reconnect; see
+docs/EVOLUTION_DATABASE_POOL_RECOVERY.md. Evolution was NOT changed/restarted.
+Actions 38957178699 recycled ONLY the existing VASA web container, preserved its
+image/config, all four other services and private files, and removed all audited
+disposable acceptance identities: VASA_API_POOL_RECYCLE_OK,
+LIVE_SAAS_FIXTURE_CLEANUP_PENDING_OK, LIVE_SAAS_CLEANUP_ONLY_OK.
+Full-suite/CI code 1c22f5ed79cf181a61e9127f5affd1a214e58d2c:1,147 passed,
+Ruff/format/strict mypy/workflow/shell/JS checks pass; GitHub Verify38956878164 green.
+Remaining external gates: private SMTP + operator-controlled test inbox for real
+signup, verification, recovery and invitations; authorization/no-call window for protected
+Evolution pool remediation. No email verification, permanent platform-admin grant,
+full SaaS completion or solved WhatsApp reconnect claim is made.
+
+2026-10-16 LIVE staging recovery: Actions 38953426795 successfully activated
+immutable release 858b5f853957d719a34ea96f28b5ea726100d402, migrated0006 → 0007
 through the operator-approved SQL/backup gate, and emitted VASA_DEPLOYMENT_OK.
-Canonical checkout remains502b8d8 with all three operator edge/tunnel files
+Canonical checkout remains 502b8d8 with all three operator edge/tunnel files
 preserved. Actual app/voice images use the858 release tag; private active-release
 journal records that independently of canonicalHEAD. Postgres/Redis/Evolution
 container identities and private env hashes unchanged. Host-private bind, health,
@@ -18,13 +44,13 @@ services/zero restarts and DB 0006. Synthetic login reproduces 403 invalid_origi
 SMTP/canonical-origin bindings absent in approved VPS files/runtime. Candidate
 Compose supplies trusted public HTTPS origin without weakening Origin checks.
 Recovery check/prepare Actions options preserve unknown work and normal deploy
-safety, isolate source/images, verify private backup restoration and migration0007
-only inside a disposable database. Actual preparation run38915876226 passed: private PG backup restored; migration0007
+safety, isolate source/images, verify private backup restoration and migration 0007
+only inside a disposable database. Actual preparation run 38915876226 passed: private PG backup restored; migration 0007
 passed on a disposable clone; rollback/candidate images verified; canonical files,
 all five containers and runtime secrets unchanged.
 Local browser acceptance now covers six full workflow groups with real PG/Redis
 and a test mailbox; live email/staging acceptance is not claimed. See recovery and
-browser acceptance docs. No direct Codex SSH. Operator subsequently approved exact release858b5f8 and
+browser acceptance docs. No direct Codex SSH. Operator subsequently approved exact release 858b5f8 and
 SQL SHA256 a6a226a785d60db0e00b46b301a46b2b033d198cde2b4db2a3736202cfda37c3.
 Manual immutable activation tooling now refreshes backup/restore checks, validates
 only approved config changes, applies reviewed additive SQL and updates only
@@ -33,7 +59,7 @@ is absent from approved VPS/runtime/cloud/GitHub bindings; email acceptance rema
 
 2026-10-16 SaaS implementation: existing FastAPI/template/static stack retained.
 Public marketing/auth pages, responsive workspace/team/settings, separate platform
-admin UI, signup/verification/recovery/invitations and audited server-only admin
+admin UI, signup, verification, recovery and invitations and audited server-only admin
 provisioning implemented. Additive migration 0007 reviewed as generated SQL in
 docs/migrations/0007_saas_identity.sql and exercised locally. Existing tenant/user
 IDs and hashes retained; no fake verification/platform grants or Evolution pairing.
