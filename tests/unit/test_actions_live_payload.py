@@ -45,3 +45,41 @@ def test_payload_refuses_symlink(tmp_path):
 def test_payload_refuses_unapproved_task(tmp_path, change):
     with pytest.raises(ValueError):
         build(private_input(tmp_path, **change))
+
+
+@pytest.mark.parametrize("action", ["cleanup", "cleanup_pending", "prepare"])
+def test_cleanup_cannot_be_blocked_by_historical_health_logs(tmp_path, monkeypatch, capsys, action):
+    from pathlib import Path
+
+    path = private_input(tmp_path, action=action)
+    if action == "cleanup_pending":
+        path.write_text(json.dumps({"action": action}))
+    original = Path.read_text
+    controller = """
+import re
+from types import SimpleNamespace
+def preflight(): pass
+def health(): raise ValueError("secret historical log")
+def container(name): return ("owned-container", None)
+def capture(*args, input_text, **kwargs):
+    import json
+    action = json.loads(input_text)["action"]
+    return SimpleNamespace(returncode=0, stdout="LIVE_SAAS_FIXTURE_"+action.upper()+"_OK")
+"""
+
+    def read_text(self, *args, **kwargs):
+        return (
+            controller
+            if self.as_posix() == "deploy/actions_vps.py"
+            else original(self, *args, **kwargs)
+        )
+
+    monkeypatch.setattr(Path, "read_text", read_text)
+    payload = build(path)
+    if action == "prepare":
+        with pytest.raises(SystemExit):
+            exec(payload, {})
+        assert capsys.readouterr().out == "LIVE_SAAS_TASK_FAILED=health\n"
+    else:
+        exec(payload, {})
+        assert capsys.readouterr().out == "LIVE_SAAS_FIXTURE_" + action.upper() + "_OK\n"

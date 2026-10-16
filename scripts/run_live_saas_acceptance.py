@@ -68,6 +68,37 @@ def safe_browser_markers(output: str) -> set[str]:
     return allowed
 
 
+def emit_fixture_failures(output: str) -> None:
+    codes = {
+        "LIVE_SAAS_TASK_FAILED": {"preflight", "health", "fixture"},
+        "LIVE_SAAS_FIXTURE_STAGE": {
+            "input",
+            "settings",
+            "discover_pending",
+            "database_open",
+            "prepare_database",
+            "cleanup_ownership",
+            "cleanup_database",
+            "database_commit",
+            "cleanup_sessions",
+        },
+        "LIVE_SAAS_FIXTURE_ERROR": {"invalid_configuration", "internal_error", "database_error"},
+        "LIVE_SAAS_FIXTURE_SQLSTATE": {
+            "23503",
+            "23505",
+            "23514",
+            "40001",
+            "40P01",
+            "57014",
+            "08006",
+        },
+    }
+    for line in output.splitlines():
+        name, separator, value = line.partition("=")
+        if line == "LIVE_SAAS_FIXTURE_FAILED" or (separator and value in codes.get(name, set())):
+            print(line, flush=True)
+
+
 def main() -> int:
     if os.environ.get("GITHUB_ACTIONS") != "true":
         print("LIVE_SAAS_RUNNER_FAILED=actions_required", flush=True)
@@ -84,13 +115,13 @@ def main() -> int:
         payload_file = root / "input.json"
         result_file = root / "result.json"
         payload = {
-            "action": "prepare",
+            "action": "cleanup_pending",
             "run": secrets.token_hex(16),
             "password": secrets.token_urlsafe(36),
         }
         fd = os.open(payload_file, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(fd, "w") as stream:
-            json.dump(payload, stream)
+            json.dump({"action": "cleanup_pending"}, stream)
         environment = dict(os.environ)
         environment.update(
             VASA_LIVE_ACCEPTANCE_FILE=str(payload_file),
@@ -99,11 +130,23 @@ def main() -> int:
             VASA_PROVIDER_SMOKE="false",
         )
         try:
+            pending = execute(["bash", "deploy/actions-ssh.sh"], environment, 180)
+            if (
+                pending.returncode != 0
+                or "LIVE_SAAS_FIXTURE_CLEANUP_PENDING_OK" not in pending.stdout.splitlines()
+            ):
+                emit_fixture_failures(pending.stdout)
+                print("LIVE_SAAS_RUNNER_FAILED=fixture_pending_cleanup", flush=True)
+                return 1
+            print("LIVE_SAAS_FIXTURE_CLEANUP_PENDING_OK", flush=True)
+            payload["action"] = "prepare"
+            payload_file.write_text(json.dumps(payload))
             prepared = execute(["bash", "deploy/actions-ssh.sh"], environment, 180)
             if (
                 prepared.returncode != 0
                 or "LIVE_SAAS_FIXTURE_PREPARE_OK" not in prepared.stdout.splitlines()
             ):
+                emit_fixture_failures(prepared.stdout)
                 print("LIVE_SAAS_RUNNER_FAILED=fixture_prepare", flush=True)
             else:
                 print("LIVE_SAAS_FIXTURE_PREPARE_OK", flush=True)
@@ -157,6 +200,8 @@ def main() -> int:
                 cleaned.returncode == 0
                 and "LIVE_SAAS_FIXTURE_CLEANUP_OK" in cleaned.stdout.splitlines()
             )
+            if not cleanup_ok:
+                emit_fixture_failures(cleaned.stdout)
             print(
                 "LIVE_SAAS_FIXTURE_CLEANUP_OK"
                 if cleanup_ok

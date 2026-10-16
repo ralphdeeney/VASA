@@ -80,3 +80,16 @@ Success is deliberately `LIVE_SAAS_ACCEPTANCE_PARTIAL_OK` while SMTP is absent.
 A separate new workflow could not be dispatched from this feature branch because
 GitHub registers manual workflows on the default branch. The existing registered
 workflow provides this optional path; automatic pushes never enable acceptance.
+
+## Cleanup recovery
+
+Acceptance begins with `cleanup_pending`, restricted to identities with the
+audited disposable-provision marker, exact generated IDs/names/profile invariants
+and no unrelated users or paired instances. Cleanup does not depend on historical
+startup-log health scans, so those cannot block removal of temporary privileges.
+Preparation still requires full health. Failures expose only fixed task/fixture
+stages, fixed error categories and approved SQLSTATE codes, never exception text.
+
+Live run38954094961 passed all five browser groups including logout, but its
+cleanup failed; it is recorded as a failed acceptance run until cleanup and a
+subsequent complete partial-acceptance run succeed. SMTP flows remain blocked.

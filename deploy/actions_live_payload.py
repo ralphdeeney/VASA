@@ -21,9 +21,15 @@ def build(path: Path) -> str:
     if (
         not isinstance(data, dict)
         or set(data) - {"action", "run", "password", "sessions"}
-        or data.get("action") not in {"prepare", "cleanup"}
-        or not isinstance(data.get("run"), str)
-        or re.fullmatch(r"[a-f0-9]{32}", data["run"]) is None
+        or data.get("action") not in {"prepare", "cleanup", "cleanup_pending"}
+        or (data.get("action") == "cleanup_pending" and set(data) != {"action"})
+        or (
+            data.get("action") != "cleanup_pending"
+            and (
+                not isinstance(data.get("run"), str)
+                or re.fullmatch(r"[a-f0-9]{32}", data["run"]) is None
+            )
+        )
     ):
         raise ValueError("invalid_input")
     controller = Path("deploy/actions_vps.py").read_text()
@@ -33,9 +39,13 @@ def build(path: Path) -> str:
 namespace = {{"__name__": "vasa_actions_acceptance"}}
 exec(compile({controller!r}, "actions_vps", "exec"), namespace)
 data = {data!r}
+stage = "preflight"
 try:
     namespace["preflight"]()
-    namespace["health"]()
+    if data["action"] == "prepare":
+        stage = "health"
+        namespace["health"]()
+    stage = "fixture"
     cid, _ = namespace["container"]("vasa")
     result = namespace["capture"](
         "docker", "exec", "-i", cid, "python", "-c", {fixture!r},
@@ -43,10 +53,16 @@ try:
     )
     expected = "LIVE_SAAS_FIXTURE_" + data["action"].upper() + "_OK"
     if result.returncode != 0 or result.stdout.strip() != expected:
+        for line in result.stdout.splitlines():
+            if namespace["re"].fullmatch(
+                r"LIVE_SAAS_FIXTURE_(?:STAGE=(?:input|settings|discover_pending|database_open|prepare_database|cleanup_ownership|cleanup_database|database_commit|cleanup_sessions)|ERROR=(?:invalid_configuration|database_error|internal_error)|SQLSTATE=(?:23503|23505|23514|40001|40P01|57014|08006))",
+                line,
+            ):
+                print(line, flush=True)
         raise ValueError()
     print(expected, flush=True)
 except BaseException:
-    print("LIVE_SAAS_FIXTURE_FAILED", flush=True)
+    print("LIVE_SAAS_TASK_FAILED=" + stage, flush=True)
     raise SystemExit(1) from None
 """
 

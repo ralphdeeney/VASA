@@ -8,7 +8,8 @@ from hashlib import sha256
 from uuid import NAMESPACE_URL, uuid5
 
 from redis.asyncio import Redis
-from sqlalchemy import delete, select
+from sqlalchemy import String, cast, delete, select
+from sqlalchemy.exc import DBAPIError
 
 from vasa.config import Settings
 from vasa.control.auth import hash_password
@@ -17,12 +18,23 @@ from vasa.saas.models import AuditEvent, Membership, OrganizationProfile, Platfo
 from vasa.storage.database import Database
 from vasa.storage.models import Tenant
 
+_STAGE = "input"
+
+
+def stage(value: str) -> None:
+    global _STAGE
+    _STAGE = value
+
 
 def validate(data: object) -> dict[str, object]:
     if not isinstance(data, dict) or set(data) - {"action", "run", "password", "sessions"}:
         raise ValueError("invalid_input")
-    if data.get("action") not in {"prepare", "cleanup"}:
+    if data.get("action") not in {"prepare", "cleanup", "cleanup_pending"}:
         raise ValueError("invalid_input")
+    if data["action"] == "cleanup_pending":
+        if set(data) != {"action"}:
+            raise ValueError("invalid_input")
+        return data
     if not isinstance(data.get("run"), str) or not re.fullmatch(r"[a-f0-9]{32}", data["run"]):
         raise ValueError("invalid_input")
     if data["action"] == "prepare" and (
@@ -43,20 +55,56 @@ def validate(data: object) -> dict[str, object]:
 
 
 async def execute(data: dict[str, object], settings: Settings | None = None) -> None:
+    stage("settings")
     configuration = settings or Settings()
     if not configuration.saas_enabled or configuration.public_origin != "https://vasa.litatech.xyz":
         raise ValueError("approved_staging_required")
+    if data["action"] == "cleanup_pending":
+        stage("discover_pending")
+        pending_db = Database(configuration.database_url.get_secret_value())
+        try:
+            async with pending_db.session() as session:
+                emails = list(
+                    (
+                        await session.scalars(
+                            select(User.email)
+                            .join(AuditEvent, AuditEvent.target == cast(User.id, String))
+                            .where(
+                                AuditEvent.action == "identity.server_provision",
+                                AuditEvent.safe_metadata["source"].as_string()
+                                == "disposable_acceptance",
+                                User.email.like("acceptance-%@example.invalid"),
+                            )
+                            .distinct()
+                            .limit(201)
+                        )
+                    ).all()
+                )
+                if len(emails) > 200:
+                    raise ValueError("pending_limit")
+        finally:
+            await pending_db.aclose()
+        runs = set()
+        for email in emails:
+            match = re.fullmatch(r"acceptance-([a-f0-9]{32})-[01]@example\.invalid", email)
+            if match:
+                runs.add(match[1])
+        for pending_run in sorted(runs):
+            await execute({"action": "cleanup", "run": pending_run}, configuration)
+        return
     run = str(data["run"])
     tenant_ids = [uuid5(NAMESPACE_URL, f"vasa-acceptance:{run}:tenant:{i}") for i in range(2)]
     user_ids = [uuid5(NAMESPACE_URL, f"vasa-acceptance:{run}:user:{i}") for i in range(2)]
     emails = [f"acceptance-{run}-{i}@example.invalid" for i in range(2)]
     database = Database(configuration.database_url.get_secret_value())
     try:
+        stage("database_open")
         async with database.session() as session, session.begin():
             existing = list(
                 (await session.scalars(select(User).where(User.id.in_(user_ids)))).all()
             )
             if data["action"] == "prepare":
+                stage("prepare_database")
                 if existing or await session.scalar(
                     select(Tenant.id).where(Tenant.id.in_(tenant_ids))
                 ):
@@ -115,6 +163,7 @@ async def execute(data: dict[str, object], settings: Settings | None = None) -> 
                     )
                 )
             else:
+                stage("cleanup_ownership")
                 unrelated_user = await session.scalar(
                     select(User.id).where(User.tenant_id.in_(tenant_ids), User.id.not_in(user_ids))
                 )
@@ -133,8 +182,17 @@ async def execute(data: dict[str, object], settings: Settings | None = None) -> 
                     i = user_ids.index(user.id)
                     tenant = await session.get(Tenant, tenant_ids[i])
                     profile = await session.get(UserProfile, user.id)
+                    provision = await session.scalar(
+                        select(AuditEvent.id).where(
+                            AuditEvent.target == str(user.id),
+                            AuditEvent.action == "identity.server_provision",
+                            AuditEvent.safe_metadata["source"].as_string()
+                            == "disposable_acceptance",
+                        )
+                    )
                     if (
-                        user.email != emails[i]
+                        provision is None
+                        or user.email != emails[i]
                         or user.tenant_id != tenant_ids[i]
                         or tenant is None
                         or tenant.name != f"Disposable acceptance {run} {i}"
@@ -154,8 +212,11 @@ async def execute(data: dict[str, object], settings: Settings | None = None) -> 
                             safe_metadata={"source": "disposable_acceptance"},
                         )
                     )
+                stage("cleanup_database")
                 await session.execute(delete(Tenant).where(Tenant.id.in_(tenant_ids)))
+            stage("database_commit")
         if data["action"] == "cleanup":
+            stage("cleanup_sessions")
             cache = Redis.from_url(configuration.redis_url.get_secret_value())
             try:
                 # Delete only explicitly supplied browser session keys belonging to
@@ -181,8 +242,19 @@ def main() -> None:
             raise ValueError("input_limit")
         data = validate(json.loads(raw))
         asyncio.run(execute(data))
-    except Exception:
+    except Exception as error:
         print("LIVE_SAAS_FIXTURE_FAILED")
+        print("LIVE_SAAS_FIXTURE_STAGE=" + _STAGE)
+        code = "internal_error"
+        if isinstance(error, (ValueError, json.JSONDecodeError)):
+            code = "invalid_configuration"
+        if isinstance(error, DBAPIError):
+            state = getattr(error.orig, "sqlstate", None)
+            approved_states = {"23503", "23505", "23514", "40001", "40P01", "57014", "08006"}
+            if state in approved_states:
+                print("LIVE_SAAS_FIXTURE_SQLSTATE=" + state)
+            code = "database_error"
+        print("LIVE_SAAS_FIXTURE_ERROR=" + code)
         raise SystemExit(1) from None
     print("LIVE_SAAS_FIXTURE_" + str(data["action"]).upper() + "_OK")
 

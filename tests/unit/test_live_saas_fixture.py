@@ -13,7 +13,7 @@ from sqlalchemy import select
 from scripts import live_saas_fixture as fixture
 from vasa.config import Settings
 from vasa.control.models import User
-from vasa.saas.models import UserProfile
+from vasa.saas.models import AuditEvent, UserProfile
 from vasa.storage.database import Database
 from vasa.storage.models import Tenant
 
@@ -73,10 +73,14 @@ def test_exception_body_never_printed(monkeypatch, capsys):
         raise RuntimeError("Authorization: Bearer private-key response-body")
 
     monkeypatch.setattr(fixture, "execute", fail)
+    fixture.stage("input")
     with pytest.raises(SystemExit):
         fixture.main()
     output = capsys.readouterr()
-    assert output.out == "LIVE_SAAS_FIXTURE_FAILED\n"
+    assert output.out == (
+        "LIVE_SAAS_FIXTURE_FAILED\nLIVE_SAAS_FIXTURE_STAGE=input\n"
+        "LIVE_SAAS_FIXTURE_ERROR=internal_error\n"
+    )
     assert output.err == ""
 
 
@@ -114,6 +118,16 @@ async def test_disposable_cleanup_ownership_and_exact_sessions():
         async with db.session() as session:
             assert await session.get(User, user_id) is not None
             tenant = await session.get(Tenant, tenant_id)
+            session.add(
+                AuditEvent(
+                    actor_id=user_id, tenant_id=tenant_id, action="auth.login", target=str(user_id)
+                )
+            )
+            session.add(
+                AuditEvent(
+                    actor_id=user_id, tenant_id=tenant_id, action="auth.logout", target=str(user_id)
+                )
+            )
             tenant.name = f"Disposable acceptance {run} 0"
             await session.commit()
         await cache.set(session_key, json.dumps({"user_id": str(user_id)}), ex=60)
@@ -153,3 +167,80 @@ async def test_cleanup_refuses_foreign_session_without_deleting_it():
     finally:
         await cache.delete(key)
         await cache.aclose()
+
+
+def test_pending_accepts_only_action():
+    assert fixture.validate({"action": "cleanup_pending"})
+    with pytest.raises(ValueError):
+        fixture.validate({"action": "cleanup_pending", "run": "f" * 32})
+
+
+@pytest.mark.integration
+async def test_pending_discovers_only_audited_disposable_users():
+    settings = Settings(
+        _env_file=None,
+        environment="test",
+        saas_enabled=True,
+        public_origin="https://vasa.litatech.xyz",
+        database_url="postgresql+asyncpg://vasa:vasa_local_only@127.0.0.1:54329/vasa",
+        redis_url="redis://127.0.0.1:6389/0",
+    )
+    run = secrets.token_hex(16)
+    user_id = uuid5(NAMESPACE_URL, f"vasa-acceptance:{run}:user:0")
+    tenant_id = uuid5(NAMESPACE_URL, f"vasa-acceptance:{run}:tenant:0")
+    db = Database(settings.database_url.get_secret_value())
+    try:
+        await fixture.execute(
+            {"action": "prepare", "run": run, "password": secrets.token_urlsafe(32)}, settings
+        )
+        async with db.session() as session:
+            session.add(
+                AuditEvent(
+                    actor_id=user_id, tenant_id=tenant_id, action="auth.login", target=str(user_id)
+                )
+            )
+            session.add(
+                AuditEvent(
+                    actor_id=user_id, tenant_id=tenant_id, action="auth.logout", target=str(user_id)
+                )
+            )
+            await session.commit()
+        await fixture.execute({"action": "cleanup_pending"}, settings)
+        async with db.session() as session:
+            assert await session.get(User, user_id) is None
+            assert (
+                await session.scalar(
+                    select(AuditEvent.id).where(
+                        AuditEvent.action == "identity.server_provision",
+                        AuditEvent.target == str(user_id),
+                    )
+                )
+                is not None
+            )
+    finally:
+        await fixture.execute({"action": "cleanup", "run": run}, settings)
+        await db.aclose()
+
+
+def test_database_error_only_exposes_approved_sqlstate(monkeypatch, capsys):
+    from sqlalchemy.exc import DBAPIError
+
+    class SecretDatabaseError(Exception):
+        sqlstate = "23503"
+
+    async def fail(data):
+        fixture.stage("cleanup_database")
+        raise DBAPIError(
+            "private SQL", {"password": "never-print"}, SecretDatabaseError("private-body")
+        )
+
+    monkeypatch.setattr(fixture, "execute", fail)
+    monkeypatch.setattr(fixture.sys, "stdin", io.StringIO('{"action":"cleanup_pending"}'))
+    with pytest.raises(SystemExit):
+        fixture.main()
+    output = capsys.readouterr()
+    assert output.out == (
+        "LIVE_SAAS_FIXTURE_FAILED\nLIVE_SAAS_FIXTURE_STAGE=cleanup_database\n"
+        "LIVE_SAAS_FIXTURE_SQLSTATE=23503\nLIVE_SAAS_FIXTURE_ERROR=database_error\n"
+    )
+    assert output.err == ""

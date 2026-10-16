@@ -15,7 +15,9 @@ def test_actions_only(monkeypatch, capsys):
     assert capsys.readouterr().out == "LIVE_SAAS_RUNNER_FAILED=actions_required\n"
 
 
-@pytest.mark.parametrize("failure", ["none", "prepare", "browser", "cleanup", "exception"])
+@pytest.mark.parametrize(
+    "failure", ["none", "cleanup_pending", "prepare", "browser", "cleanup", "exception"]
+)
 def test_private_inputs_cleanup_and_output_allowlist(tmp_path, monkeypatch, capsys, failure):
     monkeypatch.setenv("GITHUB_ACTIONS", "true")
     monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
@@ -28,8 +30,11 @@ def test_private_inputs_cleanup_and_output_allowlist(tmp_path, monkeypatch, caps
         payload = json.loads(path.read_text())
         assert path.stat().st_mode & 0o077 == 0
         assert path.parent.stat().st_mode & 0o077 == 0
-        assert len(payload["password"]) >= 32
-        assert payload["password"] not in " ".join(command)
+        if payload["action"] == "cleanup_pending":
+            assert payload == {"action": "cleanup_pending"}
+        else:
+            assert len(payload["password"]) >= 32
+            assert payload["password"] not in " ".join(command)
         directories.append(path.parent)
         if command[0] == "node":
             operations.append("browser")
@@ -45,7 +50,9 @@ def test_private_inputs_cleanup_and_output_allowlist(tmp_path, monkeypatch, caps
         action = payload["action"]
         operations.append(action)
         if action == "cleanup":
-            assert payload["sessions"] == ([] if failure == "prepare" else ["a" * 43])
+            assert payload["sessions"] == (
+                [] if failure in {"prepare", "cleanup_pending"} else ["a" * 43]
+            )
         code = int(failure == action)
         marker = "LIVE_SAAS_FIXTURE_" + action.upper() + "_OK"
         return SimpleNamespace(returncode=code, stdout=marker + "\n" + secret)
@@ -56,7 +63,10 @@ def test_private_inputs_cleanup_and_output_allowlist(tmp_path, monkeypatch, caps
     assert secret not in output
     assert "made-up" not in output
     assert operations[-1] == "cleanup"
-    assert "prepare" in operations
+    assert "cleanup_pending" in operations
+    assert ("prepare" in operations) == (failure != "cleanup_pending")
+    if failure == "cleanup_pending":
+        assert "browser" not in operations
     assert all(not path.exists() for path in directories)
     assert ("LIVE_SAAS_ACCEPTANCE_PARTIAL_OK" in output) == (failure == "none")
 
@@ -81,3 +91,19 @@ def test_child_timeout_is_sanitized(monkeypatch):
     monkeypatch.setattr(runner.subprocess, "run", timeout)
     result = runner.execute(["node", "script"], {}, 1)
     assert result.returncode == 1 and result.stdout == "" and result.stderr == ""
+
+
+def test_only_fixed_fixture_diagnostics_survive(capsys):
+    runner.emit_fixture_failures(
+        "LIVE_SAAS_TASK_FAILED=health\n"
+        "LIVE_SAAS_FIXTURE_STAGE=cleanup_sessions\n"
+        "LIVE_SAAS_FIXTURE_SQLSTATE=23503\n"
+        "LIVE_SAAS_FIXTURE_ERROR=internal_error Authorization=secret\n"
+        "LIVE_SAAS_TASK_FAILED=secret\n"
+        "raw-private-body\n"
+    )
+    assert capsys.readouterr().out.splitlines() == [
+        "LIVE_SAAS_TASK_FAILED=health",
+        "LIVE_SAAS_FIXTURE_STAGE=cleanup_sessions",
+        "LIVE_SAAS_FIXTURE_SQLSTATE=23503",
+    ]
