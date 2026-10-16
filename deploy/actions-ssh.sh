@@ -55,6 +55,13 @@ if [[ ! -s "$vasa_ssh_dir/known_hosts" ]]; then
   echo 'to a SHA256 fingerprint obtained through the VPS provider console. No SSH login attempted.'
   exit 1
 fi
+vasa_remote_payload=deploy/actions_vps.py
+if [[ -n "${VASA_LIVE_ACCEPTANCE_FILE:-}" ]]; then
+  [[ "$VASA_DEPLOY_MODE" == check && "$VASA_RECOVERY" == none && "$VASA_PROVIDER_SMOKE" == false ]] || exit 1
+  vasa_remote_payload="$vasa_ssh_dir/private-task.py"
+  python3 deploy/actions_live_payload.py "$VASA_LIVE_ACCEPTANCE_FILE" > "$vasa_remote_payload"
+  chmod 600 "$vasa_remote_payload"
+fi
 ssh -F /dev/null -T -p 22 -i "$vasa_ssh_dir/key" \
   -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityAgent=none \
   -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$vasa_ssh_dir/known_hosts" \
@@ -64,4 +71,4 @@ ssh -F /dev/null -T -p 22 -i "$vasa_ssh_dir/key" \
   -o ConnectTimeout=15 -o ConnectionAttempts=1 -o LogLevel=ERROR \
   -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
   "$VASA_VPS_USER@$VASA_VPS_HOST" \
-  "python3 - '$VASA_DEPLOY_MODE' '$GITHUB_SHA' '$VASA_PROVIDER_SMOKE' '$VASA_RECOVERY' '$VASA_RELEASE_SHA' '$VASA_MIGRATION_SQL_SHA256'" < deploy/actions_vps.py
+  "python3 - '$VASA_DEPLOY_MODE' '$GITHUB_SHA' '$VASA_PROVIDER_SMOKE' '$VASA_RECOVERY' '$VASA_RELEASE_SHA' '$VASA_MIGRATION_SQL_SHA256'" < "$vasa_remote_payload"

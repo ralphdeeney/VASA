@@ -1,3 +1,15 @@
+2026-10-16 LIVE staging recovery: Actions38953426795 successfully activated
+immutable release858b5f853957d719a34ea96f28b5ea726100d402, migrated0006→0007
+through the operator-approved SQL/backup gate, and emitted VASA_DEPLOYMENT_OK.
+Canonical checkout remains502b8d8 with all three operator edge/tunnel files
+preserved. Actual app/voice images use the858 release tag; private active-release
+journal records that independently of canonicalHEAD. Postgres/Redis/Evolution
+container identities and private env hashes unchanged. Host-private bind, health,
+voice readiness, Evolution license/instances and dashboard auth checks passed.
+Recovery controller commitab37384 is pushed; paid provider smoke not requested.
+Live browser acceptance now being run with disposable audited identities; SMTP
+email flows remain externally blocked (no credentials configured).
+
 # Current state
 
 2026-10-16 delivery recovery: Actions investigation 38914233338 confirms actual
