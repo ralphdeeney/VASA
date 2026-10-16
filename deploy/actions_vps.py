@@ -322,6 +322,15 @@ def investigate():
                     s.startswith("+") and "VASA_SMTP_" in s for s in diff.splitlines()
                 )
         else:
+            if (
+                re.fullmatch(r"[a-zA-Z][a-zA-Z0-9_./-]{0,159}", name)
+                and not re.search(
+                    r"(?:secret|credential|token|password|\.env|\.key|\.pem)", name, re.I
+                )
+                and not re.search(r"[0-9a-fA-F]{16,}|[A-Za-z0-9_-]{40,}", name)
+                and ".." not in Path(name).parts
+            ):
+                record["path"] = name
             record["path_sha256"] = hashlib.sha256(name.encode()).hexdigest()
             record["classification"] = "private_or_untracked_preserved"
         changes.append(record)
@@ -454,6 +463,341 @@ asyncio.run(main())
     except Refusal:
         print("VPS_RUNTIME_PROBE=unavailable", flush=True)
     print("VASA_INVESTIGATION_OK", flush=True)
+
+
+def prepare_recovery(target):
+    """Prepare isolated source/images and a restore-tested backup; never activate."""
+    import shutil
+    import uuid
+
+    require(re.fullmatch(r"[0-9a-f]{40}", target) is not None, "Invalid preparation target.")
+    preflight()
+    local = ROOT / ".local"
+    require(local.is_dir() and not local.is_symlink(), "Private directory unavailable.")
+    lock_path = local / "actions-deploy.lock"
+    require(not lock_path.is_symlink(), "Unsafe deployment lock.")
+    with lock_path.open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        baseline = git("status", "--porcelain=v1", "--untracked-files=all")
+
+        def dirty_file_hashes():
+            names = set(git("diff", "--name-only", "-z", "HEAD").split("\0"))
+            names.update(git("ls-files", "--others", "--exclude-standard", "-z").split("\0"))
+            result = {}
+            for name in names - {""}:
+                require(
+                    not Path(name).is_absolute() and ".." not in Path(name).parts,
+                    "Unsafe dirty path.",
+                )
+                path = ROOT / name
+                if path.is_symlink():
+                    result[name] = (
+                        "symlink",
+                        hashlib.sha256(os.readlink(path).encode()).hexdigest(),
+                    )
+                elif path.is_file() and path.resolve().is_relative_to(ROOT):
+                    with path.open("rb") as source:
+                        result[name] = ("file", hashlib.file_digest(source, "sha256").hexdigest())
+                else:
+                    result[name] = ("missing_or_external", None)
+            return result
+
+        dirty_hashes = dirty_file_hashes()
+        hashes = private_hashes()
+        topology = snapshot_services(DEPENDENCIES + SERVICES)
+        require(
+            len({topology[name]["image"] for name in SERVICES}) == 1, "App rollback images differ."
+        )
+        previous = git("rev-parse", "HEAD")
+        require(re.fullmatch(r"[0-9a-f]{40}", previous) is not None, "Invalid previous revision.")
+        require(
+            shutil.disk_usage(ROOT).free >= 2 * 1024**3, "Preparation requires 2 GiB free disk."
+        )
+
+        def unchanged():
+            require(git("rev-parse", "HEAD") == previous, "Live checkout changed.")
+            require(
+                git("status", "--porcelain=v1", "--untracked-files=all") == baseline,
+                "Live working tree changed.",
+            )
+            require(private_hashes() == hashes, "Private environment changed.")
+            require(dirty_file_hashes() == dirty_hashes, "Preserved local file contents changed.")
+            assert_unchanged(topology)
+
+        def owned_directory(path):
+            require(not path.is_symlink(), "Unsafe preparation directory.")
+            path.mkdir(mode=0o700, exist_ok=True)
+            require(path.is_dir() and path.stat().st_uid == os.getuid(), "Unowned directory.")
+            require(path.stat().st_mode & 0o077 == 0, "Preparation directory must be private.")
+
+        def source_tree(sha):
+            releases = local / "releases"
+            owned_directory(releases)
+            path = releases / sha
+            require(not path.is_symlink(), "Unsafe release path.")
+            if path.exists():
+                require(path.is_dir() and path.stat().st_uid == os.getuid(), "Unowned release.")
+                require(
+                    git("-C", str(path), "rev-parse", "HEAD") == sha, "Release revision differs."
+                )
+                require(
+                    git("-C", str(path), "rev-parse", "--git-common-dir") == str(ROOT / ".git"),
+                    "Release repository differs.",
+                )
+                require(not git("-C", str(path), "status", "--porcelain"), "Release is dirty.")
+            else:
+                git("worktree", "add", "--detach", str(path), sha)
+            ca = ROOT / ".local/evolution-source/vasa-host-trust.pem"
+            require(ca.is_file() and not ca.is_symlink(), "Public build trust file unavailable.")
+            require(ca.stat().st_size <= 2 * 1024**2, "Invalid public trust file.")
+            payload = ca.read_bytes()
+            require(
+                b"-----BEGIN CERTIFICATE-----" in payload and b"PRIVATE KEY" not in payload,
+                "Invalid public trust file.",
+            )
+            run("openssl", "x509", "-in", str(ca), "-noout", timeout=15)
+            destination = path / ".local/evolution-source"
+            require(not (path / ".local").is_symlink(), "Unsafe release trust directory.")
+            require(not destination.is_symlink(), "Unsafe release trust directory.")
+            destination.mkdir(parents=True, exist_ok=True, mode=0o700)
+            trust = destination / "vasa-host-trust.pem"
+            require(not trust.is_symlink(), "Unsafe release trust file.")
+            trust.write_bytes(payload)
+            trust.chmod(0o644)
+            return path
+
+        def build(sha, tag):
+            path = source_tree(sha)
+            unchanged()
+            run(
+                "docker",
+                "build",
+                "--tag",
+                tag,
+                "--file",
+                str(path / "docker/vasa.Dockerfile"),
+                str(path),
+                timeout=1200,
+            )
+            require(
+                re.fullmatch(
+                    r"sha256:[0-9a-f]{64}",
+                    run("docker", "image", "inspect", "--format", "{{.Id}}", tag),
+                )
+                is not None,
+                "Prepared image verification failed.",
+            )
+
+        def recovery_stage(name):
+            global ACTIVE_STAGE
+            ACTIVE_STAGE = "RECOVERY_PREPARE_STAGE=" + name
+            print("RECOVERY_PREPARE_STAGE=" + name, flush=True)
+
+        try:
+            recovery_stage("git_fetch")
+            git("fetch", "origin", BRANCH)
+            require(
+                git("rev-parse", "origin/" + BRANCH) == target, "Target is not remote branch tip."
+            )
+            git("merge-base", "--is-ancestor", previous, target)
+            target_source = source_tree(target)
+            recovery_stage("backup")
+            backups = local / "backups"
+            owned_directory(backups)
+            token = uuid.uuid4().hex
+            archive = backups / ("vasa-" + token + ".dump")
+            postgres, _ = container("postgres")
+            descriptor = os.open(archive, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(descriptor, "wb") as output:
+                try:
+                    dumped = subprocess.run(
+                        [
+                            "docker",
+                            "exec",
+                            postgres,
+                            "sh",
+                            "-ec",
+                            'exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom',
+                        ],
+                        stdin=subprocess.DEVNULL,
+                        stdout=output,
+                        stderr=subprocess.PIPE,
+                        timeout=300,
+                        check=False,
+                    )
+                except (OSError, subprocess.TimeoutExpired) as exc:
+                    raise Refusal("Backup creation failed; raw output withheld.") from exc
+                require(dumped.returncode == 0, "Backup creation failed; raw output withheld.")
+                output.flush()
+                os.fsync(output.fileno())
+            require(archive.stat().st_size > 0, "Empty database backup.")
+            temporary = "vasa_verify_" + token
+            created = False
+            try:
+                run(
+                    "docker",
+                    "exec",
+                    postgres,
+                    "sh",
+                    "-ec",
+                    'exec createdb -U "$POSTGRES_USER" -- "$1"',
+                    "sh",
+                    temporary,
+                )
+                created = True
+                for operation in ("list", "restore"):
+                    command = (
+                        "exec pg_restore --list"
+                        if operation == "list"
+                        else 'exec pg_restore -U "$POSTGRES_USER" --exit-on-error --no-owner '
+                        '--no-privileges -d "$1"'
+                    )
+                    with archive.open("rb") as source:
+                        try:
+                            result = subprocess.run(
+                                [
+                                    "docker",
+                                    "exec",
+                                    "-i",
+                                    postgres,
+                                    "sh",
+                                    "-ec",
+                                    command,
+                                    "sh",
+                                    temporary,
+                                ],
+                                stdin=source,
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.PIPE,
+                                timeout=300,
+                                check=False,
+                            )
+                        except (OSError, subprocess.TimeoutExpired) as exc:
+                            raise Refusal(
+                                "Backup verification failed; raw output withheld."
+                            ) from exc
+                    require(
+                        result.returncode == 0, "Backup verification failed; raw output withheld."
+                    )
+
+                def clone_query(sql):
+                    return run(
+                        "docker",
+                        "exec",
+                        postgres,
+                        "sh",
+                        "-ec",
+                        'exec psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$1" -Atc "$2"',
+                        "sh",
+                        temporary,
+                        sql,
+                    )
+
+                revision = clone_query("SELECT version_num FROM alembic_version")
+                require(revision in ("0006", "0007"), "Unsupported clone migration revision.")
+                if revision == "0006":
+                    sql_path = target_source / "docs/migrations/0007_saas_identity.sql"
+                    require(
+                        sql_path.is_file()
+                        and not sql_path.is_symlink()
+                        and sql_path.stat().st_uid == os.getuid()
+                        and sql_path.stat().st_size <= 1048576,
+                        "Reviewed migration artifact unavailable.",
+                    )
+                    reviewed_sql = sql_path.read_text()
+                    # Compare only digests inside the isolated clone; no user rows escape.
+                    invariant_sql = (
+                        "SELECT md5(COALESCE(string_agg(id::text || ':' || tenant_id::text "
+                        "|| ':' || password_hash, ',' ORDER BY id), '')) FROM users"
+                    )
+                    before = clone_query(invariant_sql)
+                    run(
+                        "docker",
+                        "exec",
+                        "-i",
+                        postgres,
+                        "sh",
+                        "-ec",
+                        'exec psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$1"',
+                        "sh",
+                        temporary,
+                        input_text=reviewed_sql,
+                        timeout=120,
+                    )
+                    require(
+                        clone_query("SELECT version_num FROM alembic_version") == "0007"
+                        and clone_query(invariant_sql) == before,
+                        "Disposable migration compatibility failed.",
+                    )
+                    print(
+                        "RECOVERY_MIGRATION_SQL_SHA256="
+                        + hashlib.sha256(reviewed_sql.encode()).hexdigest(),
+                        flush=True,
+                    )
+                    print("RECOVERY_MIGRATION_CLONE_OK", flush=True)
+                else:
+                    print("RECOVERY_MIGRATION_CLONE_ALREADY_CURRENT", flush=True)
+            finally:
+                if created:
+                    run(
+                        "docker",
+                        "exec",
+                        postgres,
+                        "sh",
+                        "-ec",
+                        'exec dropdb -U "$POSTGRES_USER" -- "$1"',
+                        "sh",
+                        temporary,
+                    )
+            print("RECOVERY_BACKUP_RESTORE_OK", flush=True)
+            print("RECOVERY_BACKUP_BYTES=" + str(archive.stat().st_size), flush=True)
+            with archive.open("rb") as backup_input:
+                digest = hashlib.file_digest(backup_input, "sha256").hexdigest()
+            print("RECOVERY_BACKUP_SHA256=" + digest, flush=True)
+            recovery_stage("rollback_image")
+            rollback = "vasa-app:rollback-" + previous
+            image = topology["vasa"]["image"]
+            available = capture("docker", "image", "inspect", "--format", "{{.Id}}", image)
+            if available.returncode == 0 and available.stdout.strip() == image:
+                run("docker", "image", "tag", image, rollback)
+            else:
+                build(previous, rollback)
+            require(
+                re.fullmatch(
+                    r"sha256:[0-9a-f]{64}",
+                    run("docker", "image", "inspect", "--format", "{{.Id}}", rollback),
+                )
+                is not None,
+                "Rollback image unavailable.",
+            )
+            recovery_stage("candidate_build")
+            build(target, "vasa-app:release-" + target)
+            print("RECOVERY_PREVIOUS_SHA=" + previous, flush=True)
+            print("RECOVERY_TARGET_SHA=" + target, flush=True)
+
+        finally:
+            unchanged()
+        receipt_directory = local / "recovery-preparations"
+        owned_directory(receipt_directory)
+        receipt = receipt_directory / (target + "-" + token + ".json")
+        receipt_data = {
+            "target_sha": target,
+            "previous_sha": previous,
+            "backup": str(archive.relative_to(ROOT)),
+            "backup_sha256": digest,
+            "restore_verified": True,
+            "migration_clone_verified": True,
+            "candidate_image": "vasa-app:release-" + target,
+            "rollback_image": rollback,
+            "live_checkout_unchanged": True,
+            "live_migration_applied": False,
+        }
+        with os.fdopen(
+            os.open(receipt, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w"
+        ) as record:
+            record.write(json.dumps(receipt_data, sort_keys=True) + "\n")
+        print("RECOVERY_RECEIPT=prepared", flush=True)
+        print("VASA_RECOVERY_PREPARE_OK", flush=True)
 
 
 def config():
@@ -1266,7 +1610,7 @@ def main():
         )
         smoke = sys.argv[3] if len(sys.argv) >= 4 else "false"
         recovery = sys.argv[4] if len(sys.argv) == 5 else "none"
-        require(recovery in ("none", "investigate"), "Invalid recovery option.")
+        require(recovery in ("none", "investigate", "prepare"), "Invalid recovery option.")
         require(
             recovery == "none" or (sys.argv[1] == "check" and smoke == "false"),
             "Recovery inspection requires check mode.",
@@ -1277,7 +1621,20 @@ def main():
         if sys.argv[1] == "check":
             if recovery == "investigate":
                 investigate()
-            print("Read-only check: no fetch, checkout, writes, builds or restarts.", flush=True)
+            elif recovery == "prepare":
+                investigate()
+                prepare_recovery(sys.argv[2])
+            if recovery == "none":
+                print(
+                    "Read-only check: no fetch, checkout, writes, builds or restarts.", flush=True
+                )
+            elif recovery == "investigate":
+                print(
+                    "Investigation preserves files/services; one bounded auth rate-limit probe.",
+                    flush=True,
+                )
+            else:
+                print("Preparation only: no live migration or application activation.", flush=True)
             print("VASA_VPS_CONNECTIVITY_OK", flush=True)
         elif sys.argv[1] == "bootstrap":
             bootstrap(sys.argv[2], branch, previous)

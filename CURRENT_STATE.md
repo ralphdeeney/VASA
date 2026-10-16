@@ -1,5 +1,17 @@
 # Current state
 
+2026-10-16 delivery recovery: Actions investigation 38914233338 confirms actual
+staging remains 502b8d8 with three untracked files (no tracked changes), five healthy
+services/zero restarts and DB 0006. Synthetic login reproduces 403 invalid_origin;
+SMTP/canonical-origin bindings absent in approved VPS files/runtime. Candidate
+Compose supplies trusted public HTTPS origin without weakening Origin checks.
+Recovery check/prepare Actions options preserve unknown work and normal deploy
+safety, isolate source/images, verify private backup restoration and migration0007
+only inside a disposable database. Actual preparation results remain pending.
+Local browser acceptance now covers six full workflow groups with real PG/Redis
+and a test mailbox; live email/staging acceptance is not claimed. See recovery and
+browser acceptance docs. No direct Codex SSH or live migration authorization.
+
 2026-10-16 SaaS implementation: existing FastAPI/template/static stack retained.
 Public marketing/auth pages, responsive workspace/team/settings, separate platform
 admin UI, signup/verification/recovery/invitations and audited server-only admin

@@ -1,5 +1,14 @@
 # Test results
 
+2026-10-16 recovery investigation: 1,047 full checks passed in 87.68s and 95
+focused deployment checks passed. Final recovery suite: **1,056 passed** in 84.47s; Ruff/format (249 files),
+strict mypy (69 sources), workflow/shell/Node validation pass. New stateful
+preparation checks exercise backup
+restore/clone migration isolation, failed restore/build cleanup, secret suppression
+and preserved operator files. Complete browser acceptance passed six groups using
+real PostgreSQL/Redis plus an isolated fake mailbox; all disposable accounts and
+sessions cleaned up. Live SMTP and newly deployed staging acceptance remain pending.
+
 2026-10-16 SaaS website/auth/admin: **1,041 passed** in 84.93s, zero failures,
 errors or skips; one existing Starlette deprecation warning. Full unit/component/
 integration/native/eval suite; Ruff, formatting (242 Python files), strict mypy

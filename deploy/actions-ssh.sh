@@ -9,7 +9,7 @@ case "${VASA_DEPLOY_MODE:-}" in
 esac
 VASA_PROVIDER_SMOKE=${VASA_PROVIDER_SMOKE:-false}
 VASA_RECOVERY=${VASA_RECOVERY:-none}
-[[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate ]] || exit 1
+[[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate || "$VASA_RECOVERY" == prepare ]] || exit 1
 [[ "$VASA_RECOVERY" == none || ( "$VASA_DEPLOY_MODE" == check && "$VASA_PROVIDER_SMOKE" == false ) ]] || exit 1
 [[ "$VASA_PROVIDER_SMOKE" == false || "$VASA_PROVIDER_SMOKE" == true ]] || exit 1
 [[ "$VASA_PROVIDER_SMOKE" == false || "$VASA_DEPLOY_MODE" == deploy ]] || exit 1

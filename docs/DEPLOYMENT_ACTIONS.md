@@ -405,3 +405,9 @@ without forwarding them, reports safe structural metadata/configuration presence
 and performs one synthetic failed-login probe (normal Redis rate limiter applies).
 No real password is accepted, no account is created, no environment values or raw
 logs/diffs are printed. Normal deploy/bootstrap still refuse dirty working trees.
+
+`recovery=prepare` is a separate explicit check-mode action: isolated sources,
+private restore-tested backup, clone-only migration compatibility and separate
+candidate/rollback images. It preserves the dirty canonical checkout and all
+running services. It does not execute a live migration, enable SaaS, configure
+SMTP or activate an image. See `docs/SAAS_RECOVERY_STRATEGY.md` for the exact gate.

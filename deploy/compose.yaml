@@ -103,6 +103,8 @@ services:
         required: false
     environment: &vasa-environment
       VASA_ENVIRONMENT: production
+      # Trusted public HTTPS origin; do not trust arbitrary forwarded headers.
+      VASA_PUBLIC_ORIGIN: ${VASA_PUBLIC_ORIGIN:-https://vasa.litatech.xyz}
       VASA_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:?required}:${POSTGRES_PASSWORD:?required}@postgres:5432/${POSTGRES_DB:?required}
       VASA_REDIS_URL: redis://:${REDIS_PASSWORD:?required}@redis:6379/0
       VASA_EVOLUTION_BASE_URL: http://evolution:4000

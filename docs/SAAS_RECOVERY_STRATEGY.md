@@ -100,3 +100,36 @@ schema and actual delivery are validated.
 
 No approach here authorizes sudo, Compose down, prune, Docker restart, bootstrap,
 changes to Caddy/n8n/Cloudflare/Evolution pairing or public port exposure.
+
+## Implemented preparation path
+
+Run the existing Actions workflow with `mode=check`, `recovery=prepare`,
+`provider_smoke=false`. This is explicitly a preparation action rather than the
+ordinary read-only connectivity check. It first investigates, then locks the
+project, snapshots dirty file contents/private-file hashes/service identity,
+fetches the exact branch tip and creates detached release sources. It writes a
+0600 custom-format PostgreSQL archive in `.local/backups`, restores it into a new
+UUID-named database, tests the reviewed 0007 SQL only there, checks legacy user
+IDs/home tenants/password hashes remain unchanged, and drops that disposable DB.
+It then verifies/builds the old-source rollback image and builds an isolated
+`vasa-app:release-<target-sha>` image. It never retags `vasa-app:pinned`.
+
+A private 0600 receipt under `.local/recovery-preparations` records source/image
+references and the backup digest. The `VASA_RECOVERY_PREPARE_OK` marker follows
+all preservation checks. Failed builds retain the archive and source for diagnosis,
+without activating an application or modifying the original database schema.
+A fresh backup is required again if writes occur before a later approved rollout.
+
+Observed investigation (Actions 38914233338): current HEAD 502b8d8 has three
+untracked files and no tracked edits; all five containers healthy with zero
+restarts; DB 0006, two users/two tenants, one WhatsApp instance. Private bind remains
+172.16.2.1:18081. Approved private files and running app have no SMTP bindings.
+Synthetic public-Origin login returns 403 invalid_origin while login page is 200;
+the TLS-terminated HTTP origin comparison is the confirmed rejection. Candidate
+Compose now supplies the trusted public origin explicitly; the existing parser
+still refuses foreign origins and forwarded-header spoofing.
+
+Repository secret metadata could not be read through the connected CLI. Recovery
+Actions therefore checks the approved SMTP secret names directly, reporting only
+presence/absence; values are never emitted or copied into source. No live SMTP
+availability is claimed until that check and delivery both succeed.
