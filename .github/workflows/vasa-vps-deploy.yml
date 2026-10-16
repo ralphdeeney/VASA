@@ -25,6 +25,11 @@ on:
         type: string
         default: ''
         required: false
+      saas_acceptance:
+        description: Disposable live browser acceptance only (check mode, no recovery/smoke)
+        type: boolean
+        default: false
+        required: false
       provider_smoke:
         description: Opt-in paid live provider validation after deploy (deploy mode only)
         type: boolean
@@ -65,6 +70,18 @@ jobs:
               state = "present" if os.environ.get("SMTP_" + name) else "absent"
               print("GITHUB_SMTP_BINDING_" + name + "=" + state)
           PYTHON
+      - name: Install isolated browser tooling
+        if: github.event_name == 'workflow_dispatch' && inputs.saas_acceptance
+        shell: bash
+        env:
+          VASA_MODE: ${{ inputs.mode }}
+          VASA_RECOVERY_OPTION: ${{ inputs.recovery }}
+          VASA_SMOKE_OPTION: ${{ inputs.provider_smoke }}
+        run: |
+          [[ "$VASA_MODE" == check && "$VASA_RECOVERY_OPTION" == none && "$VASA_SMOKE_OPTION" == false ]] || exit 1
+          mkdir -p "$RUNNER_TEMP/vasa-browser"
+          npm install --prefix "$RUNNER_TEMP/vasa-browser" --no-audit --no-fund playwright@1.62.1
+          "$RUNNER_TEMP/vasa-browser/node_modules/.bin/playwright" install chromium
       - name: Verify SSH trust and run the selected mode
         id: deployment
         shell: bash
@@ -73,12 +90,20 @@ jobs:
           VASA_VPS_USER: ${{ secrets.VASA_VPS_USER }}
           VASA_VPS_SSH_KEY: ${{ secrets.VASA_VPS_SSH_KEY }}
           VASA_VPS_HOST_KEY_SHA256: ${{ vars.VASA_VPS_HOST_KEY_SHA256 }}
+          VASA_SAAS_ACCEPTANCE: ${{ github.event_name == 'workflow_dispatch' && inputs.saas_acceptance && 'true' || 'false' }}
           VASA_DEPLOY_MODE: ${{ github.event_name == 'push' && 'deploy' || inputs.mode }}
           VASA_RELEASE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.release_sha || '' }}
           VASA_MIGRATION_SQL_SHA256: ${{ github.event_name == 'workflow_dispatch' && inputs.migration_sql_sha256 || '' }}
           VASA_RECOVERY: ${{ github.event_name == 'workflow_dispatch' && inputs.recovery || 'none' }}
           VASA_PROVIDER_SMOKE: ${{ github.event_name == 'workflow_dispatch' && inputs.provider_smoke && 'true' || 'false' }}
-        run: bash deploy/actions-ssh.sh
+        run: |
+          if [[ "$VASA_SAAS_ACCEPTANCE" == true ]]; then
+            [[ "$VASA_DEPLOY_MODE" == check && "$VASA_RECOVERY" == none && "$VASA_PROVIDER_SMOKE" == false ]] || exit 1
+            export NODE_PATH="$RUNNER_TEMP/vasa-browser/node_modules"
+            python3 scripts/run_live_saas_acceptance.py
+          else
+            bash deploy/actions-ssh.sh
+          fi
       - name: Write sanitized deployment summary
         if: always()
         env:

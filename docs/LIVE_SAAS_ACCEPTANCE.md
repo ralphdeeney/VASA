@@ -68,10 +68,15 @@ Actions result separately.
 
 ## Actions execution
 
-Dispatch **VASA staging browser acceptance** on `build/vasa-foundation`. The
-manual-only workflow installs pinned Playwright outside the repo, generates private
+Dispatch **VASA staging VPS** on `build/vasa-foundation` with `mode=check`,
+`recovery=none`, `provider_smoke=false`, `saas_acceptance=true`. The
+manual-only option installs pinned Playwright outside the repo, generates private
 runner credentials, and uses the existing pinned-host SSH bridge. A private SSH
 stdin task invokes the trusted fixture source inside the existing app container;
 it neither rebuilds the runtime nor changes existing users. It always attempts
 exact fixture/session cleanup. No credentials or browser artifacts are uploaded.
 Success is deliberately `LIVE_SAAS_ACCEPTANCE_PARTIAL_OK` while SMTP is absent.
+
+A separate new workflow could not be dispatched from this feature branch because
+GitHub registers manual workflows on the default branch. The existing registered
+workflow provides this optional path; automatic pushes never enable acceptance.

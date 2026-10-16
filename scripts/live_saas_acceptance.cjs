@@ -59,6 +59,15 @@ async function main() {
       await page.setViewportSize({width,height:900});
       check(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1));
     }
+    const publicContext=await browser.newContext();
+    const publicPage=await publicContext.newPage();
+    let scriptError=false; publicPage.on("pageerror",()=>{scriptError=true;});
+    for(const width of [390,1440]) for(const path of ["/","/features","/pricing","/login","/signup","/forgot-password"]) {
+      await publicPage.setViewportSize({width,height:900});
+      check((await publicPage.goto(origin+path)).status()===200);
+      check(await publicPage.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1));
+    }
+    check(!scriptError); await publicContext.close();
     console.log("LIVE_SAAS_PASS=mobile_desktop");
     stage="logout";
     for(const page of pages) {
