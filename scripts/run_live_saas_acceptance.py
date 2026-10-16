@@ -133,6 +133,11 @@ def emit_fixture_failures(output: str) -> None:
         "LIVE_SAAS_TASK_FAILED": {"preflight", "fixture", "health"},
     }
     for line in output.splitlines():
+        if line in {"DB_CAPACITY_UNAVAILABLE", "DB_SOCKET_UNAVAILABLE"} or re.fullmatch(
+            r"DB_(?:CAPACITY_(?:MAX_CONNECTIONS|RESERVED_CONNECTIONS|SUPERUSER_RESERVED_CONNECTIONS|TOTAL_CONNECTIONS|PRIMARY_DB_CONNECTIONS|CURRENT_ROLE_CONNECTIONS|PRIMARY_DB_IDLE|PRIMARY_DB_ACTIVE|ROLE_CONNECTION_LIMIT|DATABASE_CONNECTION_LIMIT|EVOLUTION_AUTH_CONNECTIONS|EVOLUTION_USERS_CONNECTIONS)|CONFIG_MAX_CONNECTIONS|SOCKET_(?:VASA|VOICE|EVOLUTION|OTHER|TOTAL))=(?:-1|[0-9]{1,8})",
+            line,
+        ):
+            print(line, flush=True)
         name, separator, value = line.partition("=")
         if line == "LIVE_SAAS_FIXTURE_FAILED" or (separator and value in codes.get(name, set())):
             print(line, flush=True)

@@ -98,6 +98,7 @@ def build(path: Path) -> str:
         raise ValueError("invalid_input")
     controller = Path("deploy/actions_vps.py").read_text()
     fixture = Path("scripts/live_saas_fixture.py").read_text()
+    capacity = Path("deploy/actions_db_capacity.py").read_text()
     # All three values travel encrypted on SSH stdin, never argv or logs.
     return f"""import json
 namespace = {{"__name__": "vasa_actions_acceptance"}}
@@ -122,6 +123,10 @@ try:
             name, separator, value = line.partition("=")
             if separator and value in approved.get(name, set()):
                 print(line, flush=True)
+        if "LIVE_SAAS_FIXTURE_SQLSTATE=53300" in result.stdout.splitlines():
+            capacity_namespace = {{"__name__": "vasa_capacity"}}
+            exec(compile({capacity!r}, "capacity", "exec"), capacity_namespace)
+            capacity_namespace["diagnose"](namespace)
         raise ValueError()
     print(expected, flush=True)
 except BaseException:
