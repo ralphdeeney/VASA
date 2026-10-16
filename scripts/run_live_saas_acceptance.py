@@ -133,6 +133,8 @@ def emit_fixture_failures(output: str) -> None:
         "LIVE_SAAS_TASK_FAILED": {"preflight", "fixture", "health"},
     }
     for line in output.splitlines():
+        if line in {"VASA_API_POOL_RECYCLE_OK", "VASA_API_POOL_RECYCLE_FAILED"}:
+            print(line, flush=True)
         if line in {"DB_CAPACITY_UNAVAILABLE", "DB_SOCKET_UNAVAILABLE"} or re.fullmatch(
             r"DB_(?:CAPACITY_(?:MAX_CONNECTIONS|RESERVED_CONNECTIONS|SUPERUSER_RESERVED_CONNECTIONS|TOTAL_CONNECTIONS|PRIMARY_DB_CONNECTIONS|CURRENT_ROLE_CONNECTIONS|PRIMARY_DB_IDLE|PRIMARY_DB_ACTIVE|ROLE_CONNECTION_LIMIT|DATABASE_CONNECTION_LIMIT|EVOLUTION_AUTH_CONNECTIONS|EVOLUTION_USERS_CONNECTIONS)|CONFIG_MAX_CONNECTIONS|SOCKET_(?:VASA|VOICE|EVOLUTION|OTHER|TOTAL))=(?:-1|[0-9]{1,8})",
             line,
@@ -147,6 +149,16 @@ def main() -> int:
     if os.environ.get("GITHUB_ACTIONS") != "true":
         print("LIVE_SAAS_RUNNER_FAILED=actions_required", flush=True)
         return 1
+    cleanup_flag = os.environ.get("VASA_SAAS_CLEANUP_ONLY", "false")
+    recycle_flag = os.environ.get("VASA_API_POOL_RECYCLE", "false")
+    if (
+        cleanup_flag not in {"true", "false"}
+        or recycle_flag not in {"true", "false"}
+        or (recycle_flag == "true" and cleanup_flag != "true")
+    ):
+        print("LIVE_SAAS_RUNNER_FAILED=configuration", flush=True)
+        return 1
+    cleanup_only = cleanup_flag == "true"
     runner_temp = Path(os.environ.get("RUNNER_TEMP", ""))
     if not runner_temp.is_absolute() or not runner_temp.is_dir() or runner_temp.is_symlink():
         print("LIVE_SAAS_RUNNER_FAILED=private_directory", flush=True)
@@ -172,17 +184,22 @@ def main() -> int:
             VASA_DEPLOY_MODE="check",
             VASA_RECOVERY="none",
             VASA_PROVIDER_SMOKE="false",
+            VASA_SAAS_CLEANUP_ONLY=cleanup_flag,
+            VASA_API_POOL_RECYCLE=recycle_flag,
         )
         try:
             pending = execute(["bash", "deploy/actions-ssh.sh"], environment, 180)
+            emit_fixture_failures(pending.stdout)
             if (
                 pending.returncode != 0
                 or "LIVE_SAAS_FIXTURE_CLEANUP_PENDING_OK" not in pending.stdout.splitlines()
             ):
-                emit_fixture_failures(pending.stdout)
                 print("LIVE_SAAS_RUNNER_FAILED=fixture_pending_cleanup", flush=True)
                 return 1
             print("LIVE_SAAS_FIXTURE_CLEANUP_PENDING_OK", flush=True)
+            if cleanup_only:
+                print("LIVE_SAAS_CLEANUP_ONLY_OK", flush=True)
+                return 0
             payload["action"] = "prepare"
             payload_file.write_text(json.dumps(payload))
             prepared = execute(["bash", "deploy/actions-ssh.sh"], environment, 180)
@@ -219,39 +236,40 @@ def main() -> int:
         except Exception:
             print("LIVE_SAAS_RUNNER_FAILED=internal", flush=True)
         finally:
-            sessions = []
-            try:
-                if (
-                    result_file.is_file()
-                    and not result_file.is_symlink()
-                    and result_file.stat().st_size <= 8192
-                ):
-                    document = json.loads(result_file.read_text())
-                    values = document.get("sessions", []) if isinstance(document, dict) else []
-                    if isinstance(values, list) and len(values) <= 16:
-                        sessions = [
-                            v
-                            for v in values
-                            if isinstance(v, str) and re.fullmatch(r"[A-Za-z0-9_-]{43}", v)
-                        ]
-            except (OSError, ValueError):
-                pass
-            payload["action"] = "cleanup"
-            payload["sessions"] = sessions
-            payload_file.write_text(json.dumps(payload))
-            cleaned = execute(["bash", "deploy/actions-ssh.sh"], environment, 180)
-            cleanup_ok = (
-                cleaned.returncode == 0
-                and "LIVE_SAAS_FIXTURE_CLEANUP_OK" in cleaned.stdout.splitlines()
-            )
-            if not cleanup_ok:
-                emit_fixture_failures(cleaned.stdout)
-            print(
-                "LIVE_SAAS_FIXTURE_CLEANUP_OK"
-                if cleanup_ok
-                else "LIVE_SAAS_RUNNER_FAILED=fixture_cleanup",
-                flush=True,
-            )
+            if not cleanup_only:
+                sessions = []
+                try:
+                    if (
+                        result_file.is_file()
+                        and not result_file.is_symlink()
+                        and result_file.stat().st_size <= 8192
+                    ):
+                        document = json.loads(result_file.read_text())
+                        values = document.get("sessions", []) if isinstance(document, dict) else []
+                        if isinstance(values, list) and len(values) <= 16:
+                            sessions = [
+                                v
+                                for v in values
+                                if isinstance(v, str) and re.fullmatch(r"[A-Za-z0-9_-]{43}", v)
+                            ]
+                except (OSError, ValueError):
+                    pass
+                payload["action"] = "cleanup"
+                payload["sessions"] = sessions
+                payload_file.write_text(json.dumps(payload))
+                cleaned = execute(["bash", "deploy/actions-ssh.sh"], environment, 180)
+                cleanup_ok = (
+                    cleaned.returncode == 0
+                    and "LIVE_SAAS_FIXTURE_CLEANUP_OK" in cleaned.stdout.splitlines()
+                )
+                if not cleanup_ok:
+                    emit_fixture_failures(cleaned.stdout)
+                print(
+                    "LIVE_SAAS_FIXTURE_CLEANUP_OK"
+                    if cleanup_ok
+                    else "LIVE_SAAS_RUNNER_FAILED=fixture_cleanup",
+                    flush=True,
+                )
     if success and cleanup_ok:
         print("LIVE_SAAS_ACCEPTANCE_PARTIAL_OK", flush=True)
         return 0

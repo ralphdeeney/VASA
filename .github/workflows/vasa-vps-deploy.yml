@@ -30,6 +30,16 @@ on:
         type: boolean
         default: false
         required: false
+      cleanup_only:
+        description: Remove audited disposable test identities only (requires saas_acceptance)
+        type: boolean
+        default: false
+        required: false
+      recycle_api_pool:
+        description: Restart only existing VASA web container before cleanup (requires cleanup_only)
+        type: boolean
+        default: false
+        required: false
       provider_smoke:
         description: Opt-in paid live provider validation after deploy (deploy mode only)
         type: boolean
@@ -71,7 +81,7 @@ jobs:
               print("GITHUB_SMTP_BINDING_" + name + "=" + state)
           PYTHON
       - name: Install isolated browser tooling
-        if: github.event_name == 'workflow_dispatch' && inputs.saas_acceptance
+        if: github.event_name == 'workflow_dispatch' && inputs.saas_acceptance && !inputs.cleanup_only
         shell: bash
         env:
           VASA_MODE: ${{ inputs.mode }}
@@ -90,6 +100,8 @@ jobs:
           VASA_VPS_USER: ${{ secrets.VASA_VPS_USER }}
           VASA_VPS_SSH_KEY: ${{ secrets.VASA_VPS_SSH_KEY }}
           VASA_VPS_HOST_KEY_SHA256: ${{ vars.VASA_VPS_HOST_KEY_SHA256 }}
+          VASA_SAAS_CLEANUP_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.cleanup_only && 'true' || 'false' }}
+          VASA_API_POOL_RECYCLE: ${{ github.event_name == 'workflow_dispatch' && inputs.recycle_api_pool && 'true' || 'false' }}
           VASA_SAAS_ACCEPTANCE: ${{ github.event_name == 'workflow_dispatch' && inputs.saas_acceptance && 'true' || 'false' }}
           VASA_DEPLOY_MODE: ${{ github.event_name == 'push' && 'deploy' || inputs.mode }}
           VASA_RELEASE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.release_sha || '' }}
@@ -97,6 +109,10 @@ jobs:
           VASA_RECOVERY: ${{ github.event_name == 'workflow_dispatch' && inputs.recovery || 'none' }}
           VASA_PROVIDER_SMOKE: ${{ github.event_name == 'workflow_dispatch' && inputs.provider_smoke && 'true' || 'false' }}
         run: |
+          if [[ "$VASA_SAAS_CLEANUP_ONLY" == true || "$VASA_API_POOL_RECYCLE" == true ]]; then
+            [[ "$VASA_SAAS_ACCEPTANCE" == true ]] || exit 1
+          fi
+          [[ "$VASA_API_POOL_RECYCLE" == false || "$VASA_SAAS_CLEANUP_ONLY" == true ]] || exit 1
           if [[ "$VASA_SAAS_ACCEPTANCE" == true ]]; then
             [[ "$VASA_DEPLOY_MODE" == check && "$VASA_RECOVERY" == none && "$VASA_PROVIDER_SMOKE" == false ]] || exit 1
             export NODE_PATH="$RUNNER_TEMP/vasa-browser/node_modules"

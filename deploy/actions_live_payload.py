@@ -99,6 +99,16 @@ def build(path: Path) -> str:
     controller = Path("deploy/actions_vps.py").read_text()
     fixture = Path("scripts/live_saas_fixture.py").read_text()
     capacity = Path("deploy/actions_db_capacity.py").read_text()
+    recycle = os.environ.get("VASA_API_POOL_RECYCLE", "false")
+    if recycle not in {"true", "false"} or (
+        recycle == "true"
+        and (
+            os.environ.get("VASA_SAAS_CLEANUP_ONLY") != "true"
+            or data.get("action") != "cleanup_pending"
+        )
+    ):
+        raise ValueError("invalid_recycle_option")
+    recycle_source = Path("deploy/actions_api_recycle.py").read_text() if recycle == "true" else ""
     # All three values travel encrypted on SSH stdin, never argv or logs.
     return f"""import json
 namespace = {{"__name__": "vasa_actions_acceptance"}}
@@ -107,6 +117,10 @@ data = {data!r}
 stage = "preflight"
 try:
     namespace["preflight"]()
+    if {recycle == "true"!r}:
+        recycle_namespace = {{"__name__": "vasa_api_recycle"}}
+        exec(compile({recycle_source!r}, "api_recycle", "exec"), recycle_namespace)
+        recycle_namespace["recycle"](namespace)
     if data["action"] == "prepare":
         stage = "health"
         namespace["health"]()

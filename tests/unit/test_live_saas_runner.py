@@ -107,3 +107,54 @@ def test_only_fixed_fixture_diagnostics_survive(capsys):
         "LIVE_SAAS_FIXTURE_STAGE=cleanup_sessions",
         "LIVE_SAAS_FIXTURE_SQLSTATE=23503",
     ]
+
+
+@pytest.mark.parametrize("recycle", ["true", "false"])
+@pytest.mark.parametrize("pending_success", [True, False])
+def test_cleanup_only_never_provisions_or_runs_browser(
+    tmp_path, monkeypatch, capsys, recycle, pending_success
+):
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("RUNNER_TEMP", str(tmp_path))
+    monkeypatch.setenv("VASA_SAAS_CLEANUP_ONLY", "true")
+    monkeypatch.setenv("VASA_API_POOL_RECYCLE", recycle)
+    calls = []
+
+    def execute(command, environment, timeout):
+        calls.append(command)
+        assert command == ["bash", "deploy/actions-ssh.sh"]
+        assert environment["VASA_SAAS_CLEANUP_ONLY"] == "true"
+        assert environment["VASA_API_POOL_RECYCLE"] == recycle
+        document = json.loads(Path(environment["VASA_LIVE_ACCEPTANCE_FILE"]).read_text())
+        assert document == {"action": "cleanup_pending"}
+        return SimpleNamespace(
+            returncode=0 if pending_success else 1,
+            stdout="VASA_API_POOL_RECYCLE_OK\nLIVE_SAAS_FIXTURE_CLEANUP_PENDING_OK\nprivate-secret-body",
+        )
+
+    monkeypatch.setattr(runner, "execute", execute)
+    assert runner.main() == (0 if pending_success else 1)
+    assert len(calls) == 1
+    output = capsys.readouterr().out
+    assert "private-secret" not in output
+    assert "VASA_API_POOL_RECYCLE_OK" in output
+    assert ("LIVE_SAAS_CLEANUP_ONLY_OK" in output) == pending_success
+    assert "LIVE_SAAS_ACCEPTANCE_PARTIAL_OK" not in output
+
+
+@pytest.mark.parametrize(
+    "cleanup,recycle", [("false", "true"), ("yes", "false"), ("false", "yes"), ("TRUE", "true")]
+)
+def test_invalid_cleanup_recycle_configuration_fails_before_ssh(
+    monkeypatch, capsys, cleanup, recycle
+):
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("VASA_SAAS_CLEANUP_ONLY", cleanup)
+    monkeypatch.setenv("VASA_API_POOL_RECYCLE", recycle)
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("must_not_execute_ssh")
+
+    monkeypatch.setattr(runner, "execute", forbidden)
+    assert runner.main() == 1
+    assert capsys.readouterr().out == "LIVE_SAAS_RUNNER_FAILED=configuration\n"
