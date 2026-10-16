@@ -1,5 +1,15 @@
 # Performance
 
+2026-10-16 SaaS work adds control-plane identity/admin/database operations only.
+No speech models, provider configuration, audio pacing, call quotas or runtime
+queue behavior were changed. Auth retains native scrypt with four bounded slots;
+SMTP delivery is offloaded with four bounded native slots and a ten-second network
+timeout, TLS by default. Sessions remain Redis-backed with version revocation.
+Directory pagination is bounded to 100 rows, tenant team/workspace lists to 100,
+and pending invitations to 100 per organization. No new VPS latency, CPU, capacity
+or SMTP-delivery performance measurements are claimed. Full local suite completed
+in 84.93s; responsive browser checks are UI evidence only.
+
 2026-10-15 operator-observed reconnect calls last 30–36 seconds and some gaps
 recover. These are call durations, not measured gap lengths. New local monotonic
 receive_recovered_ms instrumentation and 24-second maximum active receive grace

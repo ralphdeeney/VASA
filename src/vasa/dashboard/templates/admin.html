@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Platform administration · VASA</title>
+    <link rel="stylesheet" href="/dashboard/assets/styles.css" />
+    <script src="/dashboard/assets/admin.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="topbar">
+      <a class="wordmark" href="/dashboard">vasa.</a
+      ><a href="/dashboard">Back to workspace</a>
+    </header>
+    <main id="main" class="workspace">
+      <p class="eyebrow">Platform administration</p>
+      <h1>Overview</h1>
+      <p class="muted">
+        Global identity and organization administration. Tenant conversation
+        content is not exposed here.
+      </p>
+      <p id="admin-message" class="notice" role="status" aria-live="polite">
+        Loading authorized platform data…
+      </p>
+      <section
+        id="admin-metrics"
+        class="admin-metrics"
+        aria-label="Platform totals"
+      ></section>
+      <section class="card">
+        <form id="admin-search" class="form-grid">
+          <div>
+            <label for="admin-directory">Directory</label
+            ><select id="admin-directory">
+              <option value="users">Users</option>
+              <option value="organizations">Organizations</option>
+              <option value="registrations">Registrations</option>
+              <option value="audit">Audit history</option>
+            </select>
+          </div>
+          <div>
+            <label for="admin-query">Search</label
+            ><input id="admin-query" maxlength="200" type="search" />
+          </div>
+          <div>
+            <label for="admin-status">Status</label
+            ><select id="admin-status">
+              <option value="">All statuses</option>
+              <option>active</option>
+              <option>pending</option>
+              <option>suspended</option>
+              <option>approved</option>
+              <option>rejected</option>
+            </select>
+          </div>
+          <div>
+            <label for="admin-sort">Sort</label
+            ><select id="admin-sort">
+              <option value="created_at">Created date</option>
+              <option value="email">Email (users)</option>
+              <option value="name">Name (users/organizations)</option>
+            </select>
+          </div>
+          <button type="submit">Apply filters</button>
+        </form>
+        <div class="table-wrap">
+          <table>
+            <caption id="admin-caption">
+              User directory
+            </caption>
+            <thead id="admin-columns"></thead>
+            <tbody id="admin-rows"></tbody>
+          </table>
+        </div>
+        <div class="button-row">
+          <button id="admin-previous" type="button" class="secondary">
+            Previous
+          </button>
+          <p id="admin-page" class="small"></p>
+          <button id="admin-next" type="button" class="secondary">Next</button>
+        </div>
+      </section>
+      <section class="card product-section">
+        <h2>Connections</h2>
+        <p class="small muted">
+          Explicit organization scope is required and audited. Connection
+          identifiers only; no pairing secrets or caller data.
+        </p>
+        <form id="admin-connections" class="stack">
+          <label for="admin-tenant">Organization ID</label
+          ><input
+            id="admin-tenant"
+            required
+            pattern="[a-fA-F0-9-]{36}"
+            maxlength="36"
+          /><button type="submit">View scoped connections</button>
+        </form>
+        <ul id="admin-connection-list"></ul>
+      </section>
+      <section class="card product-section">
+        <h2>System health</h2>
+        <p id="admin-health" role="status">Checking…</p>
+      </section>
+    </main>
+  </body>
+</html>

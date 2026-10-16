@@ -14,8 +14,10 @@ from vasa.storage.models import Tenant
 pytestmark = pytest.mark.integration
 
 
+@pytest.mark.parametrize("saas_enabled", [False, True])
 async def test_bootstrap_creates_hashed_account_without_printing_password_and_refuses_overwrite(
     control_harness: ControlHarness,
+    saas_enabled: bool,
 ) -> None:
     harness = control_harness
     email = f"bootstrap-{uuid4().hex}@example.invalid"
@@ -24,6 +26,7 @@ async def test_bootstrap_creates_hashed_account_without_printing_password_and_re
         **os.environ,
         "VASA_DATABASE_URL": harness.settings.database_url.get_secret_value(),
         "VASA_BOOTSTRAP_PASSWORD": PASSWORD,
+        "VASA_SAAS_ENABLED": "true" if saas_enabled else "false",
     }
     try:
         stored_hash = None
@@ -54,6 +57,15 @@ async def test_bootstrap_creates_hashed_account_without_printing_password_and_re
                 assert verify_password(PASSWORD, user.password_hash)
                 tenant = await session.get(Tenant, user.tenant_id)
                 assert tenant is not None and tenant.name == tenant_name
+                if saas_enabled:
+                    from vasa.saas.models import Membership, PlatformRole, UserProfile
+
+                    profile = await session.get(UserProfile, user.id)
+                    assert profile is not None and profile.status == "active"
+                    assert profile.legacy_access and profile.email_verified_at is None
+                    membership = await session.get(Membership, (user.id, user.tenant_id))
+                    assert membership is not None and membership.role == "owner"
+                    assert await session.get(PlatformRole, user.id) is None
                 if stored_hash is None:
                     stored_hash = user.password_hash
                 else:

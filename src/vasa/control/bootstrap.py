@@ -34,8 +34,34 @@ async def bootstrap(email: str, tenant_name: str, password: str) -> None:
             tenant = Tenant(name=tenant_name.strip())
             session.add(tenant)
             await session.flush()
-            session.add(User(tenant_id=tenant.id, email=data.email, password_hash=password_hash))
+            user = User(tenant_id=tenant.id, email=data.email, password_hash=password_hash)
+            session.add(user)
             await session.flush()
+            if settings.saas_enabled:
+                from vasa.saas.models import (
+                    AuditEvent,
+                    Membership,
+                    OrganizationProfile,
+                    UserProfile,
+                )
+
+                session.add_all(
+                    [
+                        UserProfile(user_id=user.id, status="active", legacy_access=True),
+                        OrganizationProfile(
+                            tenant_id=tenant.id, slug=f"workspace-{tenant.id}", status="active"
+                        ),
+                        Membership(
+                            user_id=user.id, tenant_id=tenant.id, role="owner", status="active"
+                        ),
+                        AuditEvent(
+                            actor_id=None,
+                            tenant_id=tenant.id,
+                            action="identity.server_provision",
+                            target=str(user.id),
+                        ),
+                    ]
+                )
     finally:
         await database.aclose()
 

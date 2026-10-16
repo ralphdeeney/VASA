@@ -535,3 +535,6 @@ panel("calls-refresh").addEventListener("click", loadCalls);
 function initializeProduct() {
   loadAgent(); knowledgeAction(async () => {}, ""); loadCalls();
 }
+
+// Keep the established dashboard entry point; load optional SaaS controls separately.
+import("/dashboard/assets/workspace.js");

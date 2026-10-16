@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Every call deserves an answer · VASA</title>
+    <link rel="stylesheet" href="/dashboard/assets/styles.css" />
+    <script src="/dashboard/assets/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="topbar">
+      <a class="wordmark" href="/">vasa.</a>
+      <nav class="public-nav" aria-label="Main navigation">
+        <a href="/features">Features</a><a href="/how-it-works">How it works</a
+        ><a href="/pricing">Pricing</a><a href="/contact">Contact</a
+        ><a href="/login">Sign in</a
+        ><a class="button" href="/signup">Get started</a>
+      </nav>
+    </header>
+    <main id="main" class="marketing">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">AI voice platform</p>
+          <h1>Every call deserves an answer.</h1>
+          <p class="hero-copy">
+            A natural AI voice assistant for your business WhatsApp. Connect
+            your number, teach it about your business, and manage conversations
+            in one place.
+          </p>
+          <div class="button-row">
+            <a class="button" href="/signup">Get started</a
+            ><a class="button secondary" href="/features">Explore VASA</a>
+          </div>
+          <p class="small muted">
+            Built for thoughtful conversations. Human acceptance testing is
+            ongoing.
+          </p>
+        </div>
+        <aside
+          class="product-preview"
+          aria-label="Illustrative product preview"
+        >
+          <div class="detail-heading">
+            <span class="wordmark">Your workspace</span
+            ><span class="badge">Example</span>
+          </div>
+          <p class="eyebrow">A calmer way to stay available</p>
+          <div class="preview-card">
+            <span>WhatsApp connection</span><strong>Connected</strong>
+          </div>
+          <div class="preview-card">
+            <span>AI assistant</span><strong>Ready to help</strong>
+          </div>
+          <div class="preview-card">
+            <span>Recent conversation</span>
+            <p>AI answered an inbound WhatsApp call.</p>
+          </div>
+          <p class="small muted">
+            Illustrative interface. These are not live account statuses.
+          </p>
+        </aside>
+      </section>
+      <section id="features" class="marketing-section">
+        <p class="eyebrow">Why VASA</p>
+        <h2>A helpful voice, grounded in your business.</h2>
+        <div class="feature-grid">
+          <article class="card">
+            <h3>Voice conversations</h3>
+            <p>
+              Answer inbound WhatsApp calls with an AI assistant, including
+              interruption support. Live reliability testing continues.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Your business knowledge</h3>
+            <p>
+              Manage instructions, greetings and supported documents in your
+              workspace.
+            </p>
+          </article>
+          <article class="card">
+            <h3>Conversation history</h3>
+            <p>
+              Review recorded call outcomes, summaries and available transcripts
+              with authorized access.
+            </p>
+          </article>
+        </div>
+      </section>
+      <section id="how-it-works" class="marketing-section">
+        <p class="eyebrow">How it works</p>
+        <h2>Make room for every conversation.</h2>
+        <ol class="steps">
+          <li>
+            <h3>Create your workspace</h3>
+            <p>Register and verify your email when registration is enabled.</p>
+          </li>
+          <li>
+            <h3>Connect WhatsApp</h3>
+            <p>
+              Pair your business account yourself using the workspace QR flow.
+            </p>
+          </li>
+          <li>
+            <h3>Shape your assistant</h3>
+            <p>Add your greeting, business knowledge and clear instructions.</p>
+          </li>
+        </ol>
+      </section>
+      <section id="pricing" class="marketing-section callout">
+        <p class="eyebrow">Pricing</p>
+        <h2>Building the right foundation.</h2>
+        <p>
+          VASA is in a staged rollout. Public subscription plans, billing and
+          self-service payments are not available yet.
+        </p>
+        <a href="/contact">Learn about access</a>
+      </section>
+      <section class="marketing-section">
+        <h2>A few useful answers.</h2>
+        <details>
+          <summary>Will signup connect my WhatsApp automatically?</summary>
+          <p>
+            No. Pairing is a separate action after account verification and
+            workspace setup.
+          </p>
+        </details>
+        <details>
+          <summary>Can I bring my business information?</summary>
+          <p>
+            The workspace supports text knowledge and supported document
+            uploads.
+          </p>
+        </details>
+        <details>
+          <summary>Are integrations and billing available?</summary>
+          <p>
+            Runtime tool connections are managed by your operator. Self-service
+            integration configuration and billing are upcoming.
+          </p>
+        </details>
+      </section>
+      <section id="contact" class="marketing-section callout">
+        <p class="eyebrow">Contact & access</p>
+        <h2>Start with a conversation.</h2>
+        <p>
+          Ask about VASA or request a demo when contact delivery is enabled.
+          Existing customers can also use their established workspace support
+          channel.
+        </p>
+        <p id="contact-status" class="notice" role="status" aria-live="polite">
+          Checking contact availability…
+        </p>
+        <form id="contact-form" class="stack">
+          <div>
+            <label for="contact-name">Full name</label
+            ><input
+              id="contact-name"
+              name="name"
+              maxlength="200"
+              autocomplete="name"
+              required
+              disabled
+            />
+          </div>
+          <div>
+            <label for="contact-email">Email address</label
+            ><input
+              id="contact-email"
+              name="email"
+              type="email"
+              maxlength="254"
+              autocomplete="email"
+              required
+              disabled
+            />
+          </div>
+          <div>
+            <label for="contact-message">How can we help?</label
+            ><textarea
+              id="contact-message"
+              name="message"
+              maxlength="4000"
+              minlength="10"
+              rows="5"
+              required
+              disabled
+            ></textarea>
+          </div>
+          <button id="contact-submit" type="submit" disabled>
+            Send request
+          </button>
+        </form>
+        <a class="button" href="/login">Sign in to your workspace</a>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <a class="wordmark" href="/">vasa.</a>
+      <p class="small muted">Your business. Always available.</p>
+      <a href="/login">Your workspace</a>
+    </footer>
+  </body>
+</html>

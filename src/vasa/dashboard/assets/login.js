@@ -26,7 +26,11 @@ form.addEventListener("submit", async (event) => {
         ? "Too many sign-in attempts. Wait a few minutes and try again."
         : response.status === 401
           ? "The email or password is incorrect. Please try again."
-          : "Sign-in is unavailable. Please try again or contact your administrator.";
+          : response.status === 403
+            ? "Sign-in was not permitted. Check your account status or contact your administrator."
+            : response.status === 503
+              ? "Sign-in service is temporarily unavailable. Please try again shortly."
+              : "Sign-in is unavailable. Please try again or contact your administrator.";
       error.hidden = false;
       error.focus();
       return;

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Your account · VASA</title>
+    <link rel="stylesheet" href="/dashboard/assets/styles.css" />
+    <script src="/dashboard/assets/identity.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="topbar">
+      <a class="wordmark" href="/">vasa.</a>
+      <nav class="public-nav" aria-label="Main navigation">
+        <a href="/features">Features</a><a href="/how-it-works">How it works</a
+        ><a href="/pricing">Pricing</a><a href="/contact">Contact</a
+        ><a href="/login">Sign in</a
+        ><a class="button" href="/signup">Get started</a>
+      </nav>
+    </header>
+    <main id="main" class="auth-shell">
+      <section class="login-card">
+        <p class="eyebrow">Your VASA account</p>
+        <h1 id="identity-title">Manage your account</h1>
+        <p id="identity-description" class="muted"></p>
+        <p
+          id="identity-message"
+          class="notice"
+          role="status"
+          aria-live="polite"
+        ></p>
+        <form id="identity-form" class="stack">
+          <div id="name-field" hidden>
+            <label for="name">Full name</label
+            ><input id="name" maxlength="200" autocomplete="name" />
+          </div>
+          <div id="business-field" hidden>
+            <label for="business">Business name</label
+            ><input id="business" maxlength="200" autocomplete="organization" />
+          </div>
+          <div id="email-field" hidden>
+            <label for="email">Work email</label
+            ><input
+              id="email"
+              type="email"
+              maxlength="254"
+              autocomplete="email"
+            />
+          </div>
+          <div id="password-field" hidden>
+            <label for="password">Password</label
+            ><input
+              id="password"
+              type="password"
+              minlength="12"
+              maxlength="256"
+              autocomplete="new-password"
+            />
+            <p class="small muted">Use at least 12 characters.</p>
+          </div>
+          <button id="identity-submit" type="submit" disabled>Continue</button>
+        </form>
+        <p class="help-text small">
+          <a href="/login">Sign in</a> · <a href="/signup">Create account</a>
+        </p>
+        <noscript
+          ><p class="notice">
+            Enable JavaScript to manage your account.
+          </p></noscript
+        >
+      </section>
+    </main>
+    <footer class="site-footer">
+      <a class="wordmark" href="/">vasa.</a>
+      <p class="small muted">Your business. Always available.</p>
+      <a href="/login">Your workspace</a>
+    </footer>
+  </body>
+</html>

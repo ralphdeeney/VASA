@@ -1,5 +1,22 @@
 # Test results
 
+2026-10-16 SaaS website/auth/admin: **1,041 passed** in 84.93s, zero failures,
+errors or skips; one existing Starlette deprecation warning. Full unit/component/
+integration/native/eval suite; Ruff, formatting (242 Python files), strict mypy
+(69 sources), Actionlint, shell and all JavaScript syntax checks pass. JUnit:
+reports/saas-site-final.xml. New coverage includes additive legacy migration/backfill,
+password preservation, no platform-role auto-grants, token expiry/purpose/replay,
+approval in both orders, legacy verification, reset/session revocation, feature-off
+rollback restrictions, CSRF/origin/tenant/role isolation, last-role safeguards,
+confirmed admin mutations, scoped connection audits, secret-safe failures and UI
+contracts. Chromium checked 20 public/auth page layouts at mobile/desktop widths
+without overflow or script errors. Authenticated real-HTTP login, profile edits,
+team loading and dashboard/admin layouts pass at both widths. Contact delivery
+tests use a fake mailbox; integration metadata tests prove scope and secret
+exclusion with the existing strict private loader. These checks do not prove live SMTP, real-user
+login or human voice reliability. Staging migrations remain explicitly forbidden
+from the automatic deployment path.
+
 2026-10-15 private bridge web publication: **925 passed** in 66.40s; zero
 failures/errors/skips and one existing Starlette warning. Full checks include
 Ruff/format (221 files), strict mypy (60 sources), Actionlint and shell syntax.

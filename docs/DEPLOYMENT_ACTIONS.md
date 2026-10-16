@@ -382,3 +382,19 @@ Secret-safe stage markers precede important operations, for example
 `BOOTSTRAP_STAGE=health`. Deploy uses `DEPLOY_STAGE=...`; recovery uses
 `rollback`/`rollback_health`. Command failures identify the active stage while
 withholding raw commands, build logs, credentials and environment values.
+
+## SaaS rollout gate (2026-10-16)
+
+Normal code-only updates remain `mode=deploy`, never bootstrap. The additive SaaS
+change introduces migration 0007, so the unchanged controller must refuse that push
+before modifying staging checkout/services. Do not disable this refusal or execute
+an automatic migration. Review `docs/DB_MIGRATION_PLAN.md` and the committed exact
+SQL first; the operator backup/migration/enablement process is a separate gate.
+A failed staging run with the explicit schema-change refusal is expected and does
+not authorize changing private environment files or infrastructure. After that
+approved rollout, standard Actions deploy/health checks continue unchanged.
+
+Optional operator-only auth diagnosis in the approved image:
+`python -m vasa.control.diagnostics --origin https://vasa.litatech.xyz`.
+It emits fixed sanitized status/category markers only; it does not take credentials
+or reset/create users. Keep public proxy/tunnel policies separate from app auth.

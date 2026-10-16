@@ -19,9 +19,11 @@ from vasa.control.auth import (
     authenticate_password,
     check_login_limit,
     check_origin,
+    identity_schema_present,
     require_context,
     require_csrf,
     session_key,
+    validate_saas_identity,
 )
 from vasa.control.models import User, WhatsAppInstance
 from vasa.evolution.client import EvolutionCalls
@@ -85,18 +87,68 @@ async def login(payload: LoginInput, request: Request, response: Response) -> di
         async with database.session() as session:
             result = await session.execute(select(User).where(User.email == payload.email))
             user = result.scalar_one_or_none()
-        if not await authenticate_password(payload.password, user.password_hash if user else None):
-            raise HTTPException(401, "invalid_credentials")
-        assert user is not None
+            if not await authenticate_password(
+                payload.password, user.password_hash if user else None
+            ):
+                raise HTTPException(401, "invalid_credentials")
+            assert user is not None
+            state: dict[str, str | int] = {
+                "user_id": str(user.id),
+                "tenant_id": str(user.tenant_id),
+            }
+            saas = getattr(request.app.state.settings, "saas_enabled", False)
+            if await identity_schema_present(session, saas):
+                version = await validate_saas_identity(session, user.id, enabled=saas)
+                if saas or version:
+                    state["auth_version"] = version
+            if saas:
+                from vasa.saas.models import AuditEvent, Membership, OrganizationProfile
+
+                membership = await session.get(Membership, (user.id, user.tenant_id))
+                organization = await session.get(OrganizationProfile, user.tenant_id)
+                selected_tenant = user.tenant_id
+                if (
+                    membership is None
+                    or membership.status != "active"
+                    or organization is None
+                    or organization.status != "active"
+                ):
+                    selected = await session.scalar(
+                        select(Membership.tenant_id)
+                        .join(
+                            OrganizationProfile,
+                            OrganizationProfile.tenant_id == Membership.tenant_id,
+                        )
+                        .where(
+                            Membership.user_id == user.id,
+                            Membership.status == "active",
+                            OrganizationProfile.status == "active",
+                        )
+                        .order_by(Membership.tenant_id)
+                        .limit(1)
+                    )
+                    if selected is None:
+                        raise HTTPException(403, "workspace_inactive")
+                    selected_tenant = selected
+                state["tenant_id"] = str(selected_tenant)
+                session.add(
+                    AuditEvent(
+                        actor_id=user.id,
+                        tenant_id=selected_tenant,
+                        action="auth.login",
+                        target=str(user.id),
+                        safe_metadata={},
+                    )
+                )
+                await session.commit()
         token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
+        state["csrf_token"] = csrf
         old_token = request.cookies.get(SESSION_COOKIE)
         if old_token and len(old_token) == 43:
             await cache.delete(session_key(old_token))
         await cache.set(
             session_key(token),
-            json.dumps(
-                {"user_id": str(user.id), "tenant_id": str(user.tenant_id), "csrf_token": csrf}
-            ),
+            json.dumps(state),
             ex=SESSION_TTL_SECONDS,
         )
     except (RedisError, SQLAlchemyError):
@@ -127,7 +179,21 @@ async def logout(request: Request, response: Response, context: Mutation) -> dic
     cache: Redis = request.app.state.redis
     try:
         await cache.delete(session.key)
-    except RedisError:
+        if getattr(request.app.state.settings, "saas_enabled", False):
+            from vasa.saas.models import AuditEvent
+
+            async with request.app.state.database.session() as database:
+                database.add(
+                    AuditEvent(
+                        actor_id=context.user_id,
+                        tenant_id=context.tenant_id,
+                        action="auth.logout",
+                        target=str(context.user_id),
+                        safe_metadata={},
+                    )
+                )
+                await database.commit()
+    except (RedisError, SQLAlchemyError):
         raise HTTPException(503, "unavailable") from None
     response.delete_cookie(SESSION_COOKIE, path="/", httponly=True, samesite="strict")
     response.headers["Cache-Control"] = "no-store"

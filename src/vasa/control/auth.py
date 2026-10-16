@@ -13,8 +13,9 @@ from uuid import UUID
 from fastapi import HTTPException, Request
 from redis.asyncio import Redis
 from redis.exceptions import RedisError
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from vasa.contracts.models import TenantContext
 from vasa.control.models import User
@@ -81,6 +82,13 @@ def check_origin(request: Request) -> None:
     try:
         supplied = urlsplit(origin)
         expected = urlsplit(str(request.base_url))
+        canonical = getattr(request.app.state.settings, "public_origin", "")
+        if canonical:
+            public = urlsplit(canonical)
+            # A trusted configured origin repairs TLS termination without trusting
+            # client-controlled forwarding headers or accepting another Host.
+            if request.headers.get("host") == public.netloc:
+                expected = public
     except ValueError:
         raise HTTPException(403, "invalid_origin") from None
     if (
@@ -115,6 +123,32 @@ class AuthSession:
     email: str
     csrf_token: str
     key: str
+    auth_version: int = 0
+
+
+async def identity_schema_present(database: AsyncSession, enabled: bool) -> bool:
+    if enabled:
+        return True
+    # A feature rollback must not revive suspended/revoked migrated identities.
+    # This catalog probe works on revision 0006 without querying absent tables.
+    return await database.scalar(text("SELECT to_regclass('public.user_profiles')")) is not None
+
+
+async def validate_saas_identity(
+    database: AsyncSession, user_id: UUID, *, enabled: bool = True
+) -> int:
+    from vasa.saas.models import UserProfile
+
+    profile = await database.get(UserProfile, user_id)
+    if profile is None and not enabled:
+        return 0  # Existing operator-created legacy users need no SaaS profile.
+    if profile is None or profile.status != "active":
+        raise HTTPException(403, "account_inactive")
+    if profile.email_verified_at is None and not profile.legacy_access:
+        raise HTTPException(403, "email_verification_required")
+    if not enabled and not profile.legacy_access:
+        raise HTTPException(403, "account_inactive")
+    return profile.auth_version
 
 
 async def require_context(request: Request) -> TenantContext:
@@ -130,7 +164,13 @@ async def require_context(request: Request) -> TenantContext:
         if len(payload) > 4096:
             raise ValueError("invalid session")
         data = json.loads(payload)
-        if not isinstance(data, dict) or set(data) != {"user_id", "tenant_id", "csrf_token"}:
+        if not isinstance(data, dict) or set(data) not in (
+            {"user_id", "tenant_id", "csrf_token"},
+            {"user_id", "tenant_id", "csrf_token", "auth_version"},
+        ):
+            raise ValueError("invalid session")
+        auth_version = data.get("auth_version", 0)
+        if type(auth_version) is not int or auth_version < 0:
             raise ValueError("invalid session")
         if not isinstance(data["user_id"], str) or not isinstance(data["tenant_id"], str):
             raise ValueError("invalid session")
@@ -139,13 +179,33 @@ async def require_context(request: Request) -> TenantContext:
         if not isinstance(csrf_token, str) or len(csrf_token) != 43:
             raise ValueError("invalid session")
         async with request.app.state.database.session() as database:
-            result = await database.execute(
-                select(User).where(User.id == user_id, User.tenant_id == tenant_id)
-            )
+            saas = getattr(request.app.state.settings, "saas_enabled", False)
+            query = select(User).where(User.id == user_id)
+            if not saas:
+                query = query.where(User.tenant_id == tenant_id)
+            result = await database.execute(query)
             user = result.scalar_one_or_none()
+            if user is not None and await identity_schema_present(database, saas):
+                if await validate_saas_identity(database, user_id, enabled=saas) != auth_version:
+                    raise HTTPException(401, "authentication_required")
+            if user is not None and saas:
+                from vasa.saas.models import Membership, OrganizationProfile
+
+                membership = await database.get(Membership, (user_id, tenant_id))
+                organization = await database.get(OrganizationProfile, tenant_id)
+                if (
+                    membership is None
+                    or membership.status != "active"
+                    or organization is None
+                    or organization.status != "active"
+                ):
+                    raise HTTPException(403, "workspace_inactive")
+                request.state.membership_role = membership.role
         if user is None:
             raise HTTPException(401, "authentication_required")
-        request.state.auth_session = AuthSession(user_id, tenant_id, user.email, csrf_token, key)
+        request.state.auth_session = AuthSession(
+            user_id, tenant_id, user.email, csrf_token, key, auth_version
+        )
     except (ValueError, TypeError, KeyError):
         raise HTTPException(401, "authentication_required") from None
     except (RedisError, SQLAlchemyError):
@@ -159,6 +219,21 @@ async def require_csrf(request: Request) -> TenantContext:
     supplied = request.headers.get("x-csrf-token", "")
     if not hmac.compare_digest(supplied.encode(), request.state.auth_session.csrf_token.encode()):
         raise HTTPException(403, "invalid_csrf")
+    personal = {
+        "/api/auth/logout",
+        "/api/saas/workspace",
+        "/api/saas/profile",
+        "/api/saas/accept-invitation",
+    }
+    if (
+        getattr(request.app.state.settings, "saas_enabled", False)
+        and request.url.path not in personal
+        # Every platform endpoint independently requires a platform role; an
+        # organization role must neither grant nor obstruct that authority.
+        and not request.url.path.startswith("/api/saas/admin/")
+        and request.state.membership_role not in {"owner", "admin"}
+    ):
+        raise HTTPException(403, "permission_denied")
     return context
 
 

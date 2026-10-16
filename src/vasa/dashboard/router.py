@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse
 
 from vasa.contracts.models import TenantContext
@@ -51,3 +51,50 @@ async def dashboard_script() -> FileResponse:
     return FileResponse(
         _ROOT / "assets" / "dashboard.js", media_type="text/javascript", headers=_HEADERS
     )
+
+
+@router.get("/")
+@router.get("/features")
+@router.get("/how-it-works")
+@router.get("/pricing")
+@router.get("/contact")
+async def public_page() -> FileResponse:
+    return FileResponse(_ROOT / "templates" / "site.html", headers=_HEADERS)
+
+
+@router.get("/signup")
+@router.get("/verify-email")
+@router.get("/resend-verification")
+@router.get("/forgot-password")
+@router.get("/reset-password")
+@router.get("/accept-invitation")
+@router.get("/logout")
+async def identity_page() -> FileResponse:
+    return FileResponse(_ROOT / "templates" / "identity.html", headers=_HEADERS)
+
+
+@router.get("/403", status_code=403)
+@router.get("/404", status_code=404)
+async def error_page(request: Request) -> FileResponse:
+    code = 403 if request.url.path == "/403" else 404
+    return FileResponse(_ROOT / "templates" / "error.html", status_code=code, headers=_HEADERS)
+
+
+@router.get("/admin")
+async def admin_page(request: Request) -> FileResponse:
+    if not request.app.state.settings.saas_enabled:
+        raise HTTPException(status_code=404, detail="not_found")
+    from vasa.saas.permissions import require_platform_admin
+
+    await require_platform_admin(request)
+    return FileResponse(_ROOT / "templates" / "admin.html", headers=_HEADERS)
+
+
+@router.get("/dashboard/assets/site.js")
+@router.get("/dashboard/assets/identity.js")
+@router.get("/dashboard/assets/workspace.js")
+@router.get("/dashboard/assets/admin.js")
+async def site_script(request: Request) -> FileResponse:
+    # The route set is explicit; this cannot select arbitrary filesystem paths.
+    filename = request.url.path.rsplit("/", 1)[-1]
+    return FileResponse(_ROOT / "assets" / filename, media_type="text/javascript", headers=_HEADERS)

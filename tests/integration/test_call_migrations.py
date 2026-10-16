@@ -64,7 +64,7 @@ async def test_fresh_migrations_upgrade_downgrade_and_schema_agreement(
         isolated = await asyncpg.connect(
             isolated_url.render_as_string(hide_password=False), timeout=3
         )
-        tenant, legacy, custom = uuid4(), uuid4(), uuid4()
+        tenant, legacy, custom, user_id = uuid4(), uuid4(), uuid4(), uuid4()
         try:
             await isolated.execute("INSERT INTO tenants(id, name) VALUES($1, 'Fixture')", tenant)
             await isolated.execute(
@@ -74,7 +74,29 @@ async def test_fresh_migrations_upgrade_downgrade_and_schema_agreement(
                 custom,
                 tenant,
             )
+            await isolated.execute(
+                "INSERT INTO users(id,tenant_id,email,password_hash) "
+                "VALUES($1,$2,'legacy@example.invalid','unchanged-legacy-hash')",
+                user_id,
+                tenant,
+            )
             await migrate("upgrade", "head")
+            profile = await isolated.fetchrow(
+                "SELECT * FROM user_profiles WHERE user_id=$1", user_id
+            )
+            assert profile["status"] == "active" and profile["legacy_access"] is True
+            assert profile["email_verified_at"] is None and profile["auth_version"] == 0
+            member = await isolated.fetchrow(
+                "SELECT * FROM organization_memberships WHERE user_id=$1", user_id
+            )
+            assert member["tenant_id"] == tenant and member["role"] == "owner"
+            assert member["status"] == "active"
+            assert await isolated.fetchval("SELECT count(*) FROM platform_role_assignments") == 0
+            assert await isolated.fetchval("SELECT count(*) FROM identity_tokens") == 0
+            assert (
+                await isolated.fetchval("SELECT password_hash FROM users WHERE id=$1", user_id)
+                == "unchanged-legacy-hash"
+            )
             rows = await isolated.fetch("SELECT id, tenant_id, voice FROM agents ORDER BY name")
             assert {(row["id"], row["tenant_id"], row["voice"]) for row in rows} == {
                 (legacy, tenant, "kokoro_af_maple"),

@@ -280,3 +280,46 @@ as live acceptance. Parallel ownership follows the harness.
   creates/finalizes durable calls and tool audit IDs, supplies KnowledgeService and
   per-call EndCall. Existing answer/media transport remains unchanged. Summary
   processing is bounded and separate from live audio; failure cannot strand calls.
+# SaaS wave contract (2026-10-16)
+
+Existing tenant/user/session/product endpoints remain compatible. New APIs live at
+/api/saas, gated by Settings.saas_enabled=false by default. Public capability
+GET /api/site/capabilities reports signup/email availability without secrets.
+Root owns config.py, app.py, saas/models.py, migrations, shared fixtures and docs.
+
+Models (UUID IDs unless composite PK): UserProfile(user_id PK,name,status,
+email_verified_at nullable,legacy_access bool,auth_version int,created_at);
+OrganizationProfile(tenant_id PK,slug unique,status,created_at);
+Membership(user_id+tenant_id PK,role owner/admin/member,status,created_at);
+PlatformRole(user_id PK,role super_admin,granted_by nullable,granted_at);
+AuthToken(id,user_id,purpose verify_email/password_reset,token_hash unique,
+expires_at,consumed_at nullable);
+Invitation(id,tenant_id,email,role,token_hash unique,expires_at,accepted_at nullable);
+AuditEvent(id,actor_id nullable,tenant_id nullable,action,target,safe_metadata JSON,created_at);
+RegistrationRequest(id,user_id,tenant_id,status,reviewed_by nullable,reviewed_at nullable,created_at).
+Status: profiles/orgs active/pending/suspended; membership active/pending/revoked;
+registration pending/approved/rejected. String columns with server checks.
+
+Identity API POST /api/saas/signup {name,business_name,email,password}; POST
+/verify-email {token}; POST /forgot-password {email}; POST /reset-password
+{token,password}; POST /resend-verification {email}; tokens never returned publicly.
+Mailer: app.state.mailer, async send(recipient,subject,body)->None; trusted SMTP
+implementation from Settings; enabled property bool. Test fake only captures mail.
+
+Permissions module require_enabled(request), require_member(request,context,
+roles: set[str]|None=None)->Membership; async require_platform_admin(request)->User.
+Reuse require_context/require_csrf; queries must use trusted context.
+Team API GET /api/saas/workspaces, POST /workspace {tenant_id}, GET /team,
+POST /invitations {email,role}, POST /accept-invitation {token}, PATCH
+/team/{user_id} {role,status,confirm:true}; GET/PATCH /profile and /organization.
+Admin API /api/saas/admin/{overview,users,organizations,registrations,audit,connections,health};
+GET lists {items,total,page,page_size}, bounded page_size<=100, search/status/sort
+allowlists. POST /users/{id}/status and /organizations/{id}/status {status,confirm:true};
+POST /registrations/{id}/review {status,confirm:true}. Mutations require CSRF.
+Audit metadata never includes secrets/tokens/passwords/call payloads.
+
+SaaS completion additions: GET /api/saas/integrations returns manager-scoped
+{items:[{name,kind:"tool_gateway",status:"configured"}]} only; no schema/URL/token
+references. Public POST /api/site/contact {name,email,message} uses configured SMTP
+and trusted contact_recipient, with fixed errors, origin/rate limits, no DB record.
+Capabilities additionally report contact_available; empty recipient disables UI.

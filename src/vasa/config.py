@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import Literal
+from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -43,3 +44,48 @@ class Settings(BaseSettings):
     llm_primary: Literal["openai", "anthropic"] = "openai"
     webhook_config_path: Path | None = None
     max_active_calls: int = Field(default=2, ge=1, le=10)
+
+    # Additive SaaS features stay off until the separately reviewed migration is applied.
+    saas_enabled: bool = False
+    public_origin: str = ""
+    smtp_host: str = Field(default="", max_length=253)
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_username: str = Field(default="", max_length=254)
+    smtp_password: SecretStr = SecretStr("")
+    smtp_sender: str = Field(default="", max_length=254)
+    smtp_starttls: bool = True
+    contact_recipient: str = Field(default="", max_length=254)
+    registration_approval_required: bool = False
+
+    @field_validator("public_origin")
+    @classmethod
+    def canonical_origin(cls, value: str) -> str:
+        if not value:
+            return value
+        parsed = urlsplit(value)
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.hostname
+            or parsed.username is not None
+            or parsed.password is not None
+            or parsed.query
+            or parsed.fragment
+            or parsed.path not in {"", "/"}
+            or (
+                parsed.scheme == "http"
+                and parsed.hostname not in {"localhost", "127.0.0.1", "testserver"}
+            )
+        ):
+            raise ValueError("public_origin must be a canonical HTTPS origin")
+        return value.rstrip("/")
+
+    @field_validator("contact_recipient")
+    @classmethod
+    def contact_email(cls, value: str) -> str:
+        if value and (
+            value.count("@") != 1
+            or not all(value.split("@"))
+            or any(c.isspace() or ord(c) < 32 for c in value)
+        ):
+            raise ValueError("contact recipient must be an email address")
+        return value

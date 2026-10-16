@@ -1,5 +1,24 @@
 # Current state
 
+2026-10-16 SaaS implementation: existing FastAPI/template/static stack retained.
+Public marketing/auth pages, responsive workspace/team/settings, separate platform
+admin UI, signup/verification/recovery/invitations and audited server-only admin
+provisioning implemented. Additive migration 0007 reviewed as generated SQL in
+docs/migrations/0007_saas_identity.sql and exercised locally. Existing tenant/user
+IDs and hashes retained; no fake verification/platform grants or Evolution pairing.
+SaaS defaults OFF until separately approved migration and private SMTP setup.
+Schema-change deploy refusal remains intact: this push must NOT automatically
+migrate staging. See docs/DB_MIGRATION_PLAN.md for the concrete operator gate.
+Full local suite: 1,041 passed; strict mypy/Ruff/format/workflow/shell/JS checks pass.
+Twenty Chromium public/auth layouts checked at 390/1280px; authenticated real-HTTP login/profile/team and dashboard/admin layouts also pass
+at both widths with no overflow or script errors. Live signup/email/admin/human call review
+remain pending. Public cloud GET/login and synthetic POST returned 403; no claim
+that the real sign-in failure is proven or fixed. Trusted canonical-origin support
+and secret-safe operator diagnostics added without trusting forwarded headers.
+Voice/provider/topology/private ingress/Cloudflare/n8n/Evolution remain unchanged.
+GitHub Actions → VPS bridge and voice bootstrap: VERIFIED by prior operator run.
+New SaaS staging deployment and real human acceptance: pending migration gate.
+
 2026-10-15 private ingress: operator confirms public Caddy n8n-docker-caddy-1,
 network n8n-docker_default (172.16.2.0/24), gateway 172.16.2.1. VASA publication
 changes from loopback to exactly 172.16.2.1:18081; Evolution stays 127.0.0.1:18080.
