@@ -9,7 +9,15 @@ case "${VASA_DEPLOY_MODE:-}" in
 esac
 VASA_PROVIDER_SMOKE=${VASA_PROVIDER_SMOKE:-false}
 VASA_RECOVERY=${VASA_RECOVERY:-none}
-[[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate || "$VASA_RECOVERY" == prepare ]] || exit 1
+[[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate || "$VASA_RECOVERY" == prepare || "$VASA_RECOVERY" == activate ]] || exit 1
+VASA_RELEASE_SHA=${VASA_RELEASE_SHA:-}
+VASA_MIGRATION_SQL_SHA256=${VASA_MIGRATION_SQL_SHA256:-}
+if [[ "$VASA_RECOVERY" == activate ]]; then
+  [[ "$VASA_RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
+  [[ "$VASA_MIGRATION_SQL_SHA256" =~ ^[0-9a-f]{64}$ ]] || exit 1
+else
+  [[ -z "$VASA_RELEASE_SHA" && -z "$VASA_MIGRATION_SQL_SHA256" ]] || exit 1
+fi
 [[ "$VASA_RECOVERY" == none || ( "$VASA_DEPLOY_MODE" == check && "$VASA_PROVIDER_SMOKE" == false ) ]] || exit 1
 [[ "$VASA_PROVIDER_SMOKE" == false || "$VASA_PROVIDER_SMOKE" == true ]] || exit 1
 [[ "$VASA_PROVIDER_SMOKE" == false || "$VASA_DEPLOY_MODE" == deploy ]] || exit 1
@@ -56,4 +64,4 @@ ssh -F /dev/null -T -p 22 -i "$vasa_ssh_dir/key" \
   -o ConnectTimeout=15 -o ConnectionAttempts=1 -o LogLevel=ERROR \
   -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
   "$VASA_VPS_USER@$VASA_VPS_HOST" \
-  "python3 - '$VASA_DEPLOY_MODE' '$GITHUB_SHA' '$VASA_PROVIDER_SMOKE' '$VASA_RECOVERY'" < deploy/actions_vps.py
+  "python3 - '$VASA_DEPLOY_MODE' '$GITHUB_SHA' '$VASA_PROVIDER_SMOKE' '$VASA_RECOVERY' '$VASA_RELEASE_SHA' '$VASA_MIGRATION_SQL_SHA256'" < deploy/actions_vps.py

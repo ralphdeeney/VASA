@@ -411,3 +411,19 @@ private restore-tested backup, clone-only migration compatibility and separate
 candidate/rollback images. It preserves the dirty canonical checkout and all
 running services. It does not execute a live migration, enable SaaS, configure
 SMTP or activate an image. See `docs/SAAS_RECOVERY_STRATEGY.md` for the exact gate.
+
+## Explicit immutable recovery activation
+
+Normal pushes retain the clean-checkout and migration refusal gates. When operator
+files block that path, manual `mode=check,recovery=activate` requires an exact
+`release_sha` and reviewed `migration_sql_sha256`. This is a mutating, separately
+authorized recovery operation, despite its check-mode namespace. It first repeats
+the isolated backup/restore and cloned migration checks. Only the reviewed 0007
+SQL is applied; only VASA app/voice are recreated, using immutable release tags.
+Canonical checkout, operator files, private env hashes, postgres/redis/evolution
+configuration and container identities are preserved. A private release journal
+records the actual active source/image independently of the canonical checkout.
+
+Rollback restores verified previous app images; additive schema0007 remains,
+without destructive downgrade or restoring stale database data. SMTP absence does
+not block legacy login testing but keeps email-dependent flows unavailable.

@@ -7,10 +7,17 @@ SMTP/canonical-origin bindings absent in approved VPS files/runtime. Candidate
 Compose supplies trusted public HTTPS origin without weakening Origin checks.
 Recovery check/prepare Actions options preserve unknown work and normal deploy
 safety, isolate source/images, verify private backup restoration and migration0007
-only inside a disposable database. Actual preparation results remain pending.
+only inside a disposable database. Actual preparation run38915876226 passed: private PG backup restored; migration0007
+passed on a disposable clone; rollback/candidate images verified; canonical files,
+all five containers and runtime secrets unchanged.
 Local browser acceptance now covers six full workflow groups with real PG/Redis
 and a test mailbox; live email/staging acceptance is not claimed. See recovery and
-browser acceptance docs. No direct Codex SSH or live migration authorization.
+browser acceptance docs. No direct Codex SSH. Operator subsequently approved exact release858b5f8 and
+SQL SHA256 a6a226a785d60db0e00b46b301a46b2b033d198cde2b4db2a3736202cfda37c3.
+Manual immutable activation tooling now refreshes backup/restore checks, validates
+only approved config changes, applies reviewed additive SQL and updates only
+vasa/voice with app-only rollback. Live activation is not yet claimed. SMTP
+is absent from approved VPS/runtime/cloud/GitHub bindings; email acceptance remains blocked.
 
 2026-10-16 SaaS implementation: existing FastAPI/template/static stack retained.
 Public marketing/auth pages, responsive workspace/team/settings, separate platform

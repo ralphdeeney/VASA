@@ -465,7 +465,7 @@ asyncio.run(main())
     print("VASA_INVESTIGATION_OK", flush=True)
 
 
-def prepare_recovery(target):
+def prepare_recovery(target, *, exact_tip=True):
     """Prepare isolated source/images and a restore-tested backup; never activate."""
     import shutil
     import uuid
@@ -508,14 +508,25 @@ def prepare_recovery(target):
         require(
             len({topology[name]["image"] for name in SERVICES}) == 1, "App rollback images differ."
         )
-        previous = git("rev-parse", "HEAD")
+        canonical = git("rev-parse", "HEAD")
+        previous = canonical
+        release_journal = local / "actions-release.json"
+        if release_journal.exists():
+            require(not release_journal.is_symlink(), "Unsafe release journal.")
+            prior = json.loads(release_journal.read_text())
+            require(
+                re.fullmatch(r"[0-9a-f]{40}", prior.get("active_sha", "")) is not None
+                and prior.get("active_image") == topology["vasa"]["image"],
+                "Active release journal differs from running applications.",
+            )
+            previous = prior["active_sha"]
         require(re.fullmatch(r"[0-9a-f]{40}", previous) is not None, "Invalid previous revision.")
         require(
             shutil.disk_usage(ROOT).free >= 2 * 1024**3, "Preparation requires 2 GiB free disk."
         )
 
         def unchanged():
-            require(git("rev-parse", "HEAD") == previous, "Live checkout changed.")
+            require(git("rev-parse", "HEAD") == canonical, "Live checkout changed.")
             require(
                 git("status", "--porcelain=v1", "--untracked-files=all") == baseline,
                 "Live working tree changed.",
@@ -596,9 +607,13 @@ def prepare_recovery(target):
         try:
             recovery_stage("git_fetch")
             git("fetch", "origin", BRANCH)
-            require(
-                git("rev-parse", "origin/" + BRANCH) == target, "Target is not remote branch tip."
-            )
+            if exact_tip:
+                require(
+                    git("rev-parse", "origin/" + BRANCH) == target,
+                    "Target is not remote branch tip.",
+                )
+            else:
+                git("merge-base", "--is-ancestor", target, "origin/" + BRANCH)
             git("merge-base", "--is-ancestor", previous, target)
             target_source = source_tree(target)
             recovery_stage("backup")
@@ -783,6 +798,7 @@ def prepare_recovery(target):
         receipt_data = {
             "target_sha": target,
             "previous_sha": previous,
+            "canonical_sha": canonical,
             "backup": str(archive.relative_to(ROOT)),
             "backup_sha256": digest,
             "restore_verified": True,
@@ -798,6 +814,314 @@ def prepare_recovery(target):
             record.write(json.dumps(receipt_data, sort_keys=True) + "\n")
         print("RECOVERY_RECEIPT=prepared", flush=True)
         print("VASA_RECOVERY_PREPARE_OK", flush=True)
+
+
+def release_compose(source, image, saas, *args, unchecked=False):
+    """Use canonical project paths with verified immutable release configuration."""
+    require(
+        re.fullmatch(r"vasa-app:(?:release|rollback)-[0-9a-f]{40}", image) is not None,
+        "Invalid release image reference.",
+    )
+    require(source == ROOT or source.parent == ROOT / ".local/releases", "Unsafe release source.")
+    require(not source.is_symlink() and source.is_dir(), "Release source unavailable.")
+    patch = {"services": {name: {"image": image} for name in SERVICES}}
+    if saas is not None:
+        for name in SERVICES:
+            patch["services"][name]["environment"] = {
+                "VASA_SAAS_ENABLED": "true" if saas else "false"
+            }
+    command = (
+        "docker",
+        "compose",
+        "--project-name",
+        PROJECT,
+        "--project-directory",
+        str(ROOT / "deploy"),
+        "--env-file",
+        str(ROOT / ".local/vps.env"),
+        "-f",
+        str(source / "deploy/compose.yaml"),
+        "-f",
+        "-",
+        "--profile",
+        "voice",
+        *args,
+    )
+    result = capture(*command, input_text=json.dumps(patch), timeout=240)
+    if unchecked:
+        return result
+    require(result.returncode == 0, ACTIVE_STAGE + " failed; raw output withheld.")
+    return result.stdout.strip()
+
+
+def activate_recovery(target, sql_hash):
+    """Explicitly approved additive migration and targeted immutable-image rollout."""
+    require(re.fullmatch(r"[0-9a-f]{40}", target) is not None, "Invalid activation target.")
+    require(re.fullmatch(r"[0-9a-f]{64}", sql_hash) is not None, "Invalid approved SQL hash.")
+    source = ROOT / ".local/releases" / target
+    require(source.is_dir() and not source.is_symlink(), "Prepared release is unavailable.")
+    require(git("-C", str(source), "rev-parse", "HEAD") == target, "Prepared source differs.")
+    require(not git("-C", str(source), "status", "--porcelain"), "Prepared release is dirty.")
+    sql_path = source / "docs/migrations/0007_saas_identity.sql"
+    require(sql_path.is_file() and not sql_path.is_symlink(), "Approved SQL artifact missing.")
+    sql = sql_path.read_text()
+    require(
+        hashlib.sha256(sql.encode()).hexdigest() == sql_hash, "Approved migration hash differs."
+    )
+    local = ROOT / ".local"
+    lock_fd = os.open(local / "actions-deploy.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(lock_fd, "a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        canonical = git("rev-parse", "HEAD")
+        require(not git("diff", "--name-only", "HEAD"), "Tracked canonical changes require review.")
+        baseline = git("status", "--porcelain=v1", "--untracked-files=all")
+        # Preserve operator infrastructure files, including their exact contents.
+        names = git("ls-files", "--others", "--exclude-standard", "-z").split("\0")
+
+        def local_fingerprints():
+            output = {}
+            for name in set(names) - {""}:
+                require(
+                    not Path(name).is_absolute() and ".." not in Path(name).parts,
+                    "Unsafe local path.",
+                )
+                path = ROOT / name
+                if path.is_symlink():
+                    output[name] = ("link", os.readlink(path))
+                elif path.is_file() and path.resolve().is_relative_to(ROOT):
+                    with path.open("rb") as stream:
+                        output[name] = ("file", hashlib.file_digest(stream, "sha256").hexdigest())
+                else:
+                    output[name] = ("missing", None)
+            return output
+
+        fingerprints = local_fingerprints()
+        hashes = private_hashes()
+        before = snapshot_services(DEPENDENCIES + SERVICES)
+        require(len({before[s]["image"] for s in SERVICES}) == 1, "Running app images differ.")
+        receipts = local / "recovery-preparations"
+        require(
+            receipts.is_dir() and not receipts.is_symlink(), "Preparation receipts unavailable."
+        )
+        candidates = [p for p in receipts.glob(target + "-*.json") if not p.is_symlink()]
+        require(bool(candidates), "Verified preparation receipt required.")
+        record_path = max(candidates, key=lambda p: p.stat().st_mtime_ns)
+        require(
+            record_path.stat().st_uid == os.getuid() and record_path.stat().st_mode & 0o077 == 0,
+            "Preparation receipt is not private and owned.",
+        )
+        prepared = json.loads(record_path.read_text())
+        previous = prepared.get("previous_sha", "")
+        require(
+            re.fullmatch(r"[0-9a-f]{40}", previous) is not None
+            and prepared.get("target_sha") == target
+            and prepared.get("restore_verified") is True
+            and prepared.get("migration_clone_verified") is True,
+            "Verified preparation does not match activation.",
+        )
+        backup = ROOT / prepared.get("backup", "")
+        require(
+            backup.parent == local / "backups" and backup.is_file() and not backup.is_symlink(),
+            "Verified backup is unavailable.",
+        )
+        with backup.open("rb") as stream:
+            require(
+                hashlib.file_digest(stream, "sha256").hexdigest() == prepared.get("backup_sha256"),
+                "Verified backup changed.",
+            )
+        candidate = "vasa-app:release-" + target
+        rollback = "vasa-app:rollback-" + previous
+        previous_source = ROOT if previous == canonical else ROOT / ".local/releases" / previous
+        require(
+            git("-C", str(previous_source), "rev-parse", "HEAD") == previous,
+            "Previous release source is unavailable.",
+        )
+        candidate_id = run("docker", "image", "inspect", "--format", "{{.Id}}", candidate)
+        require(
+            re.fullmatch(r"sha256:[0-9a-f]{64}", candidate_id) is not None,
+            "Candidate image unavailable.",
+        )
+        require(
+            run("docker", "image", "inspect", "--format", "{{.Id}}", rollback)
+            == before["vasa"]["image"],
+            "Verified rollback differs from running application.",
+        )
+        prior_saas = True if previous != canonical else None
+        old_config = json.loads(
+            release_compose(previous_source, rollback, prior_saas, "config", "--format", "json")
+        )
+        new_config = json.loads(
+            release_compose(source, candidate, True, "config", "--format", "json")
+        )
+        validate_web_bind(new_config)
+        require(
+            {k: v for k, v in old_config.items() if k != "services"}
+            == {k: v for k, v in new_config.items() if k != "services"},
+            "Release project topology differs.",
+        )
+        require(
+            set(new_config["services"]) == set(DEPENDENCIES + SERVICES), "Release services differ."
+        )
+        for service in DEPENDENCIES:
+            require(
+                old_config["services"][service] == new_config["services"][service],
+                "Dependency configuration differs.",
+            )
+        for service in SERVICES:
+            old, new = old_config["services"][service], new_config["services"][service]
+            require(
+                {k: v for k, v in old.items() if k not in {"image", "environment"}}
+                == {k: v for k, v in new.items() if k not in {"image", "environment"}},
+                "App topology or command differs.",
+            )
+            excluded = {"VASA_PUBLIC_ORIGIN", "VASA_SAAS_ENABLED"}
+            require(
+                {k: v for k, v in old.get("environment", {}).items() if k not in excluded}
+                == {k: v for k, v in new.get("environment", {}).items() if k not in excluded},
+                "Provider or private configuration differs.",
+            )
+            require(
+                new["environment"].get("VASA_PUBLIC_ORIGIN") == "https://vasa.litatech.xyz"
+                and new["environment"].get("VASA_SAAS_ENABLED") == "true",
+                "Trusted public origin or SaaS setting differs.",
+            )
+
+        def preserved():
+            require(
+                git("rev-parse", "HEAD") == canonical
+                and git("status", "--porcelain=v1", "--untracked-files=all") == baseline
+                and local_fingerprints() == fingerprints,
+                "Canonical operator work changed.",
+            )
+            require(private_hashes() == hashes, "Private runtime configuration changed.")
+            assert_unchanged({name: before[name] for name in DEPENDENCIES})
+
+        def release_stage(name):
+            global ACTIVE_STAGE
+            ACTIVE_STAGE = "RELEASE_STAGE=" + name
+            print("RELEASE_STAGE=" + name, flush=True)
+
+        postgres, _ = container("postgres")
+
+        def live_query(query):
+            return run(
+                "docker",
+                "exec",
+                postgres,
+                "sh",
+                "-ec",
+                'exec psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "$1"',
+                "sh",
+                query,
+            )
+
+        journal = local / "actions-release.json"
+        require(not journal.is_symlink(), "Unsafe release journal.")
+
+        def receipt(status, active_sha, active_image):
+            value = {
+                "status": status,
+                "target_sha": target,
+                "previous_sha": previous,
+                "canonical_sha": canonical,
+                "active_sha": active_sha,
+                "active_image": active_image,
+                "migration_sql_sha256": sql_hash,
+                "backup_receipt": str(record_path.relative_to(ROOT)),
+                "database_revision": live_query("SELECT version_num FROM alembic_version"),
+            }
+            fd = os.open(journal, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+            with os.fdopen(fd, "w") as output:
+                output.write(json.dumps(value, sort_keys=True) + "\n")
+
+        attempted = False
+        for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
+            signal.signal(sig, signal_failure)
+        try:
+            release_stage("migration")
+            revision = live_query("SELECT version_num FROM alembic_version")
+            require(revision in {"0006", "0007"}, "Live schema revision requires separate review.")
+            invariant = (
+                "SELECT md5(COALESCE(string_agg(id::text || ':' || tenant_id::text "
+                "|| ':' || password_hash, ',' ORDER BY id), '')) FROM users"
+            )
+            old_identity = live_query(invariant)
+            if revision == "0006":
+                run(
+                    "docker",
+                    "exec",
+                    "-i",
+                    postgres,
+                    "sh",
+                    "-ec",
+                    'exec psql -X -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"',
+                    input_text=sql,
+                    timeout=120,
+                )
+            require(
+                live_query("SELECT version_num FROM alembic_version") == "0007"
+                and live_query(invariant) == old_identity,
+                "Migration identity/schema invariant failed.",
+            )
+            print("VASA_MIGRATION_0007_OK", flush=True)
+            preserved()
+            release_stage("app_update")
+            attempted = True
+            release_compose(
+                source,
+                candidate,
+                True,
+                "up",
+                "-d",
+                "--no-deps",
+                "--no-build",
+                "--wait",
+                "--wait-timeout",
+                "150",
+                *SERVICES,
+            )
+            release_stage("health")
+            health()
+            require(
+                all(container(s)[1]["image"] == candidate_id for s in SERVICES),
+                "Running release image differs.",
+            )
+            post_validation(target, source=source)
+            preserved()
+            receipt("active", target, candidate_id)
+        except BaseException:
+            for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
+                signal.signal(sig, signal.SIG_IGN)
+            diagnostics()
+            release_stage("rollback")
+            try:
+                if attempted:
+                    release_compose(
+                        previous_source,
+                        rollback,
+                        prior_saas,
+                        "up",
+                        "-d",
+                        "--no-deps",
+                        "--no-build",
+                        "--wait",
+                        "--wait-timeout",
+                        "150",
+                        *SERVICES,
+                    )
+                health()
+                preserved()
+                require(
+                    all(container(s)[1]["image"] == before[s]["image"] for s in SERVICES),
+                    "Rollback image restoration failed.",
+                )
+                receipt("rolled_back", previous, before["vasa"]["image"])
+                print("VASA_RELEASE_ROLLBACK_OK", flush=True)
+            except BaseException:
+                print("VASA_RELEASE_ROLLBACK_FAILED", flush=True)
+            raise Refusal("Approved release failed; only sanitized diagnostics reported.") from None
+        print("VASA_RELEASE_ACTIVATION_OK", flush=True)
+        print("VASA_DEPLOYMENT_OK", flush=True)
 
 
 def config():
@@ -1341,10 +1665,14 @@ def host_web_checks():
     print("STAGING_HOST_BINDINGS_OK", flush=True)
 
 
-def post_validation(target):
-    require(git("rev-parse", "HEAD") == target, "Post-deploy checkout SHA mismatch.")
+def post_validation(target, *, source=None):
+    release = ROOT if source is None else source
+    require(
+        git("-C", str(release), "rev-parse", "HEAD") == target,
+        "Post-deploy checkout SHA mismatch.",
+    )
     verify_running_web_bind()
-    sanitizer = ROOT / "scripts/sanitize_call_diagnostics.py"
+    sanitizer = release / "scripts/sanitize_call_diagnostics.py"
     require(sanitizer.is_file() and not sanitizer.is_symlink(), "Call sanitizer is missing.")
     output = run(
         "python3", str(sanitizer), input_text="private-fixture\nCALL_MEDIA=receive_recovered\n"
@@ -1605,18 +1933,32 @@ def deploy(target, branch, previous, *, smoke=False):
 def main():
     try:
         require(
-            len(sys.argv) in (3, 4, 5) and sys.argv[1] in ("check", "bootstrap", "deploy"),
+            len(sys.argv) in (3, 4, 5, 7) and sys.argv[1] in ("check", "bootstrap", "deploy"),
             "Invalid invocation.",
         )
         smoke = sys.argv[3] if len(sys.argv) >= 4 else "false"
-        recovery = sys.argv[4] if len(sys.argv) == 5 else "none"
-        require(recovery in ("none", "investigate", "prepare"), "Invalid recovery option.")
+        recovery = sys.argv[4] if len(sys.argv) >= 5 else "none"
+        release = sys.argv[5] if len(sys.argv) == 7 else ""
+        approved_sql = sys.argv[6] if len(sys.argv) == 7 else ""
+        require(
+            recovery in ("none", "investigate", "prepare", "activate"), "Invalid recovery option."
+        )
         require(
             recovery == "none" or (sys.argv[1] == "check" and smoke == "false"),
             "Recovery inspection requires check mode.",
         )
         require(smoke in ("true", "false"), "Invalid provider smoke option.")
         require(smoke == "false" or sys.argv[1] == "deploy", "Smoke requires deploy mode.")
+        if recovery == "activate":
+            require(
+                re.fullmatch(r"[0-9a-f]{40}", release) is not None
+                and re.fullmatch(r"[0-9a-f]{64}", approved_sql) is not None,
+                "Explicit release SHA and approved migration SQL hash are required.",
+            )
+        else:
+            require(
+                not release and not approved_sql, "Release approval applies only to activation."
+            )
         branch, previous = preflight()
         if sys.argv[1] == "check":
             if recovery == "investigate":
@@ -1624,6 +1966,9 @@ def main():
             elif recovery == "prepare":
                 investigate()
                 prepare_recovery(sys.argv[2])
+            elif recovery == "activate":
+                prepare_recovery(release, exact_tip=False)
+                activate_recovery(release, approved_sql)
             if recovery == "none":
                 print(
                     "Read-only check: no fetch, checkout, writes, builds or restarts.", flush=True
@@ -1633,8 +1978,10 @@ def main():
                     "Investigation preserves files/services; one bounded auth rate-limit probe.",
                     flush=True,
                 )
-            else:
+            elif recovery == "prepare":
                 print("Preparation only: no live migration or application activation.", flush=True)
+            else:
+                print("Approved immutable staging activation completed.", flush=True)
             print("VASA_VPS_CONNECTIVITY_OK", flush=True)
         elif sys.argv[1] == "bootstrap":
             bootstrap(sys.argv[2], branch, previous)

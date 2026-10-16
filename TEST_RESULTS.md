@@ -1,3 +1,9 @@
+2026-10-16 approved immutable activation controller: 1,072 full tests passed
+(reports/release-activation.xml), Ruff/format/strict mypy, actionlint and shell/JS
+syntax checks passed. Sixteen new tests cover exact approvals, private backup/SQL
+integrity, revision0006/0007, targeted updates and app-only rollback preserving
+canonical unknown files/private env/dependencies. Live activation pending.
+
 # Test results
 
 2026-10-16 recovery investigation: 1,047 full checks passed in 87.68s and 95
