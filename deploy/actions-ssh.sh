@@ -8,6 +8,9 @@ case "${VASA_DEPLOY_MODE:-}" in
   *) exit 1 ;;
 esac
 VASA_PROVIDER_SMOKE=${VASA_PROVIDER_SMOKE:-false}
+VASA_RECOVERY=${VASA_RECOVERY:-none}
+[[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate ]] || exit 1
+[[ "$VASA_RECOVERY" == none || ( "$VASA_DEPLOY_MODE" == check && "$VASA_PROVIDER_SMOKE" == false ) ]] || exit 1
 [[ "$VASA_PROVIDER_SMOKE" == false || "$VASA_PROVIDER_SMOKE" == true ]] || exit 1
 [[ "$VASA_PROVIDER_SMOKE" == false || "$VASA_DEPLOY_MODE" == deploy ]] || exit 1
 [[ "${VASA_VPS_USER:-}" == vasa-builder ]] || { echo 'Unexpected SSH user.' >&2; exit 1; }
@@ -53,4 +56,4 @@ ssh -F /dev/null -T -p 22 -i "$vasa_ssh_dir/key" \
   -o ConnectTimeout=15 -o ConnectionAttempts=1 -o LogLevel=ERROR \
   -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
   "$VASA_VPS_USER@$VASA_VPS_HOST" \
-  "python3 - '$VASA_DEPLOY_MODE' '$GITHUB_SHA' '$VASA_PROVIDER_SMOKE'" < deploy/actions_vps.py
+  "python3 - '$VASA_DEPLOY_MODE' '$GITHUB_SHA' '$VASA_PROVIDER_SMOKE' '$VASA_RECOVERY'" < deploy/actions_vps.py

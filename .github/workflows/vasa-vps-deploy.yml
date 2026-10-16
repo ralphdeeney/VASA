@@ -9,6 +9,12 @@ on:
         options: [check, bootstrap, deploy]
         default: check
         required: true
+      recovery:
+        description: Optional secret-safe read-only recovery investigation (check mode only)
+        type: choice
+        options: [none, investigate]
+        default: none
+        required: false
       provider_smoke:
         description: Opt-in paid live provider validation after deploy (deploy mode only)
         type: boolean
@@ -44,6 +50,7 @@ jobs:
           VASA_VPS_SSH_KEY: ${{ secrets.VASA_VPS_SSH_KEY }}
           VASA_VPS_HOST_KEY_SHA256: ${{ vars.VASA_VPS_HOST_KEY_SHA256 }}
           VASA_DEPLOY_MODE: ${{ github.event_name == 'push' && 'deploy' || inputs.mode }}
+          VASA_RECOVERY: ${{ github.event_name == 'workflow_dispatch' && inputs.recovery || 'none' }}
           VASA_PROVIDER_SMOKE: ${{ github.event_name == 'workflow_dispatch' && inputs.provider_smoke && 'true' || 'false' }}
         run: bash deploy/actions-ssh.sh
       - name: Write sanitized deployment summary

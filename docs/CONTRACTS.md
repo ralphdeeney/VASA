@@ -323,3 +323,10 @@ SaaS completion additions: GET /api/saas/integrations returns manager-scoped
 references. Public POST /api/site/contact {name,email,message} uses configured SMTP
 and trusted contact_recipient, with fixed errors, origin/rate limits, no DB record.
 Capabilities additionally report contact_available; empty recipient disables UI.
+
+Recovery wave (2026-10-16): optional Actions input recovery=none|investigate,
+default none, permitted only with mode=check and provider_smoke=false. Existing
+normal deploy/bootstrap guards remain unchanged. investigate() uses approved
+read-only Git/Docker/HTTP operations and prints fixed metadata JSON, no raw diff,
+secret values, arbitrary logs or environment contents. Controller owns integration;
+recovery tests have separate ownership. No direct Codex SSH.

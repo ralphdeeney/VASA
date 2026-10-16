@@ -273,6 +273,189 @@ def preflight():
     return branch, sha
 
 
+def investigate():
+    """Read-only recovery evidence. Arbitrary output is never forwarded."""
+    print("VASA_INVESTIGATION_BEGIN", flush=True)
+    known = set(git("ls-tree", "-r", "--name-only", "HEAD").splitlines())
+    status_result = capture(
+        "git",
+        "-c",
+        "core.fsmonitor=false",
+        "-c",
+        "core.hooksPath=/dev/null",
+        "status",
+        "--porcelain=v1",
+        "-z",
+        "--untracked-files=all",
+    )
+    require(status_result.returncode == 0, "Cannot inspect working tree status.")
+    entries = status_result.stdout.split("\0")
+    changes = []
+    for entry in entries:
+        if len(entry) < 4:
+            continue
+        status, name = entry[:2], entry[3:]
+        public = name in known and not (
+            name.startswith(".local/") or name in ENV_FILES or name.endswith((".pem", ".key"))
+        )
+        record = {"status": status if re.fullmatch(r"[ MADRCU?!]{2}", status) else "??"}
+        if public:
+            record["path"] = name
+            path = ROOT / name
+            if path.is_file() and not path.is_symlink() and path.resolve().is_relative_to(ROOT):
+                record["working_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+            # Inspect the actual diff, but report only structural metadata.
+            diff = git("diff", "--no-ext-diff", "--no-textconv", "HEAD", "--", name)
+            record["added_lines"] = sum(
+                s.startswith("+") and not s.startswith("+++") for s in diff.splitlines()
+            )
+            record["removed_lines"] = sum(
+                s.startswith("-") and not s.startswith("---") for s in diff.splitlines()
+            )
+            history = git("log", "-3", "--format=%H", "--", name).splitlines()
+            record["history"] = [sha for sha in history if re.fullmatch(r"[0-9a-f]{40}", sha)]
+            if name == "deploy/compose.yaml":
+                record["added_public_origin_setting"] = any(
+                    s.startswith("+") and "VASA_PUBLIC_ORIGIN:" in s for s in diff.splitlines()
+                )
+                record["added_smtp_bindings"] = any(
+                    s.startswith("+") and "VASA_SMTP_" in s for s in diff.splitlines()
+                )
+        else:
+            record["path_sha256"] = hashlib.sha256(name.encode()).hexdigest()
+            record["classification"] = "private_or_untracked_preserved"
+        changes.append(record)
+    print("VPS_WORKTREE=" + json.dumps(changes, sort_keys=True), flush=True)
+    print("VPS_WORKTREE_PRESERVED=yes", flush=True)
+    print(
+        "VPS_WORKTREES=" + str(git("worktree", "list", "--porcelain").count("worktree ")),
+        flush=True,
+    )
+    print(
+        "VPS_RELEASE_BASE_AVAILABLE=" + ("yes" if (ROOT / ".local").is_dir() else "no"), flush=True
+    )
+    print(
+        "VPS_DISK_AVAILABLE_MIB="
+        + str(os.statvfs(ROOT).f_bavail * os.statvfs(ROOT).f_frsize // 1048576),
+        flush=True,
+    )
+    names = (
+        "VASA_SMTP_HOST",
+        "VASA_SMTP_PORT",
+        "VASA_SMTP_USERNAME",
+        "VASA_SMTP_PASSWORD",
+        "VASA_SMTP_SENDER",
+        "VASA_SMTP_STARTTLS",
+        "VASA_CONTACT_RECIPIENT",
+        "VASA_PUBLIC_ORIGIN",
+        "VASA_SAAS_ENABLED",
+        "SMTP_HOST",
+        "SMTP_USER",
+        "SMTP_PASSWORD",
+        "SMTP_FROM",
+    )
+    for filename in ENV_FILES:
+        path = ROOT / filename
+        present = []
+        if path.is_file() and not path.is_symlink() and path.stat().st_size <= 1048576:
+            for line in path.read_text().splitlines():
+                key, sep, value = line.strip().removeprefix("export ").partition("=")
+                if sep and key.strip() in names and value.strip().strip("\"'"):
+                    present.append(key.strip())
+        print(
+            "VPS_CONFIG_BINDINGS="
+            + json.dumps({"source": filename, "present": sorted(set(present))}),
+            flush=True,
+        )
+    backups = ROOT / ".local" / "backups"
+    count = len(list(backups.iterdir())) if backups.is_dir() and not backups.is_symlink() else 0
+    print("VPS_BACKUP_FILE_COUNT=" + str(count), flush=True)
+    print("VPS_BACKUP_RESTORE_VERIFIED=no", flush=True)
+    try:
+        data = config()
+        ports = []
+        for item in data["services"]["vasa"].get("ports", []):
+            host = item.get("host_ip", "")
+            ports.append(
+                {
+                    "host_ip": host
+                    if host in {"127.0.0.1", "172.16.2.1", "0.0.0.0", "::"}
+                    else "other",
+                    "published": str(item.get("published"))
+                    if str(item.get("published")).isdigit()
+                    else "other",
+                    "target": item.get("target") if isinstance(item.get("target"), int) else 0,
+                }
+            )
+        print("VPS_VASA_PORTS=" + json.dumps(ports), flush=True)
+        for service in DEPENDENCIES + SERVICES:
+            _, value = container(service)
+            print(
+                "VPS_SERVICE="
+                + json.dumps(
+                    {"service": service, "healthy": state_ok(value), "restarts": value["restarts"]}
+                ),
+                flush=True,
+            )
+    except Refusal:
+        print("VPS_TOPOLOGY=inspection_failed", flush=True)
+    probe = r"""
+import asyncio,json,os,uuid
+from sqlalchemy import text
+from vasa.config import Settings
+from vasa.storage.database import Database
+import httpx
+async def main():
+ d=Database(Settings().database_url.get_secret_value(),timeout_seconds=3)
+ try:
+  async with d.session() as s:
+   revision=await s.scalar(text("SELECT version_num FROM alembic_version"))
+   valid=revision in {"0001","0002","0003","0004","0005","0006","0007"}
+   print("VPS_DB_REVISION="+(revision if valid else "other"))
+   for table in ("users","tenants","agents","whatsapp_instances"):
+    n=await s.scalar(text("SELECT count(*) FROM "+table))
+    print("VPS_DB_COUNT_"+table.upper()+"="+str(n))
+ except Exception: print("VPS_DB=unavailable")
+ finally: await d.aclose()
+ names=("VASA_SMTP_HOST","VASA_SMTP_USERNAME","VASA_SMTP_PASSWORD","VASA_SMTP_SENDER","VASA_PUBLIC_ORIGIN","VASA_SAAS_ENABLED")
+ for name in names:
+  present="present" if os.getenv(name) else "absent"
+  print("VPS_RUNTIME_BINDING_"+name+"="+present)
+ try:
+  async with httpx.AsyncClient(base_url="http://127.0.0.1:8080",trust_env=False,timeout=5) as c:
+   h={"Host":"vasa.litatech.xyz","Origin":"https://vasa.litatech.xyz"}
+   r=await c.get("/login",headers=h); print("VPS_LOGIN_PAGE_STATUS="+str(r.status_code))
+   payload={"email":"diagnostic-"+uuid.uuid4().hex+"@example.invalid",
+            "password":"synthetic-non-account-password"}
+   r=await c.post("/api/auth/login",headers=h,json=payload)
+   print("VPS_LOGIN_PROBE_STATUS="+str(r.status_code))
+   try: reason=r.json().get("detail")
+   except Exception: reason=None
+   approved={"invalid_origin","invalid_credentials","unavailable","too_many_attempts","account_inactive","email_verification_required"}
+   safe=reason if isinstance(reason,str) and reason in approved else "unclassified"
+   print("VPS_LOGIN_PROBE_REASON="+safe)
+ except Exception: print("VPS_HTTP=unavailable")
+asyncio.run(main())
+"""
+    # The synthetic login is an explicit bounded auth probe; it creates no account/session.
+    try:
+        output = compose("exec", "-T", "vasa", "python", "-c", probe, timeout=45)
+        pattern = (
+            r"VPS_(?:DB_REVISION=000[1-7]|DB_COUNT_(?:USERS|TENANTS|AGENTS|WHATSAPP_INSTANCES)=\d+"
+            r"|DB=unavailable|RUNTIME_BINDING_VASA_(?:SMTP_HOST|SMTP_USERNAME|SMTP_PASSWORD"
+            r"|SMTP_SENDER|PUBLIC_ORIGIN|SAAS_ENABLED)=(?:present|absent)"
+            r"|LOGIN_PAGE_STATUS=\d{3}|LOGIN_PROBE_STATUS=\d{3}|LOGIN_PROBE_REASON="
+            r"(?:invalid_origin|invalid_credentials|unavailable|too_many_attempts|account_inactive"
+            r"|email_verification_required|unclassified)|HTTP=unavailable)"
+        )
+        for line in output.splitlines():
+            if re.fullmatch(pattern, line, flags=re.ASCII):
+                print(line, flush=True)
+    except Refusal:
+        print("VPS_RUNTIME_PROBE=unavailable", flush=True)
+    print("VASA_INVESTIGATION_OK", flush=True)
+
+
 def config():
     compose("config", "--quiet")
     data = json.loads(compose("config", "--format", "json"))
@@ -1078,14 +1261,22 @@ def deploy(target, branch, previous, *, smoke=False):
 def main():
     try:
         require(
-            len(sys.argv) in (3, 4) and sys.argv[1] in ("check", "bootstrap", "deploy"),
+            len(sys.argv) in (3, 4, 5) and sys.argv[1] in ("check", "bootstrap", "deploy"),
             "Invalid invocation.",
         )
-        smoke = sys.argv[3] if len(sys.argv) == 4 else "false"
+        smoke = sys.argv[3] if len(sys.argv) >= 4 else "false"
+        recovery = sys.argv[4] if len(sys.argv) == 5 else "none"
+        require(recovery in ("none", "investigate"), "Invalid recovery option.")
+        require(
+            recovery == "none" or (sys.argv[1] == "check" and smoke == "false"),
+            "Recovery inspection requires check mode.",
+        )
         require(smoke in ("true", "false"), "Invalid provider smoke option.")
         require(smoke == "false" or sys.argv[1] == "deploy", "Smoke requires deploy mode.")
         branch, previous = preflight()
         if sys.argv[1] == "check":
+            if recovery == "investigate":
+                investigate()
             print("Read-only check: no fetch, checkout, writes, builds or restarts.", flush=True)
             print("VASA_VPS_CONNECTIVITY_OK", flush=True)
         elif sys.argv[1] == "bootstrap":

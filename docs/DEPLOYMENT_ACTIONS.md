@@ -398,3 +398,10 @@ Optional operator-only auth diagnosis in the approved image:
 `python -m vasa.control.diagnostics --origin https://vasa.litatech.xyz`.
 It emits fixed sanitized status/category markers only; it does not take credentials
 or reset/create users. Keep public proxy/tunnel policies separate from app auth.
+
+Recovery investigation: manually run `mode=check`, `recovery=investigate`,
+`provider_smoke=false`. It preserves the checkout, captures actual Git diffs
+without forwarding them, reports safe structural metadata/configuration presence,
+and performs one synthetic failed-login probe (normal Redis rate limiter applies).
+No real password is accepted, no account is created, no environment values or raw
+logs/diffs are printed. Normal deploy/bootstrap still refuse dirty working trees.
