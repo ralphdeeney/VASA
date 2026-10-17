@@ -48,9 +48,12 @@ on:
   push:
     branches:
       - build/vasa-foundation
+    paths-ignore:
+      - 'deploy/requests/**'
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: vasa-staging-vps
@@ -66,6 +69,11 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
+      - name: Require successful CI before automatic application deployment
+        if: github.event_name == 'push' || inputs.mode != 'check' || inputs.recovery == 'evolution_deploy' || inputs.recovery == 'activate'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 deploy/wait_ci.py
       - name: Check approved SMTP secret bindings without revealing values
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'check' && inputs.recovery != 'none' && !startsWith(inputs.recovery, 'evolution_')
         env:

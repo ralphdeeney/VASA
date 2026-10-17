@@ -7,6 +7,8 @@ import os
 import re
 import signal
 import time
+import urllib.error
+import urllib.request
 from contextlib import redirect_stdout
 
 
@@ -31,6 +33,8 @@ def emit_probe(ns, script, expected, *arguments):
                 "EVOLUTION_INSTANCE_STAGE=list",
                 "EVOLUTION_INSTANCE_STAGE=status",
                 "EVOLUTION_INSTANCE_STAGE=paired_device",
+                "EVOLUTION_INSTANCE_BASELINE=online",
+                "EVOLUTION_INSTANCE_BASELINE=offline",
             }
         ) or line in {
             "EVOLUTION_CALL_GATE_OK",
@@ -42,6 +46,7 @@ def emit_probe(ns, script, expected, *arguments):
             print(line, flush=True)
     if result.returncode or expected not in lines:
         raise Deferred("call_or_instance_inspection")
+    return lines
 
 
 def udp_gate(ns):
@@ -128,6 +133,44 @@ def verify_identity(ns, module, receipt):
     print("EVOLUTION_PAIRING_AND_SCHEMA_PRESERVED", flush=True)
 
 
+def staged_run(ns, stage, *arguments, **kwargs):
+    """Classify a command failure without exposing command, output or exception text."""
+    print("EVOLUTION_POOL_STAGE=" + stage, flush=True)
+    if "request_stage" in ns:
+        ns["request_stage"](stage)
+    try:
+        return ns["run"](*arguments, **kwargs)
+    except BaseException as error:
+        import subprocess
+
+        category = "timeout" if isinstance(error, subprocess.TimeoutExpired) else "command_failed"
+        print("EVOLUTION_POOL_FAILURE=" + stage + ":" + category, flush=True)
+        raise
+
+
+def public_health():
+    """Check the fixed public origin, suppressing response bodies and redirect destinations."""
+
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+
+    opener = urllib.request.build_opener(NoRedirect())
+    for path, allowed in (
+        ("/login", {200}),
+        ("/health/ready", {200}),
+        ("/dashboard", {302, 303, 307, 308, 401, 403}),
+    ):
+        try:
+            with opener.open("https://vasa.litatech.xyz" + path, timeout=15) as response:
+                status = response.status
+        except urllib.error.HTTPError as error:
+            status = error.code
+        if status not in allowed:
+            raise Deferred("public_health")
+    print("EVOLUTION_PUBLIC_HEALTH_OK", flush=True)
+
+
 def acquire_rollback(ns, before, source, rollback):
     """Retain old image or rebuild its pinned pre-fix public recipe; never commit runtime."""
     running = before["evolution"]["image"]
@@ -138,7 +181,9 @@ def acquire_rollback(ns, before, source, rollback):
     else:
         print("EVOLUTION_ROLLBACK_IMAGE=previous_source_build", flush=True)
         old_source = source / ".local/evolution-rollback-source"
-        ns["run"](
+        staged_run(
+            ns,
+            "rollback_prepare",
             "python3",
             str(source / "scripts/prepare_evolution.py"),
             "--isolated",
@@ -147,7 +192,9 @@ def acquire_rollback(ns, before, source, rollback):
             str(old_source),
             timeout=300,
         )
-        ns["run"](
+        staged_run(
+            ns,
+            "rollback_build",
             "docker",
             "build",
             "--tag",
@@ -190,7 +237,23 @@ def run(ns, target, deploy, gate, instances, backup_source, capacity_source):
         before_connections = capacity(ns, cap)
         try:
             no_calls(ns, gate)
-            emit_probe(ns, instances, "EVOLUTION_REGISTERED_INSTANCES_OK")
+            initial_instances = emit_probe(ns, instances, "EVOLUTION_REGISTERED_INSTANCES_OK")
+            require(
+                sum(
+                    line in initial_instances
+                    for line in (
+                        "EVOLUTION_INSTANCE_BASELINE=online",
+                        "EVOLUTION_INSTANCE_BASELINE=offline",
+                    )
+                )
+                == 1,
+                "Instance connectivity baseline unavailable.",
+            )
+            instance_mode = (
+                "preserve-offline"
+                if "EVOLUTION_INSTANCE_BASELINE=offline" in initial_instances
+                else "restore"
+            )
         except Deferred as error:
             print("EVOLUTION_ROLLOUT_DEFERRED=" + str(error), flush=True)
             return 2
@@ -222,7 +285,9 @@ def run(ns, target, deploy, gate, instances, backup_source, capacity_source):
         acquire_rollback(ns, before, source, rollback)
         require(ns["private_hashes"]() == hashes, "Runtime files changed.")
         print("EVOLUTION_POOL_STAGE=prepare_source", flush=True)
-        ns["run"](
+        staged_run(
+            ns,
+            "prepare_source",
             "python3",
             str(source / "scripts/prepare_evolution.py"),
             "--isolated",
@@ -231,7 +296,9 @@ def run(ns, target, deploy, gate, instances, backup_source, capacity_source):
             timeout=300,
         )
         print("EVOLUTION_POOL_STAGE=target_build", flush=True)
-        ns["run"](
+        staged_run(
+            ns,
+            "target_build",
             "docker",
             "build",
             "--tag",
@@ -248,12 +315,16 @@ def run(ns, target, deploy, gate, instances, backup_source, capacity_source):
         back = {"__name__": "evolution_backups"}
         exec(compile(backup_source, "backups", "exec"), back)
         print("EVOLUTION_POOL_STAGE=backup", flush=True)
+        if "request_stage" in ns:
+            ns["request_stage"]("backup")
         receipt = back["backup"](ns)
         no_calls(ns, gate)
         ns["assert_unchanged"](before)
         require(ns["private_hashes"]() == hashes, "Runtime files changed.")
         voice, _ = ns["container"]("voice")
         paused = attempted = False
+        if "before_evolution_mutation" in ns:
+            ns["before_evolution_mutation"]()
         for sig in (signal.SIGHUP, signal.SIGTERM, signal.SIGINT):
             signal.signal(sig, ns["signal_failure"])
         try:
@@ -275,7 +346,7 @@ def run(ns, target, deploy, gate, instances, backup_source, capacity_source):
                 "150",
                 "evolution",
             )
-            emit_probe(ns, instances, "EVOLUTION_REGISTERED_INSTANCES_OK", "restore")
+            emit_probe(ns, instances, "EVOLUTION_REGISTERED_INSTANCES_OK", instance_mode)
             require(ns["container"]("evolution")[1]["image"] == candidate_id, "Wrong image.")
             verify_identity(ns, back, receipt)
             ns["run"]("docker", "unpause", voice)
@@ -289,6 +360,8 @@ def run(ns, target, deploy, gate, instances, backup_source, capacity_source):
                 "Operator files changed.",
             )
             for _ in range(3):
+                # Read-only status probes exercise the existing device lookup without reconnecting.
+                emit_probe(ns, instances, "EVOLUTION_REGISTERED_INSTANCES_OK")
                 print("EVOLUTION_CONNECTIONS_AFTER", flush=True)
                 after_connections = capacity(ns, cap)
                 require(
@@ -302,6 +375,7 @@ def run(ns, target, deploy, gate, instances, backup_source, capacity_source):
                         "Evolution connection consumption did not decrease.",
                     )
                 time.sleep(5)
+            public_health()
             ns["run"]("docker", "image", "tag", candidate, "vasa-evolution-calls:e21ce0dd")
             receipt.update(
                 target_sha=target,
@@ -337,7 +411,7 @@ def run(ns, target, deploy, gate, instances, backup_source, capacity_source):
                         "150",
                         "evolution",
                     )
-                    emit_probe(ns, instances, "EVOLUTION_REGISTERED_INSTANCES_OK", "restore")
+                    emit_probe(ns, instances, "EVOLUTION_REGISTERED_INSTANCES_OK", instance_mode)
                     verify_identity(ns, back, receipt)
                     ns["run"]("docker", "image", "tag", rollback, "vasa-evolution-calls:e21ce0dd")
                     if paused:

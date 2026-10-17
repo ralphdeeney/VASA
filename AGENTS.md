@@ -13,3 +13,18 @@ Python 3.12+, typed async I/O, Ruff and strict mypy. Run bash scripts/check.sh f
 Keep secrets outside Git and logs; never expose server credentials to clients. All tenant-owned queries require explicit trusted tenant context; client-supplied tenant headers are not authentication. Use bounded resources and cleanup. Keep n8n out of live audio. Respect V1 scope.
 
 Use scoped VASA development services only. Do not alter unrelated Docker resources, host services or credentials. No normal build work as root. Do not claim unrun evals or benchmarks passed.
+
+Autonomous delivery: follow docs/DEPLOYMENT_ORCHESTRATOR.md. For approved work,
+implement/test/commit/push and monitor Actions without asking the operator to
+open Actions or select routine modes. Use explicit request-only commits for
+read-only checks and separately authorized maintenance. The exact code target
+is the request commit's parent; the controller executes the code-identical
+request envelope SHA. Require CI and success markers; never claim deployment
+from a push alone. Ordinary pushes never authorize Evolution, bootstrap, paid
+smoke, migrations, secret changes or active-call interruption. Single-use
+maintenance grants cannot be renewed by a self-approved request. Hard safety
+gates stop; known pre-login connectivity failures have bounded retries. Unknown
+remote outcomes require receipt-based verification, never blind restart.
+GitHub Actions is the only VPS bridge; no direct Codex SSH. Preserve live data,
+private runtime files, pairing and all unrelated infrastructure. Human live-call
+acceptance and unavailable external credentials remain explicit boundaries.

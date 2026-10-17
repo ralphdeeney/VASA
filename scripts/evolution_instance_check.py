@@ -14,7 +14,7 @@ from vasa.storage.database import Database
 from vasa.voice_worker import resolve_all
 
 
-async def inspect(restore: bool) -> None:
+async def inspect(restore: bool, preserve_offline: bool = False) -> None:
     settings = Settings()
     async with asyncio.timeout(90), AsyncExitStack() as resources:
         database = Database(settings.database_url.get_secret_value())
@@ -64,10 +64,15 @@ async def inspect(restore: bool) -> None:
             if paired is not True:
                 raise ValueError("paired device missing")
         print("EVOLUTION_INSTANCE_STAGE=status", flush=True)
+        connectivity = set()
         for external in expected:
             status = await client.status(external)
             print("EVOLUTION_INSTANCE_CONNECTED=" + str(int(status.connected)), flush=True)
             print("EVOLUTION_INSTANCE_LOGGED_IN=" + str(int(status.logged_in)), flush=True)
+            if not restore and status.connected != status.logged_in:
+                raise ValueError("partial connectivity baseline")
+            if preserve_offline and (status.connected or status.logged_in):
+                raise ValueError("offline baseline changed")
             if restore and not (status.connected and status.logged_in):
                 # Existing persisted device lookup; no create, pair, logout or QR endpoint.
                 # The pinned reconnect endpoint loads persisted settings. The generic
@@ -82,15 +87,27 @@ async def inspect(restore: bool) -> None:
                         break
             if restore and (not status.connected or not status.logged_in):
                 raise ValueError("instance unavailable")
+            connectivity.add(status.connected and status.logged_in)
+        if len(connectivity) != 1:
+            raise ValueError("mixed connectivity baseline")
+        print(
+            "EVOLUTION_INSTANCE_BASELINE=" + ("online" if True in connectivity else "offline"),
+            flush=True,
+        )
         print("EVOLUTION_REGISTERED_INSTANCES_OK", flush=True)
 
 
 def main() -> int:
     logging.disable(logging.CRITICAL)
     try:
-        if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1] != "restore"):
+        if len(sys.argv) > 2 or (
+            len(sys.argv) == 2 and sys.argv[1] not in {"restore", "preserve-offline"}
+        ):
             raise ValueError("invocation")
-        asyncio.run(inspect(len(sys.argv) == 2))
+        if len(sys.argv) == 2 and sys.argv[1] == "preserve-offline":
+            asyncio.run(inspect(False, preserve_offline=True))
+        else:
+            asyncio.run(inspect(len(sys.argv) == 2))
     except Exception:
         print("EVOLUTION_REGISTERED_INSTANCES_FAILED", flush=True)
         return 1

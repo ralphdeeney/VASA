@@ -1,3 +1,16 @@
+## 2026-10-17 — Autonomous request orchestration (implementation verification)
+
+Strict push-driven deployment requests, trusted actor/CI gates, GitHub deployment
+state journal and private VPS idempotency ledger implemented. Normal application
+pushes retain their controller and now require CI; request-only commits are
+excluded from application replacement. See docs/DEPLOYMENT_ORCHESTRATOR.md.
+One-shot Evolution pool maintenance remains pinned and separately authorized;
+SMTP, live migrations, destructive changes, secrets and human calls remain gated.
+Local full checks:1,313 passed before the final two retry/grant tests; focused
+request/orchestrator/remote tests pass. Full Go ./... tests and vet, targeted race
+and real PostgreSQL120-cycle lifecycle tests passed. Final suite and automatic
+read-only/maintenance demonstrations remain pending; no deployment is claimed.
+
 ## 2026-10-17 — Evolution fix tested; live rollout blocked by VPS access
 
 Implementation: f7016fbe005c409cb01a73b11fbd8a913646683a (pushed).

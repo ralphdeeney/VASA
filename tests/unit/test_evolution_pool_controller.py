@@ -8,6 +8,7 @@ import pytest
 
 from deploy import actions_evolution_pool as pool
 
+PUBLIC_HEALTH = pool.public_health
 TARGET = "a" * 40
 CANONICAL = "b" * 40
 OLD_IMAGE = "sha256:" + "1" * 64
@@ -161,7 +162,9 @@ class Runtime:
                 ),
             )
         return SimpleNamespace(
-            returncode=0, stdout=SECRET + "\nEVOLUTION_REGISTERED_INSTANCES_OK\n"
+            returncode=0,
+            stdout=SECRET
+            + "\nEVOLUTION_INSTANCE_BASELINE=online\nEVOLUTION_REGISTERED_INSTANCES_OK\n",
         )
 
     def health(self):
@@ -188,6 +191,7 @@ class Runtime:
 def isolated_signals_and_clock(monkeypatch):
     monkeypatch.setattr(pool.signal, "signal", lambda *args: None)
     monkeypatch.setattr(pool.time, "sleep", lambda *args: None)
+    monkeypatch.setattr(pool, "public_health", lambda: None)
 
 
 def test_preflight_is_read_only_and_reports_capacity(tmp_path, capsys):
@@ -436,3 +440,69 @@ def test_health_failure_rolls_back_to_verified_fallback_image(tmp_path, capsys):
     assert "VASA_EVOLUTION_POOL_ROLLBACK_OK" in output
     assert "VASA_EVOLUTION_POOL_DEPLOYMENT_OK" not in output
     assert SECRET not in output
+
+
+def test_failed_build_reports_fixed_stage_without_exception_body(tmp_path, capsys):
+    runtime = Runtime(tmp_path, missing_image=True, fallback_build_fails=True)
+    with pytest.raises(RuntimeError):
+        runtime.run()
+    output = capsys.readouterr().out
+    assert "EVOLUTION_POOL_STAGE=rollback_prepare" in output
+    assert "EVOLUTION_POOL_FAILURE=rollback_build:command_failed" in output
+    assert SECRET not in output
+    assert not runtime.replacements()
+
+
+def test_initially_offline_paired_instance_is_never_reconnected(tmp_path, capsys):
+    runtime = Runtime(tmp_path)
+    original = runtime.capture
+
+    def capture(*args, **kwargs):
+        result = original(*args, **kwargs)
+        result.stdout = result.stdout.replace("BASELINE=online", "BASELINE=offline")
+        return result
+
+    runtime.ns["capture"] = capture
+    assert runtime.run() == 0
+    probes = [
+        event[1] for event in runtime.events if event[0] == "capture" and "INSTANCES" in event[1]
+    ]
+    assert any(probe[-1] == "preserve-offline" for probe in probes)
+    assert all(probe[-1] != "restore" for probe in probes)
+    assert "EVOLUTION_INSTANCE_BASELINE=offline" in capsys.readouterr().out
+
+
+def test_public_health_failure_rolls_back(tmp_path, monkeypatch, capsys):
+    runtime = Runtime(tmp_path)
+    monkeypatch.setattr(pool, "public_health", lambda: (_ for _ in ()).throw(RuntimeError(SECRET)))
+    with pytest.raises(Refusal):
+        runtime.run()
+    assert runtime.evolution_image == OLD_IMAGE
+    output = capsys.readouterr().out
+    assert "VASA_EVOLUTION_POOL_ROLLBACK_OK" in output
+    assert "VASA_EVOLUTION_POOL_DEPLOYMENT_OK" not in output
+    assert SECRET not in output
+
+
+@pytest.mark.parametrize("statuses", [(200, 200, 303), (200, 200, 200), (530, 200, 303)])
+def test_public_origin_requires_login_readiness_and_auth_boundary(monkeypatch, capsys, statuses):
+    from contextlib import nullcontext
+
+    responses = iter(statuses)
+    calls = []
+
+    def open_url(url, timeout):
+        calls.append((url, timeout))
+        return nullcontext(SimpleNamespace(status=next(responses)))
+
+    monkeypatch.setattr(
+        pool.urllib.request, "build_opener", lambda *args: SimpleNamespace(open=open_url)
+    )
+    # Invoke the actual helper, rather than the rollout fixture's isolated no-op.
+    if statuses == (200, 200, 303):
+        PUBLIC_HEALTH()
+        assert "EVOLUTION_PUBLIC_HEALTH_OK" in capsys.readouterr().out
+    else:
+        with pytest.raises(pool.Deferred):
+            PUBLIC_HEALTH()
+    assert all(url.startswith("https://vasa.litatech.xyz/") for url, _ in calls)

@@ -341,3 +341,35 @@ pool; per-client disconnect must never close that shared pool. Existing SQLite
 selection, call/media APIs, runtime secrets and public ingress remain unchanged.
 SMTP remains explicitly deferred. Deployment is Evolution-only and manual through
 Actions; any active-call evidence or inability to prove quiescence refuses restart.
+
+## Autonomous deployment requests — 2026-10-17
+
+Root owns workflows, SSH routing, request orchestration/state, integration and
+persistent instructions. Policy specialist owns ONLY deploy/request_schema.json,
+deploy/request_validator.py, deploy/deployment_policy.py and
+ tests/unit/test_deployment_request_policy.py. Evolution specialist owns ONLY
+ deploy/actions_evolution_pool.py, deploy/actions_evolution_payload.py,
+ scripts/evolution_instance_check.py and their existing focused tests.
+Request schema v1: request_id UUID, operation enum application_deploy/application_check/
+evolution_check/evolution_pool_rollout/provider_smoke; target_commit exact40hex;
+branch build/vasa-foundation; environment staging; scope operation-specific fixed
+string; reason nonempty bounded public text; created_at/expires_at UTC ISO strings
+(max24h validity); policy fixed operation safety profile; expected_markers exact
+allowlist; authorization fixed grant ID. No shell, unknown fields or approved flag.
+A request-only triggering commit changes exactly one deploy/requests/<UUID>.json;
+target_commit MUST equal its single parent. Existing deployment controllers execute
+the triggering envelope SHA (same application/source tree except request evidence),
+and reports retain both exact source target and envelope/deployed SHA. Policy
+requires trusted GitHub repository/ref + owner actor ralphdeeney and write/admin/
+maintain permission independently of request data, exact origin tip, ancestry,
+and successful Verify CI for BOTH source and triggering commits. Normal pushes
+remain application updates; request-only pushes cannot also run that path.
+One-shot explicit Evolution authorization: grant evolution-pool-2026-10-17 for
+request_id 6e1328c2-3554-4c2d-8153-5639304a6b18, upstream e21ce0dd7634f3047410c893b5e4d1c082034b84,
+reviewed pool patch SHA256 daba5ba8222345396ce5934e8a7ef07c353a4ed73fedcbeb785c75a6fb0b5361.
+Routine readonly/application requests use routine-staging-v1; paid provider smoke
+requires a distinct explicit grant, unavailable by default. One-shot grants are
+consumed in the VPS ledger before any mutating attempt and cannot be recycled by
+new requests. SSH/CI transient retries are bounded; never retry mutation after an
+uncertain interruption or hard gate. Existing app/voice rollout/rollback, rootless
+Docker, no-call/backups and secret-safe output remain authoritative.

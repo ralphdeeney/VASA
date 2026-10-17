@@ -10,10 +10,20 @@ from scripts import evolution_instance_check as probe
 
 
 @pytest.mark.parametrize(
-    "restore,connected", [(False, True), (False, False), (True, True), (True, False)]
+    "restore,connected,preserve_offline",
+    [
+        (False, True, False),
+        (False, False, False),
+        (True, True, False),
+        (True, False, False),
+        (False, False, True),
+        (False, True, True),
+    ],
 )
 @pytest.mark.parametrize("paired", [True, False])
-async def test_existing_instance_connection_only(monkeypatch, capsys, restore, connected, paired):
+async def test_existing_instance_connection_only(
+    monkeypatch, capsys, restore, connected, paired, preserve_offline
+):
     secret = SimpleNamespace(get_secret_value=lambda: "private-secret")
     settings = SimpleNamespace(
         database_url=SimpleNamespace(
@@ -53,11 +63,16 @@ async def test_existing_instance_connection_only(monkeypatch, capsys, restore, c
     monkeypatch.setattr(probe.asyncio, "sleep", AsyncMock())
     if not paired:
         with pytest.raises(ValueError, match="paired device missing"):
-            await probe.inspect(restore)
+            await probe.inspect(restore, preserve_offline=preserve_offline)
         assert client._request.await_count == 1
         client.connect.assert_not_awaited()
         return
-    await probe.inspect(restore)
+    if preserve_offline and connected:
+        with pytest.raises(ValueError, match="offline baseline changed"):
+            await probe.inspect(restore, preserve_offline=True)
+        assert client._request.await_count == 1
+        return
+    await probe.inspect(restore, preserve_offline=preserve_offline)
     client.connect.assert_not_awaited()
     assert client._request.await_count == 1 + int(restore and not connected)
     client._request.assert_any_await("GET", "/instance/all", "private-secret")

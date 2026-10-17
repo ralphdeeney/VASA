@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vasa.invalid/deployment-request-v1",
+  "title": "VASA deployment request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "operation",
+    "target_commit",
+    "branch",
+    "environment",
+    "scope",
+    "policy",
+    "authorization",
+    "reason",
+    "created_at",
+    "expires_at",
+    "expected_markers"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "operation": {
+      "enum": [
+        "application_deploy",
+        "application_check",
+        "evolution_check",
+        "evolution_pool_rollout",
+        "provider_smoke"
+      ]
+    },
+    "target_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "branch": {
+      "const": "build/vasa-foundation"
+    },
+    "environment": {
+      "const": "staging"
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "vasa-application-only",
+        "vasa-readonly",
+        "evolution-readonly",
+        "evolution-pool-only",
+        "providers-smoke-only"
+      ]
+    },
+    "policy": {
+      "type": "string",
+      "enum": [
+        "application-safe-v1",
+        "readonly-v1",
+        "evolution-readonly-v1",
+        "evolution-no-call-backup-v1",
+        "provider-smoke-v1"
+      ]
+    },
+    "authorization": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^[^\\x00-\\x1f\\x7f]*\\S[^\\x00-\\x1f\\x7f]*$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "expected_markers": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "DEEPGRAM_SMOKE_OK",
+          "EVOLUTION_POOL_PREFLIGHT_OK",
+          "LLM_SMOKE_OK",
+          "VASA_DEPLOYMENT_OK",
+          "VASA_EVOLUTION_POOL_DEPLOYMENT_OK",
+          "VASA_VPS_CONNECTIVITY_OK"
+        ]
+      }
+    }
+  }
+}

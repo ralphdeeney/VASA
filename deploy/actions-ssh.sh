@@ -61,6 +61,13 @@ if [[ "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deplo
   python3 deploy/actions_evolution_payload.py > "$vasa_remote_payload"
   chmod 600 "$vasa_remote_payload"
 fi
+if [[ -n "${VASA_REQUEST_FILE:-}" ]]; then
+  [[ "$VASA_DEPLOY_MODE" == check && "$VASA_RECOVERY" == none && "$VASA_PROVIDER_SMOKE" == false ]] || exit 1
+  [[ -z "${VASA_LIVE_ACCEPTANCE_FILE:-}" ]] || exit 1
+  vasa_remote_payload="$vasa_ssh_dir/request-task.py"
+  python3 -m deploy.request_payload "$VASA_REQUEST_FILE" > "$vasa_remote_payload"
+  chmod 600 "$vasa_remote_payload"
+fi
 if [[ -n "${VASA_LIVE_ACCEPTANCE_FILE:-}" ]]; then
   [[ "$VASA_DEPLOY_MODE" == check && "$VASA_RECOVERY" == none && "$VASA_PROVIDER_SMOKE" == false ]] || exit 1
   vasa_remote_payload="$vasa_ssh_dir/private-task.py"

@@ -1,0 +1,42 @@
+name: VASA deployment request
+
+on:
+  push:
+    branches: [build/vasa-foundation]
+    paths: ['deploy/requests/*.json']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  deployments: write
+
+concurrency:
+  group: vasa-staging-vps
+  cancel-in-progress: false
+
+jobs:
+  request:
+    if: github.repository == 'ralphdeeney/VASA' && github.ref == 'refs/heads/build/vasa-foundation' && github.actor == 'ralphdeeney'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out exact request commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up locked Python tooling
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.12.19'
+      - run: uv python install 3.12
+      - run: uv sync --frozen
+      - name: Validate, await CI, execute and verify the authorized request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VASA_VPS_HOST: ${{ secrets.VASA_VPS_HOST }}
+          VASA_VPS_USER: ${{ secrets.VASA_VPS_USER }}
+          VASA_VPS_SSH_KEY: ${{ secrets.VASA_VPS_SSH_KEY }}
+          VASA_VPS_HOST_KEY_SHA256: ${{ vars.VASA_VPS_HOST_KEY_SHA256 }}
+        run: uv run --frozen python -m deploy.deployment_orchestrator

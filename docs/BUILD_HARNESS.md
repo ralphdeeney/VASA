@@ -1104,3 +1104,18 @@ working voice transport
 → stabilization.
 
 The highest priority is a reliable real-time WhatsApp AI voice conversation.
+# Autonomous deployment request loop
+
+Follow docs/DEPLOYMENT_ORCHESTRATOR.md for approved staging delivery:
+Plan → Implement → Test → Commit/push code → push a strict request-only commit
+when checks/maintenance are needed → monitor CI/Actions/deployment journal →
+verify required sanitized markers and live health → report actual source/image
+SHA. Do not ask the operator to operate routine Actions forms. Normal application
+push deployment remains in place and now requires CI; request-only commits
+cannot trigger that replacement path. Routine checks/application delivery have
+standing scope. Maintenance needs an explicit bounded operator grant; the current
+Evolution pool grant is single-use and pinned to reviewed artifacts. Migrations,
+destructive changes, secrets/trust and live calls remain human safety gates.
+Never bypass a hard gate to achieve a green run. Interrupted operations resume
+by verified receipts only. Record real health/connection metrics and distinguish
+container health, WhatsApp pairing/status and human call acceptance.
