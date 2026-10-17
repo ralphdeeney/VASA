@@ -6,6 +6,8 @@ import json
 import os
 import re
 import signal
+import socket
+import ssl
 import time
 import urllib.error
 import urllib.request
@@ -156,17 +158,31 @@ def public_health():
             return None
 
     opener = urllib.request.build_opener(NoRedirect())
-    for path, allowed in (
-        ("/login", {200}),
-        ("/health/ready", {200}),
-        ("/dashboard", {302, 303, 307, 308, 401, 403}),
+    print("EVOLUTION_POOL_STAGE=public_health", flush=True)
+    for label, path, allowed in (
+        ("login", "/login", {200}),
+        ("readiness", "/health/ready", {200}),
+        ("dashboard", "/dashboard", {302, 303, 307, 308, 401, 403}),
     ):
         try:
             with opener.open("https://vasa.litatech.xyz" + path, timeout=15) as response:
                 status = response.status
         except urllib.error.HTTPError as error:
             status = error.code
+        except (urllib.error.URLError, OSError) as error:
+            reason = error.reason if isinstance(error, urllib.error.URLError) else error
+            category = (
+                "certificate"
+                if isinstance(reason, ssl.SSLCertVerificationError)
+                else "timeout"
+                if isinstance(reason, (TimeoutError, socket.timeout))
+                else "network"
+            )
+            print("EVOLUTION_PUBLIC_FAILURE=" + category, flush=True)
+            raise Deferred("public_health") from None
+        print("EVOLUTION_PUBLIC_STATUS=" + label + ":" + str(status), flush=True)
         if status not in allowed:
+            print("EVOLUTION_PUBLIC_FAILURE=invalid_status", flush=True)
             raise Deferred("public_health")
     print("EVOLUTION_PUBLIC_HEALTH_OK", flush=True)
 

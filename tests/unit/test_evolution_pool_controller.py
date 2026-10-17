@@ -506,3 +506,31 @@ def test_public_origin_requires_login_readiness_and_auth_boundary(monkeypatch, c
         with pytest.raises(pool.Deferred):
             PUBLIC_HEALTH()
     assert all(url.startswith("https://vasa.litatech.xyz/") for url, _ in calls)
+
+
+@pytest.mark.parametrize("category", ["certificate", "timeout", "network", "invalid_status"])
+def test_public_health_diagnostics_never_expose_response_or_network_error(
+    monkeypatch, capsys, category
+):
+    import ssl
+    import urllib.error
+
+    errors = {
+        "certificate": urllib.error.URLError(ssl.SSLCertVerificationError(SECRET)),
+        "timeout": urllib.error.URLError(TimeoutError(SECRET)),
+        "network": urllib.error.URLError(OSError(SECRET)),
+        "invalid_status": urllib.error.HTTPError("https://private/", 530, SECRET, {}, None),
+    }
+
+    def open_url(*args, **kwargs):
+        raise errors[category]
+
+    monkeypatch.setattr(
+        pool.urllib.request, "build_opener", lambda *args: SimpleNamespace(open=open_url)
+    )
+    with pytest.raises(pool.Deferred, match="public_health"):
+        PUBLIC_HEALTH()
+    output = capsys.readouterr().out
+    assert "EVOLUTION_PUBLIC_FAILURE=" + category in output
+    assert SECRET not in output
+    assert "https://private" not in output

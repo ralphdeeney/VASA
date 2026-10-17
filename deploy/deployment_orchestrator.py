@@ -12,7 +12,12 @@ import time
 from pathlib import Path
 from typing import Any
 
-from deploy.deployment_policy import BRANCH, EVOLUTION_PATCH_SHA256, EVOLUTION_UPSTREAM, REPOSITORY
+from deploy.deployment_policy import (
+    BRANCH,
+    EVOLUTION_PATCH_SHA256,
+    EVOLUTION_UPSTREAM,
+    REPOSITORY,
+)
 from deploy.request_validator import RequestRejected, load_request, validate_request
 
 STATES = {
@@ -61,6 +66,7 @@ SAFE_VALUES = {
         "quiesce",
         "replace",
         "rollback",
+        "public_health",
     },
     "EVOLUTION_ROLLOUT_DEFERRED": {
         "call_or_instance_inspection",
@@ -68,6 +74,23 @@ SAFE_VALUES = {
         "media_sockets",
         "active_or_unknown_after_quiesce",
     },
+    "LLM_SMOKE_FAILED": {
+        "missing_configuration",
+        "invalid_configuration",
+        "invalid_response",
+        "timeout",
+        "provider_error",
+        "internal_error",
+    },
+    "DEEPGRAM_SMOKE_FAILED": {
+        "missing_configuration",
+        "invalid_configuration",
+        "invalid_response",
+        "timeout",
+        "provider_error",
+        "internal_error",
+    },
+    "EVOLUTION_PUBLIC_FAILURE": {"certificate", "timeout", "network", "invalid_status"},
     "EVOLUTION_ROLLBACK_IMAGE": {"previous_source_build"},
     "EVOLUTION_INSTANCE_STAGE": {"database", "list", "paired_device", "status"},
     "EVOLUTION_INSTANCE_BASELINE": {"online", "offline"},
@@ -86,7 +109,10 @@ MARKER_PATTERN = re.compile(
     r"CALL_GATE_(?:DB|REDIS)_ACTIVE|INSTANCE_(?:REGISTERED_COUNT|UPSTREAM_COUNT|CONNECTED|LOGGED_IN)))"
     r"=[0-9]{1,10}\Z|EVOLUTION_DEPLOYED_SHA=[0-9a-f]{40}\Z|"
     r"EVOLUTION_POOL_FAILURE=(?:rollback_prepare|rollback_build|prepare_source|target_build):"
-    r"(?:timeout|command_failed)\Z"
+    r"(?:timeout|command_failed)\Z|"
+    r"EVOLUTION_PUBLIC_STATUS=(?:login|readiness|dashboard):[1-5][0-9]{2}\Z|"
+    r"(?:LLM_FIRST_TOKEN|LLM_TOTAL|DEEPGRAM_FIRST_AUDIO|DEEPGRAM_TOTAL|DEEPGRAM_AUDIO)_MS="
+    r"[0-9]{1,8}\.[0-9]{2}\Z"
 )
 
 
@@ -173,7 +199,7 @@ def markers(stdout: str) -> list[str]:
 
 def transport_failure(result: subprocess.CompletedProcess[str]) -> str | None:
     # Retry only failures known to occur before an authenticated remote request.
-    if "SSH host-key scan failed; no connection was attempted." in result.stdout:
+    if "SSH host-key scan failed; no connection was attempted." in (result.stdout + result.stderr):
         return "ssh_scan_unavailable"
     if "Host trust is missing or mismatched." in result.stdout:
         raise Blocked("ssh_host_trust")
@@ -265,11 +291,12 @@ class Journal:
                 "auto_merge": False,
                 "required_contexts": [],
                 "production_environment": False,
-                "description": "Validated VASA deployment request",
+                "description": "VASA request: " + str(self.request["operation"]),
                 "payload": {
                     "vasa_request_id": self.request["request_id"],
                     "digest": self.digest,
                     "source_sha": self.request["target_commit"],
+                    "operation": self.request["operation"],
                     "schema_version": 1,
                 },
             },
@@ -325,8 +352,8 @@ def run_request() -> int:
         journal = Journal(request, trigger)
         journal.claim()
         if journal.previous == "SUCCEEDED":
+            # The VPS ledger guarantees no repeat mutation; still verify current health.
             print("VASA_REQUEST_ALREADY_SUCCEEDED", flush=True)
-            return 0
         journal.state("VALIDATING")
         journal.state("TESTING")
         wait_ci([facts["parent_sha"], trigger])
@@ -368,7 +395,10 @@ def run_request() -> int:
                 continue
             if transient:
                 raise Blocked("ssh_retry_limit")
-            if any("ROLLBACK" in line for line in safe):
+            if any(
+                line in {"VASA_EVOLUTION_POOL_ROLLBACK_OK", "VASA_EVOLUTION_POOL_ROLLBACK_FAILED"}
+                for line in safe
+            ):
                 journal.state("ROLLBACK")
                 raise Blocked("rollback_performed")
             if result.returncode or not all(

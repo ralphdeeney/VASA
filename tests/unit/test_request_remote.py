@@ -15,6 +15,7 @@ def request(operation="application_check"):
     return {
         "request_id": ID,
         "target_commit": "b" * 40,
+        "expires_at": "2099-01-01T00:00:00Z",
         "operation": operation,
         "expected_markers": ["VASA_VPS_CONNECTIVITY_OK"],
     }
@@ -43,7 +44,7 @@ def setup(tmp_path, fail=None):
         "private_hashes": lambda: {"runtime": "hash"},
         "assert_unchanged": invoke("unchanged"),
         "container": lambda name: ("container", {"image": "verified-image"}),
-        "git": lambda *args: "old",
+        "git": lambda *args: TRIGGER if "origin/build/vasa-foundation" in args else "old",
         "deploy": invoke("deploy"),
     }
     return ns, calls
@@ -280,3 +281,68 @@ def test_reversible_preparation_failure_can_resume_without_consuming_grant(tmp_p
     ).exists()
     ledger = tmp_path / ".local/deployment-requests" / (ID + ".json")
     assert subject.read(ledger)["state"] == "BLOCKED"
+
+
+def test_expired_request_never_reaches_remote_preflight(tmp_path):
+    ns, calls = setup(tmp_path)
+    value = request()
+    value["expires_at"] = "2000-01-01T00:00:00Z"
+    with pytest.raises(subject.GateBlocked):
+        subject.execute(ns, value, TRIGGER, {}, {})
+    assert calls == []
+
+
+def test_branch_superseded_during_preparation_cannot_consume_grant(tmp_path):
+    ns, calls = setup(tmp_path)
+    ns["git"] = lambda *args: "c" * 40
+
+    def run(*args):
+        if args[2]:
+            args[0]["before_evolution_mutation"]()
+        return 0
+
+    sources = dict.fromkeys(["gate", "instances", "backups", "capacity"], "source")
+    assert (
+        subject.execute(ns, request("evolution_pool_rollout"), TRIGGER, {"run": run}, sources) == 2
+    )
+    assert not (
+        tmp_path / ".local/deployment-requests/grant-evolution-pool-2026-10-17.json"
+    ).exists()
+
+
+def test_expiry_is_rechecked_after_preparation_before_mutation(tmp_path, monkeypatch):
+    ns, calls = setup(tmp_path)
+
+    def stale(_):
+        raise subject.GateBlocked()
+
+    def run(*args):
+        if args[2]:
+            monkeypatch.setattr(subject, "ensure_current", stale)
+            args[0]["before_evolution_mutation"]()
+        return 0
+
+    sources = dict.fromkeys(["gate", "instances", "backups", "capacity"], "source")
+    assert (
+        subject.execute(ns, request("evolution_pool_rollout"), TRIGGER, {"run": run}, sources) == 2
+    )
+    assert not (
+        tmp_path / ".local/deployment-requests/grant-evolution-pool-2026-10-17.json"
+    ).exists()
+
+
+def test_evolution_check_reports_public_gate_failure_without_mutation(tmp_path, capsys):
+    ns, calls = setup(tmp_path)
+
+    def public_health():
+        print("EVOLUTION_PUBLIC_FAILURE=certificate")
+        raise RuntimeError("private network exception")
+
+    evolution = {"run": lambda *args: 0, "public_health": public_health}
+    sources = dict.fromkeys(["gate", "instances", "backups", "capacity"], "source")
+    assert subject.execute(ns, request("evolution_check"), TRIGGER, evolution, sources) == 2
+    assert calls == ["preflight", "health"]
+    output = capsys.readouterr().out
+    assert "EVOLUTION_PUBLIC_FAILURE=certificate" in output
+    assert "private network exception" not in output
+    assert "VASA_REQUEST_STATE=SUCCEEDED" not in output

@@ -1,5 +1,23 @@
 # VASA V1 — AUTONOMOUS BUILD HARNESS
 
+## Current autonomous delivery contract — 2026-10-17
+
+Follow [the deployment orchestrator](DEPLOYMENT_ORCHESTRATOR.md) for approved
+work: code → local checks → commit/push → exact-SHA CI → automatic guarded Actions
+→ fresh verification → report. Codex pushes explicit request-only audit commits
+for read-only checks and separately approved maintenance; the user need not open
+Actions. Normal pushes never authorize protected maintenance. Do not stop at
+commit/push or claim success from healthy containers alone.
+
+Hard gates are not repair permissions: active calls, missing backup/rollback,
+unknown schema, dirty operator checkout, expired/superseded request, secret or
+host-trust changes must stop the affected mutation. Verification-only resume
+requires a matching private success receipt; a rolled-back attempt cannot be
+replayed and its one-shot maintenance grant cannot be silently renewed.
+Read-only diagnosis and independent implementation/tests continue. Keep human
+WhatsApp testing and deferred SMTP separate from container-health acceptance.
+
+
 ## 1. Mission
 
 Build **VASA V1** as a minimal multi-tenant WhatsApp AI voice-agent runtime.

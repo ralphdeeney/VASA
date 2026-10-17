@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import re
+from datetime import UTC, datetime
 
 
 class GateBlocked(Exception):
@@ -67,8 +68,18 @@ def resume_verified(ns, request, previous, evolution):
     return True
 
 
+def ensure_current(request):
+    try:
+        expires = datetime.fromisoformat(request["expires_at"].replace("Z", "+00:00"))
+        if expires.tzinfo is None or datetime.now(UTC) >= expires:
+            raise GateBlocked()
+    except (KeyError, ValueError, TypeError):
+        raise GateBlocked() from None
+
+
 def execute(ns, request, trigger, evolution, sources):
     """No request text is evaluated as a command; dispatch is an exact allowlist."""
+    ensure_current(request)
     ns["preflight"]()
     root = ns["ROOT"]
     local = root / ".local"
@@ -155,6 +166,11 @@ def execute(ns, request, trigger, evolution, sources):
                 ns["request_stage"] = record_stage
 
                 def claim_mutation():
+                    # Refresh expiry and branch immediately before production changes.
+                    ensure_current(request)
+                    ns["git"]("fetch", "origin", "build/vasa-foundation")
+                    if ns["git"]("rev-parse", "origin/build/vasa-foundation") != trigger:
+                        raise GateBlocked()
                     # Consume only after source/build/backups pass, immediately before
                     # admission is paused. Preparation failures may resume safely.
                     grant = directory / "grant-evolution-pool-2026-10-17.json"
@@ -184,6 +200,9 @@ def execute(ns, request, trigger, evolution, sources):
                 )
                 if result:
                     raise GateBlocked()
+                if operation == "evolution_check":
+                    ns["health"]()
+                    evolution["public_health"]()
             elif operation == "application_check":
                 ns["snapshot_services"](ns["DEPENDENCIES"] + ns["SERVICES"])
                 ns["health"]()

@@ -1,3 +1,39 @@
+## 2026-10-17 — Automatic requests proven; guarded pool rollout rolled back
+
+The push-driven read-only request succeeded automatically in Actions39006681009
+(source4ec0f3f; request e3a436f), with Verify39006681018 passing1,318 tests.
+GitHub deployment-journal writes, existing authenticated SSH bridge, strict host
+trust and request-only exclusion from normal application replacement are proven.
+
+The separately approved pool request7a76620d3e670b3e52152ffd313308bb2045861e
+ran automatically in Actions39006923768 after Verify39006923803. It built and
+verified the previous-source rollback image, restored three-database backups in
+disposable databases, confirmed zero durable/Redis calls and media sockets,
+replaced only Evolution, preserved pairing/schema/private files/other containers,
+and sampled Evolution connections2/2/2 (total4). Before:Evolution1,total3.
+The old95-connection incident is not this rollout's baseline.
+
+The final public-origin check failed before the deployment receipt/success marker.
+The controller restored the previous Evolution image and verified rollback:
+VASA_EVOLUTION_POOL_ROLLBACK_OK. No fixed image is claimed deployed. The grant is
+consumed; it cannot be renewed by request data or blindly retried. The instance
+remained disconnected/logged-out with its paired device preserved. Human live-call
+acceptance and SMTP remain deferred. The public origin currently responds from
+Codex; a read-only VPS diagnostic must identify the endpoint/status/network gate.
+
+Reporting/recovery hardening distinguishes a prepared rollback image from an
+actual rollback, recognizes pre-login scan failures on stderr without logging
+it, rechecks expiry/branch immediately before maintenance, and requires fresh
+verification even for successful request replay. Public-origin diagnostics emit
+only fixed endpoint labels/statuses and certificate/timeout/network/status codes.
+No raw response, URL, exception body or secret is printed.
+
+Ordinary app pushes still safely refuse the canonical dirty checkout (run
+39006668584). Existing operator edge/tunnel files and the active immutable app/
+voice release858b5f853957d719a34ea96f28b5ea726100d402 remain preserved. This is a
+hard deployment gate, not permission to reset/stash operator files. No migrations,
+provider changes, pairing changes, n8n/Caddy/Cloudflare changes or direct Codex SSH.
+
 ## 2026-10-17 — Autonomous request orchestration (implementation verification)
 
 Strict push-driven deployment requests, trusted actor/CI gates, GitHub deployment

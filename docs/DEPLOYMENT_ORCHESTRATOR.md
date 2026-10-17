@@ -10,7 +10,8 @@ both restrict the actor to the owner; repository writers remain trusted to chang
 workflow/policy code. Branch protection/required review is not configured or
 changed by this task; broader team/production delegation needs separate review.
 The new workflow declares contents:read, actions:read and deployments:write;
-its actual execution must prove those permissions before any VPS operation.
+the successful read-only Actions39006681009 proved those permissions before
+VPS execution. No extra credential was requested.
 
 Ordinary code pushes still select application deploy (never Evolution/bootstrap,
 paid smoke or migrations), now waiting for successful exact-SHA Verify CI.
@@ -94,3 +95,25 @@ pairing, alter secrets/host trust, touch n8n/Caddy/Cloudflare or unrelated servi
 or interrupt an active customer call. Preserve unknown checkout files. Dirty
 canonical checkout and migration gates remain hard gates, not permission to
 reset/stash files or invent another deployment stack. SMTP remains deferred.
+
+## Demonstration evidence and remaining gates
+
+Read-only request e3a436f / Actions39006681009 succeeded automatically; Verify
+39006681018 passed1,318 tests. The maintenance request7a76620 ran automatically
+in39006923768 and passed source/image, backups/restore, repeated no-call,
+identity/schema and connection gates. Its final public-health check failed and
+verified rollback restored the old Evolution image. The one-shot maintenance
+approval is consumed; correcting diagnostics does not authorize a second
+replacement. Require explicit review/renewed approval after identifying the gate.
+
+The pool candidate showed2 Evolution connections over three probes (total4),
+compared with1 Evolution/3 total immediately before. The historical95-connection
+incident was before external recovery; it is not a before/after reduction from
+this attempt. Offline/logged-out WhatsApp is separately reported; no pairing or
+call reconnect claim is made. Routine application pushes still refuse the dirty
+canonical checkout without touching its operator-owned edge/tunnel files.
+
+Read-only evolution_check now runs the same fixed public origin checks and emits
+EVOLUTION_PUBLIC_STATUS=login/readiness/dashboard:<HTTP code>, or one fixed
+EVOLUTION_PUBLIC_FAILURE code. TLS verification remains enabled; no arbitrary
+URL, response, redirect destination or exception text reaches logs.

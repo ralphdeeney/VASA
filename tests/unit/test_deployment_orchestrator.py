@@ -237,3 +237,49 @@ def test_unknown_lowercase_marker_values_are_not_a_covert_log_channel():
         )
         == []
     )
+
+
+def test_safe_scan_retry_recognizes_stderr_without_logging_it():
+    error = "SSH host-key scan failed; no connection was attempted.\nprivate-key-sentinel"
+    assert subject.transport_failure(result(1, stderr=error)) == "ssh_scan_unavailable"
+
+
+def test_prepared_rollback_image_does_not_mean_a_rollback_was_executed(monkeypatch):
+    states, _, _ = configured_run(
+        monkeypatch,
+        [result(0, "EVOLUTION_ROLLBACK_IMAGE_VERIFIED\nVASA_VPS_CONNECTIVITY_OK")],
+    )
+    assert subject.run_request() == 0
+    assert "ROLLBACK" not in states
+    assert states[-1] == "SUCCEEDED"
+
+
+def test_public_health_markers_cannot_print_urls_bodies_or_exception_text():
+    assert subject.markers(
+        "EVOLUTION_PUBLIC_STATUS=login:200\n"
+        "EVOLUTION_PUBLIC_STATUS=readiness:530\n"
+        "EVOLUTION_PUBLIC_FAILURE=certificate\n"
+        "EVOLUTION_PUBLIC_STATUS=login:200?token=secret\n"
+        "EVOLUTION_PUBLIC_FAILURE=private-exception\n"
+        "EVOLUTION_PUBLIC_STATUS=arbitrary:200"
+    ) == [
+        "EVOLUTION_PUBLIC_STATUS=login:200",
+        "EVOLUTION_PUBLIC_STATUS=readiness:530",
+        "EVOLUTION_PUBLIC_FAILURE=certificate",
+    ]
+
+
+def test_optional_provider_smoke_keeps_only_fixed_failures_and_bounded_timings():
+    assert subject.markers(
+        "LLM_SMOKE_FAILED=timeout\n"
+        "DEEPGRAM_SMOKE_FAILED=provider_error\n"
+        "LLM_FIRST_TOKEN_MS=123.45\n"
+        "DEEPGRAM_TOTAL_MS=456.78\n"
+        "LLM_SMOKE_FAILED=Authorization: Bearer secret\n"
+        "DEEPGRAM_TOTAL_MS=456.78?token=secret"
+    ) == [
+        "LLM_SMOKE_FAILED=timeout",
+        "DEEPGRAM_SMOKE_FAILED=provider_error",
+        "LLM_FIRST_TOKEN_MS=123.45",
+        "DEEPGRAM_TOTAL_MS=456.78",
+    ]
