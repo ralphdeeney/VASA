@@ -639,3 +639,13 @@ implementation; do not infer its own workflow status from the source runs.
 No secure provider binding is configured, no exposed key was stored or used,
 and no live AI-call or ten-call capacity claim is made. Remaining graph gate:
 live OpenAI behavior/real dialogue acceptance before dependent wave completion.
+
+## 2026-10-17 — Approved identifying health-client correction
+
+Operator Authorization A is implemented exactly: honest identifying User-Agent,
+fixed HTTPS endpoints, GET, verified TLS, no redirects and original status/rollback
+requirements. Independent runner readiness and anonymous tenant/admin boundaries
+are now blocking checks. Controller-only pushes avoid unrelated app activation.
+Authorization B is conditional; renewed grant support is dormant until fresh
+read-only readiness succeeds. Existing consumed grant and operator files remain
+untouched. Evolution remains undeployed pending fresh live proof.

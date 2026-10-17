@@ -372,9 +372,17 @@ def run_request() -> int:
         validate_request(request, facts)
         journal.state("READY")
         if request["operation"] == "evolution_check":
-            from deploy.health_diagnostics import emit, run
+            from deploy.health_diagnostics import (
+                emit,
+                run,
+                verify_auth_boundaries,
+                verify_identified_public_health,
+            )
 
             emit(run("github"))
+            # The independent runner must satisfy the same real, reviewed gate.
+            verify_identified_public_health("github")
+            verify_auth_boundaries("github")
         environment = dict(os.environ)
         environment.update(
             VASA_REQUEST_FILE=paths[0],

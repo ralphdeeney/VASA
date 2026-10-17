@@ -50,6 +50,23 @@ on:
       - build/vasa-foundation
     paths-ignore:
       - 'deploy/requests/**'
+      # Controller/read-only recovery changes use explicit deployment requests.
+      # Runtime/Compose changes still follow the normal application deployment.
+      - 'deploy/actions*.py'
+      - 'deploy/actions-ssh.sh'
+      - 'deploy/request*.py'
+      - 'deploy/request_schema.json'
+      - 'deploy/deployment_*.py'
+      - 'deploy/create_request.py'
+      - 'deploy/health_diagnostics.py'
+      - 'deploy/recovery_audit.py'
+      - 'deploy/evolution_backups.py'
+      - 'deploy/evolution_call_gate.py'
+      - 'deploy/evolution_instance_check.py'
+      - 'docs/**'
+      - 'tests/**'
+      - '*.md'
+      - '.github/**'
 
 permissions:
   contents: read

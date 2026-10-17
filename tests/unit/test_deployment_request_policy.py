@@ -168,3 +168,22 @@ def test_json_loader_limits_and_symlinks(tmp_path):
     with pytest.raises(RequestRejected):
         load_request(link)
     assert load_request(path) == {"valid": True}
+
+
+def test_renewed_policy_binding_and_absolute_expiry(monkeypatch):
+    from deploy import deployment_policy
+
+    grant = {
+        "grant_id": "evolution-pool-renewed-test",
+        "request_id": REQUEST_ID,
+        "expires_at": "2026-10-17T13:00:00Z",
+    }
+    monkeypatch.setattr(deployment_policy, "RENEWED_EVOLUTION_GRANT", grant)
+    doc = request("evolution_pool_rollout")
+    with pytest.raises(RequestRejected, match="policy_mismatch"):
+        validate_request(doc, context(doc), now=NOW)
+    doc.update(request_id=REQUEST_ID, authorization=grant["grant_id"])
+    assert validate_request(doc, context(doc), now=NOW) == doc
+    doc["expires_at"] = "2026-10-17T14:00:00Z"
+    with pytest.raises(RequestRejected, match="stale_request"):
+        validate_request(doc, context(doc), now=NOW)

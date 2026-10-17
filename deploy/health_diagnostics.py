@@ -307,7 +307,67 @@ def valid(record: object) -> bool:
     )
 
 
+def verify_identified_public_health(vantage: str) -> None:
+    """Require genuine identified HTTPS readiness from an independent vantage."""
+    if vantage not in {"github", "vps", "cloud"}:
+        raise ValueError("public_health")
+    for endpoint, expected in (("login", 200), ("ready", 200), ("dashboard", 401)):
+        record = probe(vantage, endpoint, ua="diagnostic")
+        emit([record])
+        if record["status"] != expected or record["error"] not in {"none", "http"}:
+            raise ValueError("public_health")
+    print("VASA_IDENTIFIED_PUBLIC_HEALTH_OK=" + vantage, flush=True)
+
+
+def verify_auth_boundaries(vantage: str, include_private: bool = False) -> None:
+    """Require anonymous denial at fixed management APIs; never read response bodies."""
+    if vantage not in {"github", "vps", "cloud"} or type(include_private) is not bool:
+        raise ValueError("authentication_boundary")
+
+    opener = request.build_opener(NoRedirect())
+    origins = [("public", PUBLIC)]
+    if include_private:
+        origins.append(("private", PRIVATE))
+    for origin, base_url in origins:
+        for label, path in (
+            ("identity", "/api/auth/me"),
+            ("instances", "/api/whatsapp/instances"),
+            ("admin", "/api/saas/admin/users"),
+        ):
+            probe_request = request.Request(
+                base_url + path, headers={"User-Agent": UA}, method="GET"
+            )
+            try:
+                with opener.open(probe_request, timeout=TIMEOUT) as response:
+                    status = response.status
+            except error.HTTPError as failure:
+                status = failure.code
+                failure.close()
+            except (error.URLError, OSError):
+                print("VASA_AUTH_BOUNDARY_FAILED=" + vantage + ":transport", flush=True)
+                raise ValueError("authentication_boundary") from None
+            if type(status) is not int or not 100 <= status <= 599:
+                status = 0
+            print(
+                "VASA_AUTH_BOUNDARY=" + ":".join((vantage, origin, label, f"{status:03d}")),
+                flush=True,
+            )
+            if status != 401:
+                print("VASA_AUTH_BOUNDARY_FAILED=" + vantage + ":invalid_status", flush=True)
+                raise ValueError("authentication_boundary")
+    print("VASA_AUTH_BOUNDARIES_OK=" + vantage, flush=True)
+
+
 def safe_line(line: str) -> bool:
+    if re.fullmatch(
+        r"VASA_AUTH_BOUNDARY=(?:github|vps|cloud):(?:public|private):"
+        r"(?:identity|instances|admin):(?:000|[1-5][0-9]{2})"
+        r"|VASA_AUTH_BOUNDARIES_OK=(?:github|vps|cloud)"
+        r"|VASA_IDENTIFIED_PUBLIC_HEALTH_OK=(?:github|vps|cloud)"
+        r"|VASA_AUTH_BOUNDARY_FAILED=(?:github|vps|cloud):(?:invalid_status|transport)",
+        line,
+    ):
+        return True
     prefix = "VASA_HEALTH_DIAGNOSTIC="
     if not line.startswith(prefix) or len(line) > 2048:
         return False

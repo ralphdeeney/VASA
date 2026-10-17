@@ -12,10 +12,10 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from deploy.deployment_policy import (
     BRANCH,
-    EVOLUTION_REQUEST_ID,
     OPERATIONS,
     REPOSITORY,
     TRUSTED_ACTOR,
+    active_evolution_grant,
 )
 
 
@@ -76,11 +76,13 @@ def validate_request(
     operation = OPERATIONS[request["operation"]]
     if operation["authorization"] is None:
         raise RequestRejected("authorization_required")
+    if request["operation"] == "evolution_pool_rollout":
+        operation = dict(operation, authorization=active_evolution_grant()["grant_id"])
     for field in ("scope", "policy", "expected_markers", "authorization"):
         if request[field] != operation[field]:
             raise RequestRejected("policy_mismatch")
     if request["operation"] == "evolution_pool_rollout":
-        if request["request_id"] != EVOLUTION_REQUEST_ID:
+        if request["request_id"] != active_evolution_grant()["request_id"]:
             raise RequestRejected("authorization_required")
     expected_path = f"deploy/requests/{request['request_id']}.json"
     if context.get("changed_paths") != [expected_path]:
@@ -109,4 +111,13 @@ def validate_request(
         raise RequestRejected("stale_request")
     if expires - created > timedelta(hours=24) or current - created > timedelta(hours=24):
         raise RequestRejected("stale_request")
+    if request["operation"] == "evolution_pool_rollout":
+        grant_expiry = active_evolution_grant().get("expires_at")
+        if grant_expiry is not None:
+            try:
+                deadline = datetime.fromisoformat(str(grant_expiry).replace("Z", "+00:00"))
+                if deadline.tzinfo is None or current >= deadline or expires > deadline:
+                    raise RequestRejected("stale_request")
+            except (ValueError, TypeError):
+                raise RequestRejected("stale_request") from None
     return dict(request)

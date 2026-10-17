@@ -294,8 +294,18 @@ def test_external_comparison_runs_only_after_ci_for_readonly_evolution(monkeypat
     document["operation"] = "evolution_check"
     monkeypatch.setattr(subject, "wait_ci", lambda *args: events.append("ci"))
     monkeypatch.setattr(health_diagnostics, "run", lambda vantage: events.append(vantage) or [])
+    monkeypatch.setattr(
+        health_diagnostics,
+        "verify_identified_public_health",
+        lambda vantage: events.append("public_gate"),
+    )
+    monkeypatch.setattr(
+        health_diagnostics,
+        "verify_auth_boundaries",
+        lambda vantage: events.append("auth_gate"),
+    )
     assert subject.run_request() == 0
-    assert events == ["ci", "github"]
+    assert events == ["ci", "github", "public_gate", "auth_gate"]
     assert len(commands) == 1
     assert states[-1] == "SUCCEEDED"
 
@@ -325,3 +335,23 @@ def test_malicious_json_cannot_smuggle_secrets_through_diagnostic_markers():
         )
         == []
     )
+
+
+@pytest.mark.parametrize("gate", ["verify_identified_public_health", "verify_auth_boundaries"])
+def test_independent_gate_failure_blocks_ssh(monkeypatch, gate):
+    from deploy import health_diagnostics
+
+    states, commands, _ = configured_run(monkeypatch, [])
+    subject.load_request("")["operation"] = "evolution_check"
+    monkeypatch.setattr(subject, "wait_ci", lambda *args: None)
+    monkeypatch.setattr(health_diagnostics, "run", lambda *args: [])
+    monkeypatch.setattr(health_diagnostics, "verify_identified_public_health", lambda *args: None)
+    monkeypatch.setattr(health_diagnostics, "verify_auth_boundaries", lambda *args: None)
+
+    def fail(*args):
+        raise ValueError("untrusted body secret")
+
+    monkeypatch.setattr(health_diagnostics, gate, fail)
+    assert subject.run_request() == 1
+    assert commands == []
+    assert "SUCCEEDED" not in states

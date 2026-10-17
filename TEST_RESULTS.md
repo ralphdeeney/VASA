@@ -734,3 +734,13 @@ both completed successfully for code 61b57d9e3d85a70ae6d49075a87ee1fa19e17e79
 verified native assets, migrated real PostgreSQL, and ran the full 318-check
 suite with Ruff/format/strict mypy. Source tests were not excluded. A subsequent
 documentation-only CI evidence commit does not inherit these workflow results.
+
+## Authorized health-client recovery continuation — 2026-10-17
+
+Full integrated local suite: 1,423 passed (one upstream Starlette deprecation
+warning); two subsequent independent-runner fail-closed regression cases passed
+in the focused orchestrator suite. Ruff, format, application strict mypy and seven
+deployment modules' strict mypy passed. Actionlint, Bash syntax and diff checks
+passed. Full pinned Go tests/vet, call/media race tests and real PostgreSQL
+120-cycle lifecycle/reuse/shutdown/race verification passed. No live replacement
+is inferred from these tests. Fresh automatic read-only readiness is next.

@@ -421,3 +421,110 @@ def test_diagnostic_failure_still_checks_container_preservation(tmp_path, capsys
         subject.readonly_diagnostics(ns, {}, sources)
     assert calls == ["snapshot", "unchanged"]
     assert "private-body" not in capsys.readouterr().out
+
+
+def test_renewed_grant_is_dormant_and_old_consumed_grant_remains_authoritative(tmp_path):
+    from deploy.deployment_policy import RENEWED_EVOLUTION_GRANT
+
+    assert RENEWED_EVOLUTION_GRANT is None
+    ns, _ = setup(tmp_path)
+    assert subject.renewed_prerequisite(ns, request(), tmp_path) == "evolution-pool-2026-10-17"
+
+
+def test_renewed_grant_requires_fresh_matching_private_readiness_receipt(tmp_path, monkeypatch):
+    from datetime import UTC, datetime, timedelta
+    from types import SimpleNamespace
+
+    ns, _ = setup(tmp_path)
+    now = datetime.now(UTC)
+    pre = "11111111-1111-4111-8111-111111111111"
+    grant = {
+        "grant_id": "evolution-pool-renewed-test",
+        "request_id": ID,
+        "expires_at": (now + timedelta(hours=1)).isoformat(),
+        "prerequisite_request_id": pre,
+        "prerequisite_trigger_sha": TRIGGER,
+        "source_manifest": {
+            "docker/evolution-db-pool.patch": hashlib.sha256(b"exact\n").hexdigest()
+        },
+    }
+    ns["approved_evolution_grant"] = grant
+    value = request("evolution_pool_rollout")
+    value["authorization"] = grant["grant_id"]
+    evidence = {
+        "state": "SUCCEEDED",
+        "operation": "evolution_check",
+        "trigger_sha": TRIGGER,
+        "readiness_contract": "identified-health-v1",
+        "public_health_verified": True,
+        "completed_at": now.isoformat(),
+    }
+    directory = tmp_path / ".local/deployment-requests"
+    directory.mkdir(mode=0o700)
+    path = directory / (pre + ".json")
+    subject.save(path, evidence)
+    monkeypatch.setattr(
+        subject.subprocess, "run", lambda *a, **kw: SimpleNamespace(stdout=b"exact\n")
+    )
+    assert subject.renewed_prerequisite(ns, value, directory, TRIGGER) == grant["grant_id"]
+    for key, bad in [
+        ("state", "FAILED"),
+        ("operation", "application_check"),
+        ("trigger_sha", "c" * 40),
+        ("public_health_verified", False),
+        ("readiness_contract", "legacy"),
+        ("completed_at", (now - timedelta(hours=13)).isoformat()),
+        ("completed_at", (now + timedelta(hours=1)).isoformat()),
+    ]:
+        subject.save(path, dict(evidence, **{key: bad}))
+        with pytest.raises(subject.GateBlocked):
+            subject.renewed_prerequisite(ns, value, directory, TRIGGER)
+    subject.save(path, evidence)
+    monkeypatch.setattr(
+        subject.subprocess, "run", lambda *a, **kw: SimpleNamespace(stdout=b"changed\n")
+    )
+    with pytest.raises(subject.GateBlocked):
+        subject.renewed_prerequisite(ns, value, directory, TRIGGER)
+
+
+def test_evolution_deployment_receipt_is_append_only_private_and_exact(tmp_path):
+    ns, _ = setup(tmp_path)
+    directory = tmp_path / ".local/deployment-requests"
+    directory.mkdir(mode=0o700)
+    controller = {"status": "healthy", "target_sha": TRIGGER, "image": "sha256:" + "c" * 64}
+    subject.save(tmp_path / ".local/actions-evolution-pool.json", controller)
+    state = {
+        "target_sha": "b" * 40,
+        "completed_at": "2026-10-17T12:00:00Z",
+        "before": {"evolution": {"image": "sha256:" + "d" * 64}},
+    }
+    subject.immutable_evolution_receipt(ns, directory, ID, TRIGGER, state)
+    path = directory / (ID + ".deployment.json")
+    assert path.stat().st_mode & 0o777 == 0o600
+    saved = subject.read(path)
+    assert saved["controller_receipt"] == controller
+    assert saved["source_sha"] == "b" * 40
+    with pytest.raises(FileExistsError):
+        subject.immutable_evolution_receipt(ns, directory, ID, TRIGGER, state)
+    assert subject.read(path) == saved
+    controller["target_sha"] = "e" * 40
+    subject.save(tmp_path / ".local/actions-evolution-pool.json", controller)
+    with pytest.raises(subject.GateBlocked):
+        subject.immutable_evolution_receipt(ns, directory, "different", TRIGGER, state)
+
+
+def test_renewed_prerequisite_fetches_before_manifest_and_rejects_superseded_tip(tmp_path):
+    ns, calls = setup(tmp_path)
+    ns["approved_evolution_grant"] = {"prerequisite_request_id": ID}
+
+    def git(*args):
+        calls.append(args)
+        return "changed-head" if args[0] == "rev-parse" else ""
+
+    ns["git"] = git
+    with pytest.raises(subject.GateBlocked):
+        subject.renewed_prerequisite(ns, request(), tmp_path, TRIGGER)
+    assert calls == [
+        ("fetch", "origin", "build/vasa-foundation"),
+        ("rev-parse", "origin/build/vasa-foundation"),
+    ]

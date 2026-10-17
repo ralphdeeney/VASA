@@ -491,8 +491,10 @@ def test_public_origin_requires_login_readiness_and_auth_boundary(monkeypatch, c
     responses = iter(statuses)
     calls = []
 
-    def open_url(url, timeout):
-        calls.append((url, timeout))
+    def open_url(request, timeout):
+        assert request.get_method() == "GET"
+        assert request.get_header("User-agent") == "VASA-Health-Diagnostic/1.0"
+        calls.append((request.full_url, timeout))
         return nullcontext(SimpleNamespace(status=next(responses)))
 
     monkeypatch.setattr(

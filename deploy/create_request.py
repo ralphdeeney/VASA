@@ -9,11 +9,13 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 
-from deploy.deployment_policy import BRANCH, EVOLUTION_REQUEST_ID, OPERATIONS
+from deploy.deployment_policy import BRANCH, OPERATIONS, active_evolution_grant
 
 
 def create(operation: str, reason: str) -> Path:
-    profile = OPERATIONS[operation]
+    profile = dict(OPERATIONS[operation])
+    if operation == "evolution_pool_rollout":
+        profile["authorization"] = active_evolution_grant()["grant_id"]
     if profile["authorization"] is None:
         raise ValueError("authorization_required")
     result = subprocess.run(
@@ -25,8 +27,20 @@ def create(operation: str, reason: str) -> Path:
     if branch != BRANCH:
         raise ValueError("wrong_branch")
     target = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
-    identifier = EVOLUTION_REQUEST_ID if operation == "evolution_pool_rollout" else str(uuid4())
+    identifier = (
+        str(active_evolution_grant()["request_id"])
+        if operation == "evolution_pool_rollout"
+        else str(uuid4())
+    )
     now = datetime.now(UTC).replace(microsecond=0)
+    expires = now + timedelta(hours=12)
+    if operation == "evolution_pool_rollout" and "expires_at" in active_evolution_grant():
+        deadline = datetime.fromisoformat(
+            str(active_evolution_grant()["expires_at"]).replace("Z", "+00:00")
+        )
+        if deadline.tzinfo is None or deadline <= now:
+            raise ValueError("authorization_expired")
+        expires = min(expires, deadline)
     request = {
         "request_id": identifier,
         "operation": operation,
@@ -38,7 +52,7 @@ def create(operation: str, reason: str) -> Path:
         "authorization": profile["authorization"],
         "reason": reason,
         "created_at": now.isoformat().replace("+00:00", "Z"),
-        "expires_at": (now + timedelta(hours=12)).isoformat().replace("+00:00", "Z"),
+        "expires_at": expires.isoformat().replace("+00:00", "Z"),
         "expected_markers": profile["expected_markers"],
     }
     path = Path("deploy/requests") / (identifier + ".json")

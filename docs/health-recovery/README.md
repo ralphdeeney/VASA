@@ -129,3 +129,19 @@ The private payload carries reviewed diagnostic code without changing canonical
 VPS source. A local standalone public probe is
 `python -m deploy.health_diagnostics --vantage cloud`.
 SMTP and all unrelated infrastructure remain untouched.
+
+## Explicitly authorized recovery continuation
+
+The operator separately approved the exact identifying-client patch and one
+conditional new Evolution pool maintenance attempt. The health patch is now
+applied; URLs, GET, TLS validation, no redirects, timeouts, accepted statuses and
+rollback requirements remain unchanged. The independent Actions runner must
+also pass the real reviewed public-health gate before the VPS check proceeds.
+Controller/docs/test-only pushes use explicit deployment requests and do not
+activate an unrelated application release against the dirty canonical checkout.
+
+The replacement maintenance grant remains dormant until a fresh successful
+read-only receipt binds the identified-health contract. The historical consumed
+grant remains untouched. No Evolution replacement or application activation has
+yet occurred in this continuation. Fresh evidence and final outcomes will be
+recorded below; historical results above are not current live proof.

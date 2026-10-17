@@ -5,7 +5,8 @@ import hashlib
 import json
 import os
 import re
-from datetime import UTC, datetime
+import subprocess
+from datetime import UTC, datetime, timedelta
 
 
 class GateBlocked(Exception):
@@ -28,7 +29,13 @@ def save(path, value):
 
 
 def read(path):
-    if path.is_symlink() or path.stat().st_size > 65536 or path.stat().st_mode & 0o077:
+    if (
+        path.is_symlink()
+        or not path.is_file()
+        or path.stat().st_uid != os.getuid()
+        or path.stat().st_size > 65536
+        or path.stat().st_mode & 0o077
+    ):
         raise GateBlocked()
     return json.loads(path.read_text())
 
@@ -83,6 +90,8 @@ def readonly_diagnostics(ns, evolution, sources):
             diagnostics = {"__name__": "vasa_readonly_health"}
             exec(compile(sources["health_diagnostics"], "health_diagnostics", "exec"), diagnostics)
             diagnostics["emit"](diagnostics["run"]("vps", True))
+            if "verify_auth_boundaries" in diagnostics:
+                diagnostics["verify_auth_boundaries"]("vps", True)
         cap = {"__name__": "vasa_readonly_capacity"}
         exec(compile(sources["capacity"], "capacity", "exec"), cap)
         print("EVOLUTION_CONNECTIONS_AFTER", flush=True)
@@ -100,6 +109,91 @@ def ensure_current(request):
             raise GateBlocked()
     except (KeyError, ValueError, TypeError):
         raise GateBlocked() from None
+
+
+def renewed_prerequisite(ns, request, directory, trigger=None):
+    """Trusted code policy, not request flags, binds one renewed maintenance grant."""
+    policy = ns.get("approved_evolution_grant", {})
+    if "prerequisite_request_id" not in policy:
+        return "evolution-pool-2026-10-17"
+    now = datetime.now(UTC)
+    try:
+        ns["git"]("fetch", "origin", "build/vasa-foundation")
+        if trigger is None or ns["git"]("rev-parse", "origin/build/vasa-foundation") != trigger:
+            raise GateBlocked()
+        deadline = datetime.fromisoformat(policy["expires_at"].replace("Z", "+00:00"))
+        if deadline.tzinfo is None or now >= deadline:
+            raise GateBlocked()
+        if request["request_id"] != policy["request_id"]:
+            raise GateBlocked()
+        if request.get("authorization") != policy["grant_id"]:
+            raise GateBlocked()
+        identifier = policy["prerequisite_request_id"]
+        if re.fullmatch(r"[a-f0-9-]{36}", identifier) is None:
+            raise GateBlocked()
+        evidence = read(directory / (identifier + ".json"))
+        completed = datetime.fromisoformat(evidence["completed_at"].replace("Z", "+00:00"))
+        if (
+            evidence.get("state") != "SUCCEEDED"
+            or evidence.get("operation") != "evolution_check"
+            or evidence.get("trigger_sha") != policy["prerequisite_trigger_sha"]
+            or evidence.get("readiness_contract") != "identified-health-v1"
+            or evidence.get("public_health_verified") is not True
+            or completed.tzinfo is None
+            or completed > now
+            or now - completed > timedelta(hours=12)
+        ):
+            raise GateBlocked()
+        grant_id = policy["grant_id"]
+        if re.fullmatch(r"evolution-pool-[a-z0-9-]{1,64}", grant_id) is None:
+            raise GateBlocked()
+        manifest = policy["source_manifest"]
+        if not isinstance(manifest, dict) or not manifest:
+            raise GateBlocked()
+        for path, expected in manifest.items():
+            if (
+                not isinstance(path, str)
+                or path.startswith("/")
+                or ".." in path.split("/")
+                or re.fullmatch(r"[a-f0-9]{64}", expected) is None
+            ):
+                raise GateBlocked()
+            actual = subprocess.run(
+                ["git", "-C", str(ns["ROOT"]), "show", request["target_commit"] + ":" + path],
+                capture_output=True,
+                check=True,
+            ).stdout
+            if hashlib.sha256(actual).hexdigest() != expected:
+                raise GateBlocked()
+        return grant_id
+    except (KeyError, ValueError, TypeError, OSError, subprocess.SubprocessError):
+        raise GateBlocked() from None
+
+
+def immutable_evolution_receipt(ns, directory, identifier, trigger, state):
+    """Append-only private successful deployment evidence, never a raw log channel."""
+    controller = read(ns["ROOT"] / ".local/actions-evolution-pool.json")
+    if controller.get("status") != "healthy" or controller.get("target_sha") != trigger:
+        raise GateBlocked()
+    value = {
+        "request_id": identifier,
+        "trigger_sha": trigger,
+        "source_sha": state["target_sha"],
+        "completed_at": state["completed_at"],
+        "previous_image": state["before"].get("evolution", {}).get("image"),
+        "controller_receipt": controller,
+    }
+    path = directory / (identifier + ".deployment.json")
+    descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(descriptor, "w") as output:
+        json.dump(value, output, sort_keys=True)
+        output.flush()
+        os.fsync(output.fileno())
+    descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
 
 
 def execute(ns, request, trigger, evolution, sources):
@@ -172,6 +266,7 @@ def execute(ns, request, trigger, evolution, sources):
                 print("VASA_REQUEST_BLOCKED=uncertain_or_failed_attempt", flush=True)
                 return 2
         state = {
+            "operation": request["operation"],
             "digest": digest,
             "trigger_sha": trigger,
             "target_sha": request["target_commit"],
@@ -199,7 +294,8 @@ def execute(ns, request, trigger, evolution, sources):
                     print("VASA_REQUEST_BLOCKED=active_or_unknown_preflight", flush=True)
                     return 2
 
-                grant = directory / "grant-evolution-pool-2026-10-17.json"
+                grant_name = renewed_prerequisite(ns, request, directory, trigger)
+                grant = directory / ("grant-" + grant_name + ".json")
                 if grant.exists():
                     print("VASA_REQUEST_BLOCKED=maintenance_grant_consumed", flush=True)
                     return 2
@@ -216,9 +312,13 @@ def execute(ns, request, trigger, evolution, sources):
                     ns["git"]("fetch", "origin", "build/vasa-foundation")
                     if ns["git"]("rev-parse", "origin/build/vasa-foundation") != trigger:
                         raise GateBlocked()
+                    if "prerequisite_request_id" in ns.get("approved_evolution_grant", {}):
+                        # A successful earlier check cannot excuse a new edge failure.
+                        evolution["public_health"]()
                     # Consume only after source/build/backups pass, immediately before
                     # admission is paused. Preparation failures may resume safely.
-                    grant = directory / "grant-evolution-pool-2026-10-17.json"
+                    grant_name = renewed_prerequisite(ns, request, directory, trigger)
+                    grant = directory / ("grant-" + grant_name + ".json")
                     if grant.exists():
                         print("VASA_REQUEST_BLOCKED=maintenance_grant_consumed", flush=True)
                         raise GateBlocked()
@@ -274,6 +374,12 @@ def execute(ns, request, trigger, evolution, sources):
             # Controller markers and health are authoritative, not a request's claims.
             print("VASA_SERVICES_HEALTH_OK", flush=True)
             state["state"] = "SUCCEEDED"
+            state["completed_at"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            if operation == "evolution_pool_rollout":
+                immutable_evolution_receipt(ns, directory, identifier, trigger, state)
+            if operation == "evolution_check":
+                state["readiness_contract"] = "identified-health-v1"
+                state["public_health_verified"] = True
             save(path, state)
             print("VASA_REQUEST_STATE=SUCCEEDED", flush=True)
             return 0

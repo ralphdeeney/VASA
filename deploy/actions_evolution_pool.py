@@ -165,7 +165,12 @@ def public_health():
         ("dashboard", "/dashboard", {302, 303, 307, 308, 401, 403}),
     ):
         try:
-            with opener.open("https://vasa.litatech.xyz" + path, timeout=15) as response:
+            health_request = urllib.request.Request(
+                "https://vasa.litatech.xyz" + path,
+                headers={"User-Agent": "VASA-Health-Diagnostic/1.0"},
+                method="GET",
+            )
+            with opener.open(health_request, timeout=15) as response:
                 status = response.status
         except urllib.error.HTTPError as error:
             status = error.code

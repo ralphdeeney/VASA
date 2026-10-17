@@ -9,6 +9,16 @@ EVOLUTION_REQUEST_ID = "6e1328c2-3554-4c2d-8153-5639304a6b18"
 EVOLUTION_UPSTREAM = "e21ce0dd7634f3047410c893b5e4d1c082034b84"
 EVOLUTION_PATCH_SHA256 = "daba5ba8222345396ce5934e8a7ef07c353a4ed73fedcbeb785c75a6fb0b5361"
 
+# Authorization B remains dormant until the approved Phase 2 evidence is bound.
+RENEWED_EVOLUTION_GRANT: dict[str, object] | None = None
+
+
+def active_evolution_grant() -> dict[str, object]:
+    if RENEWED_EVOLUTION_GRANT is not None:
+        return dict(RENEWED_EVOLUTION_GRANT)
+    return {"grant_id": EVOLUTION_GRANT, "request_id": EVOLUTION_REQUEST_ID}
+
+
 OPERATIONS: dict[str, dict[str, object]] = {
     "application_deploy": {
         "scope": "vasa-application-only",

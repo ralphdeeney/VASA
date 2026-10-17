@@ -408,3 +408,21 @@ Known operator paths may be named; other paths fingerprinted/classified. No move
 stash, clean, checkout, restart or build. Plan must reuse existing isolated release
 model and retain migration/backup/activation approval gates. Root owns integration,
 workflow/policy/remote files, shared docs and final validation/evidence.
+
+## Approved health client and single renewed pool attempt — 2026-10-17
+
+User authorization A explicitly approves only the existing proposed identifying-UA
+patch, preserving all existing statuses/TLS/redirect/timeouts/rollback behavior.
+Authorization B separately permits ONE renewed staging pool-only attempt after
+fresh Phase2 health succeeds. Old consumed grant stays untouched; no replacement
+retry after failure. GitHub Actions only, no direct Codex SSH or app activation.
+
+Health specialist owns deploy/actions_evolution_pool.py,
+tests/unit/test_evolution_pool_controller.py and a new focused health test file.
+Apply only approved public_health Request patch; no rollout sequence change.
+Cover requested health failures/TLS/redirect/sanitization and old rollback tests.
+Root owns shared request/policy/orchestrator/payload/schema/docs and integration.
+Read-only grant reviewer owns no source edits; audit existing trusted grant and
+recommend minimal source/expiry/readiness binding. Root will not activate the new
+grant until automatic read-only Phase2 succeeds. Peer tests may run concurrently;
+all live phases and production mutations remain sequential under existing locks.

@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-from deploy.deployment_policy import OPERATIONS
+from deploy.deployment_policy import OPERATIONS, active_evolution_grant
 from deploy.request_validator import load_request
 
 
@@ -36,6 +36,7 @@ try:
         exec(compile(sources[name], name, "exec"), module)
         modules[name] = module
     modules["controller"]["approved_provider_grant"] = {provider_grant!r}
+    modules["controller"]["approved_evolution_grant"] = {active_evolution_grant()!r}
     result = modules["remote"]["execute"](modules["controller"], request, sys.argv[2],
         modules["evolution"], sources)
 except BaseException:

@@ -1,8 +1,9 @@
 # Readiness contract and public-edge recovery review
 
-Status: diagnostic separation implemented; rollout policy changes NOT approved.
-The Evolution maintenance grant remains consumed. This document and diagnostic
-success do not authorize a replacement, a new grant, or an edge-policy change.
+Status: the operator explicitly approved the identifying health-client correction
+and separately authorized one conditional renewed pool-fix attempt. The historical
+maintenance grant remains consumed. Fresh successful readiness evidence must precede
+activation of the new bounded grant. No edge security-policy change is authorized.
 
 ## Three independent questions
 
@@ -23,7 +24,8 @@ an unauthenticated probe. Redirect destinations and bodies are never printed.
 ## Existing acceptance remains authoritative
 
 `deploy/actions_evolution_pool.py:public_health()` continues to use its original
-urllib request and accepted statuses unchanged: login200, ready200, dashboard
+endpoints and accepted statuses unchanged; its GET Request now uses the approved
+`VASA-Health-Diagnostic/1.0` User-Agent: login200, ready200, dashboard
 302/303/307/308/401/403. Its failed public gate still prevents a success marker and
 triggers the existing controlled rollback when reached after replacement.
 No diagnostic result is ORed into this gate, and curl/runner/private success
@@ -75,3 +77,6 @@ Cloudflare configuration, n8n/Caddy, tunnel credentials, rate limits and
 application authentication remain untouched. Never whitelist by disabling WAF,
 bot protection or authentication. If edge configuration changes are necessary,
 they require separate operator authorization. SMTP remains deferred.
+
+The approval and implementation continuation is recorded in health-recovery/README.md.
+Earlier proposal sections preserve the review history, not the current approval state.
