@@ -24,6 +24,7 @@ def emit_probe(ns, script, expected, *arguments):
         if (
             re.fullmatch(r"EVOLUTION_CALL_GATE_(?:DB|REDIS)_ACTIVE=[0-9]{1,10}", line)
             or re.fullmatch(r"EVOLUTION_INSTANCE_(?:REGISTERED|UPSTREAM)_COUNT=[0-9]{1,5}", line)
+            or re.fullmatch(r"EVOLUTION_INSTANCE_(?:CONNECTED|LOGGED_IN)=[01]", line)
             or line
             in {
                 "EVOLUTION_INSTANCE_STAGE=database",

@@ -84,7 +84,7 @@ def test_evolution_modes_do_not_require_application_migration_approval():
     from pathlib import Path
 
     script = Path("deploy/actions-ssh.sh").read_text()
-    approval = script.split('VASA_MIGRATION_SQL_SHA256=${VASA_MIGRATION_SQL_SHA256:-}')[1]
+    approval = script.split("VASA_MIGRATION_SQL_SHA256=${VASA_MIGRATION_SQL_SHA256:-}")[1]
     approval = approval.split('[[ "$VASA_RECOVERY" == none || (')[0]
     assert 'if [[ "$VASA_RECOVERY" == activate ]]; then' in approval
     assert "evolution_" not in approval

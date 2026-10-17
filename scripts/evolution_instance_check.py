@@ -46,6 +46,8 @@ async def inspect(restore: bool) -> None:
         print("EVOLUTION_INSTANCE_STAGE=status", flush=True)
         for external in expected:
             status = await client.status(external)
+            print("EVOLUTION_INSTANCE_CONNECTED=" + str(int(status.connected)), flush=True)
+            print("EVOLUTION_INSTANCE_LOGGED_IN=" + str(int(status.logged_in)), flush=True)
             if restore and not (status.connected and status.logged_in):
                 # Existing persisted device lookup; no create, pair, logout or QR endpoint.
                 await client.connect(external)
