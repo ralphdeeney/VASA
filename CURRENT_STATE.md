@@ -721,3 +721,19 @@ actionlint and shell syntax pass. SMTP domain/live delivery explicitly deferred;
 email-dependent signup remains unavailable until verified mailbox receipt. No
 Evolution/provider/tunnel changes. Isolated release preparation precedes the
 existing exact-release/SQL approval gate.
+
+
+Signup/logo delivery result: implementation `5ee6b2225e628db5cce9f2aa1b4609fc6d6f8744`
+pushed; CI39075620584 passed1470 (72.59s). Preparation39075631762 passed with
+restore-tested backup/rollback image, schema0007 already current, operator files
+preserved. User authorized activation; run39075886299 reached target health, then
+failed `STAGING_VALIDATION_FAILED=instances` and restored app/voice858b5f8 with
+`VASA_RELEASE_ROLLBACK_OK`. No live migration ran. Read-only39076034025 confirms
+five healthy services/restarts0, schema0007, one preserved WhatsApp instance.
+Read-only39076057013 proves one registered/upstream instance, CONNECTED=0 and
+LOGGED_IN=0, offline baseline; existing pool/call preflight passed. The unchanged
+application activation gate requires connected+logged-in instances. Do not bypass
+it or delete/recreate pairing. Phone-owner action is required before retry.
+Independent real browser confirms old UI (newlogo404), login/ready200, dashboard
+and admin401, signup/email/contact unavailable. SMTP domain/live delivery remain
+operator-deferred. No Evolution replacement, provider, tunnel, or n8n changes.

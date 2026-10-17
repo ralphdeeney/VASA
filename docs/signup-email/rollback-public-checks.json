@@ -1,0 +1,36 @@
+{
+  "scope": "read-only public health/auth and rollback UI state; not new-logo acceptance",
+  "timestamp": "2026-10-17T22:40:50.090Z",
+  "loginStatus": 200,
+  "checks": {
+    "/health/ready": {
+      "status": 200
+    },
+    "/dashboard": {
+      "status": 401
+    },
+    "/api/saas/admin/users": {
+      "status": 401
+    },
+    "/api/site/capabilities": {
+      "status": 200,
+      "capabilities": {
+        "saas_enabled": true,
+        "email_delivery_available": false,
+        "signup_available": false,
+        "contact_available": false
+      }
+    },
+    "/dashboard/assets/vasa-logo.png": {
+      "status": 404
+    },
+    "/signup": {
+      "status": 200,
+      "hasSignupLogo": false,
+      "hasSignupSelfLink": true
+    }
+  },
+  "postRequests": 0,
+  "externalRequests": 0,
+  "healthAuthOK": true
+}

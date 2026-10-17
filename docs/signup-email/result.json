@@ -65,13 +65,33 @@
   },
   "auth_recovery": "CLI token became invalid; connected GitHub integration independently recovered run status and sanitized logs; no duplicate run or new credentials",
   "remaining_gates": [
-    "private SMTP credential and verified sender",
-    "actual mailbox receipt before delivery attestation",
-    "existing exact-release activation authorization"
+    "phone owner restores existing WhatsApp login/connection required by unchanged staging instance gate",
+    "private SMTP credential and verified sender (operator deferred)",
+    "actual mailbox receipt before delivery attestation (operator deferred)"
   ],
-  "production_claim": "No branding/email change activated; no email delivery claimed operational.",
+  "production_claim": "New logo/signup/SMTP release tested and prepared but not active. Existing application restored healthy. No email delivery claimed.",
   "logo_followup": {
-    "status": "local full suite and 40 browser layouts passed; awaiting preparation",
-    "source_commit": "this commit"
+    "source_commit": "5ee6b2225e628db5cce9f2aa1b4609fc6d6f8744",
+    "local_python_tests": 1470,
+    "ci_python_tests": 1470,
+    "browser_layouts": 40,
+    "ci_run": 39075620584,
+    "preparation_run": 39075631762,
+    "preparation_marker": "VASA_RECOVERY_PREPARE_OK",
+    "activation_run": 39075886299,
+    "activation_status": "failed and rolled back",
+    "failed_gate": "STAGING_VALIDATION_FAILED=instances",
+    "rollback_marker": "VASA_RELEASE_ROLLBACK_OK",
+    "post_rollback_investigation_run": 39076034025,
+    "instance_readonly_run": 39076057013,
+    "instance_connected": false,
+    "instance_logged_in": false,
+    "registered_instances": 1,
+    "upstream_instances": 1,
+    "all_five_services_healthy": true,
+    "database_revision": "0007",
+    "live_migration_applied": false,
+    "active_release": "858b5f853957d719a34ea96f28b5ea726100d402",
+    "deployed_logo": false
   }
 }
