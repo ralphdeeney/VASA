@@ -1,0 +1,16 @@
+{
+  "request_id": "08d887be-1626-481e-8a83-7093dbc94f5b",
+  "operation": "evolution_check",
+  "target_commit": "1fa6d90b79caa52f7b17be0e023c212fa9b6d7a3",
+  "branch": "build/vasa-foundation",
+  "environment": "staging",
+  "scope": "evolution-readonly",
+  "policy": "evolution-readonly-v1",
+  "authorization": "routine-staging-v1",
+  "reason": "Authorization A: verify identified public health on independent runner and VPS, private origin, auth boundaries and unchanged five-service state before any renewed maintenance grant",
+  "created_at": "2026-10-17T07:15:58Z",
+  "expires_at": "2026-10-17T19:15:58Z",
+  "expected_markers": [
+    "EVOLUTION_POOL_PREFLIGHT_OK"
+  ]
+}
