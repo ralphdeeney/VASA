@@ -5,6 +5,9 @@ import logging
 import sys
 from contextlib import AsyncExitStack
 
+from sqlalchemy import text
+from sqlalchemy.engine import make_url
+
 from vasa.config import Settings
 from vasa.evolution.client import EvolutionCalls
 from vasa.storage.database import Database
@@ -43,6 +46,23 @@ async def inspect(restore: bool) -> None:
             or {row["id"] for row in rows} != expected
         ):
             raise ValueError("unexpected instances")
+        print("EVOLUTION_INSTANCE_STAGE=paired_device", flush=True)
+        auth_url = make_url(settings.database_url.get_secret_value()).set(
+            database="vasa_evolution_auth"
+        )
+        auth = Database(auth_url.render_as_string(hide_password=False))
+        resources.push_async_callback(auth.aclose)
+        for row in rows:
+            jid = row.get("jid")
+            if not isinstance(jid, str) or not jid or len(jid) > 256:
+                raise ValueError("unpaired instance")
+            async with auth.session() as session:
+                paired = await session.scalar(
+                    text("SELECT EXISTS (SELECT 1 FROM whatsmeow_device WHERE jid=:jid)"),
+                    {"jid": jid},
+                )
+            if paired is not True:
+                raise ValueError("paired device missing")
         print("EVOLUTION_INSTANCE_STAGE=status", flush=True)
         for external in expected:
             status = await client.status(external)
@@ -50,13 +70,17 @@ async def inspect(restore: bool) -> None:
             print("EVOLUTION_INSTANCE_LOGGED_IN=" + str(int(status.logged_in)), flush=True)
             if restore and not (status.connected and status.logged_in):
                 # Existing persisted device lookup; no create, pair, logout or QR endpoint.
-                await client.connect(external)
+                # The pinned reconnect endpoint loads persisted settings. The generic
+                # connect helper would overwrite subscriptions and webhook settings.
+                await client._request(
+                    "POST", "/instance/reconnect", client.token_for_instance(external)
+                )
                 for _ in range(30):
                     await asyncio.sleep(2)
                     status = await client.status(external)
                     if status.connected and status.logged_in:
                         break
-            if not status.connected or not status.logged_in:
+            if restore and (not status.connected or not status.logged_in):
                 raise ValueError("instance unavailable")
         print("EVOLUTION_REGISTERED_INSTANCES_OK", flush=True)
 

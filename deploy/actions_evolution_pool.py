@@ -30,6 +30,7 @@ def emit_probe(ns, script, expected, *arguments):
                 "EVOLUTION_INSTANCE_STAGE=database",
                 "EVOLUTION_INSTANCE_STAGE=list",
                 "EVOLUTION_INSTANCE_STAGE=status",
+                "EVOLUTION_INSTANCE_STAGE=paired_device",
             }
         ) or line in {
             "EVOLUTION_CALL_GATE_OK",
