@@ -101,6 +101,9 @@ services:
     env_file:
       - path: ../.local/llm.env
         required: false
+      # Dedicated web-only transactional email configuration; never shared with voice.
+      - path: ../.local/smtp.env
+        required: false
     environment: &vasa-environment
       VASA_ENVIRONMENT: production
       # Trusted public HTTPS origin; do not trust arbitrary forwarded headers.

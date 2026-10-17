@@ -209,3 +209,21 @@ th { color: var(--muted); font-size: .8rem; }
 .saas-grid > *, .form-grid > *, .stack > * { min-width: 0; }
 #profile-email, #saas-message, #admin-message { overflow-wrap: anywhere; }
 @media (max-width: 640px) { .saas-grid { grid-template-columns: minmax(0, 1fr); } }
+/* Account pages retain the public palette while keeping forms easy to scan. */
+.identity-page .login-card h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  font-size: clamp(1.9rem, 5vw, 2.4rem);
+  line-height: 1.15;
+}
+.identity-page .auth-shell { grid-template-columns: minmax(0, 1fr); }
+.identity-page .login-card { min-width: 0; }
+.identity-page .login-card p { overflow-wrap: anywhere; }
+.identity-page .topbar > *, .identity-page .public-nav { min-width: 0; }
+@media (max-width: 640px) {
+  .identity-page .auth-shell { padding: 32px 16px; }
+  .identity-page .login-card { padding: 24px; }
+  .identity-page .public-nav { column-gap: 16px; row-gap: 4px; }
+}
+/* An idle live region should not display an empty notification banner. */
+.identity-page #identity-message:empty { display: none; }

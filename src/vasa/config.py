@@ -1,3 +1,6 @@
+import re
+from email.errors import HeaderParseError
+from email.headerregistry import AddressHeader, HeaderRegistry
 from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
@@ -8,7 +11,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_prefix="VASA_", env_file=(".local/vasa.env", ".env"), extra="ignore"
+        env_prefix="VASA_",
+        env_file=(".local/vasa.env", ".env"),
+        extra="ignore",
+        hide_input_in_errors=True,
     )
 
     environment: Literal["development", "test", "production"] = "development"
@@ -50,12 +56,60 @@ class Settings(BaseSettings):
     public_origin: str = ""
     smtp_host: str = Field(default="", max_length=253)
     smtp_port: int = Field(default=587, ge=1, le=65535)
-    smtp_username: str = Field(default="", max_length=254)
-    smtp_password: SecretStr = SecretStr("")
+    # Hosted SMTP may use the API key as BOTH username and password.
+    smtp_username: SecretStr = Field(default=SecretStr(""), max_length=4096)
+    smtp_password: SecretStr = Field(default=SecretStr(""), max_length=4096)
     smtp_sender: str = Field(default="", max_length=254)
     smtp_starttls: bool = True
+    # Operator attestation only after verified sender + actual mailbox receipt.
+    smtp_delivery_verified: bool = False
     contact_recipient: str = Field(default="", max_length=254)
     registration_approval_required: bool = False
+
+    @field_validator("smtp_host")
+    @classmethod
+    def smtp_hostname(cls, value: str) -> str:
+        if value and (
+            len(value) > 253
+            or any(
+                re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label) is None
+                for label in value.split(".")
+            )
+        ):
+            raise ValueError("SMTP host must be a hostname without credentials or a URL")
+        return value.lower()
+
+    @field_validator("smtp_username", "smtp_password")
+    @classmethod
+    def smtp_credential(cls, value: SecretStr) -> SecretStr:
+        if any(ord(c) < 32 or ord(c) == 127 for c in value.get_secret_value()):
+            raise ValueError("SMTP credential contains invalid control characters")
+        return value
+
+    @field_validator("smtp_sender")
+    @classmethod
+    def smtp_sender_address(cls, value: str) -> str:
+        if not value:
+            return value
+        if any(ord(c) < 32 or ord(c) == 127 for c in value):
+            raise ValueError("SMTP sender must be one valid mailbox")
+        try:
+            header = HeaderRegistry()("From", value)
+            if not isinstance(header, AddressHeader):
+                raise ValueError()
+            addresses = header.addresses
+            if (
+                header.defects
+                or any(group.display_name is not None for group in header.groups)
+                or len(addresses) != 1
+                or not addresses[0].username
+                or not addresses[0].domain
+                or "@" not in addresses[0].addr_spec
+            ):
+                raise ValueError()
+        except (ValueError, IndexError, HeaderParseError):
+            raise ValueError("SMTP sender must be one valid mailbox") from None
+        return value
 
     @field_validator("public_origin")
     @classmethod

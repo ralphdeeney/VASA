@@ -228,7 +228,13 @@ async def test_smtp_failure_replaces_exception_and_message_material(monkeypatch)
     from vasa.config import Settings
     from vasa.saas.mailer import SMTPMailer
 
-    settings = Settings(smtp_host="mail.example.invalid", smtp_sender="vasa@example.invalid")
+    settings = Settings(
+        smtp_host="mail.example.invalid",
+        smtp_sender="vasa@example.invalid",
+        smtp_username="test-only-user",
+        smtp_password="test-only-password",
+        smtp_delivery_verified=True,
+    )
     mailer = SMTPMailer(settings)
 
     def fail(*arguments):

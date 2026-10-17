@@ -23,7 +23,14 @@ BRANCH = "build/vasa-foundation"
 PROJECT = "vasa-vps"
 SERVICES = ("vasa", "voice")
 DEPENDENCIES = ("postgres", "redis", "evolution")
-ENV_FILES = (".local/vps.env", ".local/llm.env", ".local/vasa.env", ".env", "deploy/.env")
+ENV_FILES = (
+    ".local/vps.env",
+    ".local/llm.env",
+    ".local/smtp.env",
+    ".local/vasa.env",
+    ".env",
+    "deploy/.env",
+)
 ORIGINS = {
     "https://github.com/ralphdeeney/VASA",
     "https://github.com/ralphdeeney/VASA.git",
@@ -355,6 +362,7 @@ def investigate():
         "VASA_SMTP_PASSWORD",
         "VASA_SMTP_SENDER",
         "VASA_SMTP_STARTTLS",
+        "VASA_SMTP_DELIVERY_VERIFIED",
         "VASA_CONTACT_RECIPIENT",
         "VASA_PUBLIC_ORIGIN",
         "VASA_SAAS_ENABLED",

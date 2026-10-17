@@ -765,3 +765,17 @@ services/restart_count0, unchanged other container/private/operator identities,
 registered/paired metadata and settled connections3. Public/private200/200/401;
 anonymous identity/instances/admin401. WhatsApp offline; human live-call acceptance
 and SMTP remain deferred. Detailed evidence under docs/health-recovery/.
+
+## Signup / Reloop SMTP — 2026-10-17
+
+Full local1469 passed in77.18s (one existing upstream deprecation warning).
+Ruff, format, application strict mypy69 modules plus8 script/deployment modules,
+actionlint, shell syntax and diff checks pass. Focused SaaS/dashboard/transport
+and web-only Compose isolation checks120 passed. Browser40 layouts at320/375/393/
+768/1280 pass (local capability/session fixtures, no account creation/live email).
+Regression coverage includes complete configuration/attestation, secret username
+redaction, TLS verification, auth/failures/timeouts/refusal, thread/queued SMTP
+cancellation capacity, auth/tenant/token/workflow rules and contact-recipient gate.
+Read-only staging investigation39073685888 succeeded; SMTP GitHub/runtime bindings
+absent, five services healthy/restarts0, DB0007, operator files preserved. No real
+SMTP delivery result or deployed branding change is inferred. Original logo missing.

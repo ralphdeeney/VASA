@@ -1,10 +1,11 @@
 """Serve the small first-party dashboard without a template dependency."""
 
+import asyncio
 from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 
 from vasa.contracts.models import TenantContext
 from vasa.control.auth import require_context
@@ -14,7 +15,7 @@ _ROOT = Path(__file__).parent
 _HEADERS = {
     "Cache-Control": "no-store",
     "Content-Security-Policy": (
-        "default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; "
+        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
         "connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
     ),
     "Referrer-Policy": "no-referrer",
@@ -69,8 +70,24 @@ async def public_page() -> FileResponse:
 @router.get("/reset-password")
 @router.get("/accept-invitation")
 @router.get("/logout")
-async def identity_page() -> FileResponse:
-    return FileResponse(_ROOT / "templates" / "identity.html", headers=_HEADERS)
+async def identity_page(request: Request) -> HTMLResponse:
+    # Only fixed first-party fragments vary by route; no request text is interpolated.
+    is_signup = request.url.path == "/signup"
+    template = await asyncio.to_thread(
+        (_ROOT / "templates" / "identity.html").read_text, encoding="utf-8"
+    )
+    navigation = "" if is_signup else '<a class="button" href="/signup">Get started</a>'
+    help_text = (
+        'Already have an account? <a href="/login">Sign in</a>'
+        if is_signup
+        else '<a href="/login">Sign in</a> · <a href="/signup">Create account</a>'
+    )
+    return HTMLResponse(
+        template.replace("<!-- identity-signup-navigation -->", navigation).replace(
+            "<!-- identity-account-help -->", help_text
+        ),
+        headers=_HEADERS,
+    )
 
 
 @router.get("/403", status_code=403)

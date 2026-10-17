@@ -42,6 +42,9 @@ settings = Settings(
     public_origin="http://127.0.0.1:18888",
     smtp_host="fixture.invalid",
     smtp_sender="fixture@example.invalid",
+    smtp_username="local-fixture-only",
+    smtp_password="local-fixture-only",
+    smtp_delivery_verified=True,
     database_url=database_url,
     redis_url=redis_url,
 )

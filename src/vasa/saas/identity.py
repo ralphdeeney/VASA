@@ -143,7 +143,19 @@ async def _send(request: Request, mailer: Mailer, email: str, raw: str, purpose:
     subject = (
         "Reset your VASA password" if purpose == "password_reset" else "Verify your VASA email"
     )
-    await mailer.send(email, subject, f"{settings.public_origin.rstrip('/')}/{page}#token={raw}")
+    instruction = (
+        "Choose a new password using the private link below. It expires in one hour."
+        if purpose == "password_reset"
+        else "Verify your email using the private link below. It expires in 24 hours."
+    )
+    await mailer.send(
+        email,
+        subject,
+        "VASA — Your business. Always available.\n\n"
+        + instruction
+        + "\nIf you did not request this, you can ignore this email.\n\n"
+        + f"{settings.public_origin.rstrip('/')}/{page}#token={raw}",
+    )
 
 
 async def _locked_token(

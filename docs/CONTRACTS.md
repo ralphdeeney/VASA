@@ -426,3 +426,24 @@ Read-only grant reviewer owns no source edits; audit existing trusted grant and
 recommend minimal source/expiry/readiness binding. Root will not activate the new
 grant until automatic read-only Phase2 succeeds. Peer tests may run concurrently;
 all live phases and production mutations remain sequential under existing locks.
+
+## Signup branding / Reloop SMTP wave — 2026-10-17
+
+Root owns Settings, Compose/runtime injection, deployment preparation, documentation,
+integration and commits. UI specialist owns identity template/JS/CSS, explicit
+first-party asset routing and focused UI tests. Mail specialist owns SMTPMailer,
+SMTP acceptance helper/tests; request Settings changes from root. Browser specialist
+performs responsive/security verification after integration. No migrations,
+Evolution replacement, provider changes or secret values are authorized. Original
+logo is not available in current attachments: do not invent/reconstruct it. Use only
+a newly rotated protected SMTP credential; exposed screenshot material is forbidden.
+Signup requires complete configuration and recorded real-mailbox verification;
+contact requires its independently configured trusted recipient. Preserve all auth,
+tenant and token boundaries. Isolated preparation may build/backup/test but cannot
+bypass the existing activation gate or touch operator edge/tunnel files.
+
+Operator steering after wave freeze: the previously exposed screenshot credential
+is explicitly allowed for a test only, superseding the rotated-only requirement
+for that test. It is not actually available in attachments or approved bindings.
+No key may be printed/committed or passed through frontend/logs. Real send still
+requires protected configuration, verified sender and an operator test inbox.

@@ -682,3 +682,21 @@ The separately approved new one-use grant is bound to this private receipt,
 exact reviewed source hashes and absolute expiry. Full local1,425 tests and all
 static checks pass. No replacement has yet occurred. See the new authorization
 record and sanitized readiness evidence in docs/health-recovery/.
+
+## 2026-10-17 — Signup layout / Reloop SMTP implementation (not activated)
+
+Signup navigation/footer and responsive spacing fixed; other identity routes
+preserved.40 browser layouts at320/375/393/768/1280 pass. Original logo image was
+not attached/available: exact asset integration remains pending; no invented logo.
+First-party image CSP support added without external image sources.
+SMTPMailer now requires complete authenticated STARTTLS configuration and actual
+mailbox-delivery attestation before signup/email workflows are available. Both
+Reloop API-key credential fields are SecretStr. Dedicated optional web-only
+.local/smtp.env is private/untracked/image-excluded and controller-hashed; no SMTP
+binding is added to voice/dependencies. Safe explicit scripts/check_smtp.py reports
+SMTP acceptance separately from actual receipt. No real mail sent.
+Read-only Actions39073685888 confirms five healthy services/restarts0, DB0007,
+exactly three preserved untracked operator edge/tunnel files, approved GitHub and
+VPS SMTP bindings absent. Full local1469 tests plus static/workflow/shell checks
+pass. Existing application activation safety remains; isolated preparation is next.
+No migration, Evolution/voice restart, provider or tunnel change is authorized.

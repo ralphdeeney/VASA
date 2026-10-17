@@ -1,0 +1,107 @@
+# Signup layout and Reloop transactional email
+
+## Implemented scope
+
+Signup alone now removes navigation back to signup and shows “Already have an
+account? Sign in”. Other shared identity routes retain their existing navigation
+and endpoints. Scoped form spacing/mobile rules preserve deep green #07372D,
+cream #FFFCF6 and soft sage #EDF3ED, serif identity headings and sans-serif labels/
+operational text. Empty status regions do not draw a blank notice; populated
+messages remain accessible. First-party image CSP is supported without allowing
+external images or inline scripts.
+
+The authoritative monogram/wordmark image is NOT present in this task's message,
+repository or available attachments. No logo was invented and no broken image or
+placeholder logo route was added. Actual transparent, tightly cropped brand-asset
+integration remains blocked on the original image; current text branding remains.
+
+Existing SMTPMailer is reused; no email SDK or dependency was added. Reloop's
+[official SMTP introduction](https://reloop.sh/docs/examples/smtp/introduction)
+specifies smtp.reloop.sh:587, STARTTLS, and the same API key as username/password.
+Both credential settings are SecretStr, including the API-key username. Certificate
+and hostname verification remain enabled. SMTP capacity is bounded to four and
+retained until cleanup even if an HTTP request is cancelled before its executor
+thread starts. Failures expose fixed codes, never provider details/messages.
+
+Complete SMTP transport plus VASA_SMTP_DELIVERY_VERIFIED=true is required before
+transactional workflows/signup are available. This is an operator attestation
+only AFTER verified sender/domain and an actual successful mailbox receipt.
+Presence of host/sender, successful AUTH or SMTP250 acceptance cannot attest it.
+Contact additionally requires its separate trusted VASA_CONTACT_RECIPIENT.
+
+Verification, resend, recovery and invitations retain hashed/single-use tokens,
+expiry, rate limits, enumeration resistance, tenant/session boundaries and
+transaction rollback. Verification/recovery body text now carries VASA branding
+and existing expiry instructions; URLs still carry tokens only in fragments.
+No new account notification workflow or provider resource is invented.
+
+## Private web-only configuration
+
+Provision /opt/vasa/.local/smtp.env as vasa-builder, mode0600, untracked and outside
+all images. The web service alone loads it. Do not put email credentials in the
+shared .local/llm.env or inherited service environment. Voice, Evolution, Redis
+and PostgreSQL do not receive this file. Rootless project/volumes/ports are unchanged.
+The controller hashes and preserves smtp.env alongside existing private files.
+A real Compose resolution test uses fake credentials to verify service isolation.
+
+Configure these names through the protected operator channel, never chat/Git/logs:
+
+- VASA_SMTP_HOST=smtp.reloop.sh
+- VASA_SMTP_PORT=587
+- VASA_SMTP_USERNAME and VASA_SMTP_PASSWORD: the same private API key
+- VASA_SMTP_SENDER: the domain-verified VASA sender mailbox
+- VASA_SMTP_STARTTLS=true
+- VASA_SMTP_DELIVERY_VERIFIED=false until the real mailbox test is confirmed
+
+The original request prohibited the exposed screenshot key; subsequent operator
+steering explicitly permits it for a test only. No screenshot/key is actually
+available in this task. No exposed or replacement credential was accessed, logged,
+committed or used. Rotation remains operator-controlled; prefer a new private key.
+
+## Acceptance procedure and truthful statuses
+
+Once the reviewed image is deployed with protected SMTP configuration, the
+operator test entrypoint is:
+
+    python scripts/check_smtp.py --recipient <operator-test-inbox>
+
+Run only inside the web service through the existing Actions bridge. Do not print
+container environments or place credential arguments in a command. The helper
+sends one fixed VASA message with no account tokens/customer data, verifies
+STARTTLS and AUTH, and prints only fixed JSON. SMTP acceptance returns
+`{"status":"smtp_accepted","mailbox_delivery_verified":false}`. It does NOT prove
+inbox receipt or flip the delivery setting. Confirm the intended inbox actually
+receives it and the sending domain is verified before setting the attestation.
+Then use disposable accounts to validate actual verification, resend, recovery
+and team invitation links and single-use/session/tenant rules. Do not use a
+mock mailbox or the SMTP acceptance reply as real delivery evidence.
+
+## Current evidence and deployment gates
+
+Local browser fixture:40 layouts across320/375/393/768/1280 on signup, login and
+six other identity routes. No horizontal overflow, clipped controls, page errors,
+external requests or POSTs; keyboard skip navigation, labelled fields, palette,
+CSP and missing-SMTP disabled submission passed. This is UI evidence, not live
+backend/email acceptance. See browser-results.json.
+
+Read-only Actions39073685888 succeeded against staging before implementation.
+Approved GitHub SMTP bindings HOST/USER/PASSWORD/SENDER absent. Existing VPS
+runtime/private-file SMTP bindings absent; public origin and SaaS flag present.
+Five services healthy/restart_count0; database0007. Canonical checkout still has
+exactly the three preserved untracked edge/tunnel files. No direct Codex SSH.
+
+Normal application deploy must continue refusing this dirty checkout. Use existing
+check/recovery=prepare through Actions to prepare an immutable isolated source,
+verified backup/restore, rollback image and candidate without activation. Do not
+remove/stash/move operator files or touch Evolution/voice/tunnel/n8n to deliver
+this change. The existing activation route requires separately reviewed exact
+release/migration authorization; this task does not bypass that gate.
+
+Real email delivery is NOT operational/verified. Logo input, private SMTP sender/
+credential/test inbox, mailbox receipt and permitted release activation remain
+external gates. Final local/CI/preparation results are recorded after execution.
+
+Local full suite:1,469 passed in77.18s; Ruff/format, strict mypy, actionlint,
+all shell syntax and diff checks passed. Signup screenshots show local fixture UI
+with the existing text wordmark, NOT the missing authoritative logo or deployed UI.
+They are saved under screenshots/ at320/375/393/1280px.

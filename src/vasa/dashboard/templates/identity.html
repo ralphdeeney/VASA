@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="/dashboard/assets/styles.css" />
     <script src="/dashboard/assets/identity.js" defer></script>
   </head>
-  <body>
+  <body class="identity-page">
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="topbar">
       <a class="wordmark" href="/">vasa.</a>
@@ -15,7 +15,7 @@
         <a href="/features">Features</a><a href="/how-it-works">How it works</a
         ><a href="/pricing">Pricing</a><a href="/contact">Contact</a
         ><a href="/login">Sign in</a
-        ><a class="button" href="/signup">Get started</a>
+        ><!-- identity-signup-navigation -->
       </nav>
     </header>
     <main id="main" class="auth-shell">
@@ -61,7 +61,7 @@
           <button id="identity-submit" type="submit" disabled>Continue</button>
         </form>
         <p class="help-text small">
-          <a href="/login">Sign in</a> · <a href="/signup">Create account</a>
+          <!-- identity-account-help -->
         </p>
         <noscript
           ><p class="notice">
