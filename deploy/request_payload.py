@@ -19,6 +19,8 @@ def build(path: str) -> str:
         "instances": "scripts/evolution_instance_check.py",
         "backups": "deploy/evolution_backups.py",
         "capacity": "deploy/actions_db_capacity.py",
+        "health_diagnostics": "deploy/health_diagnostics.py",
+        "audit": "deploy/recovery_audit.py",
     }
     sources = {key: Path(value).read_text() for key, value in files.items()}
     provider_grant = OPERATIONS["provider_smoke"]["authorization"]

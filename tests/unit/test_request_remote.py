@@ -380,3 +380,44 @@ def test_completed_paid_smoke_is_not_recharged_or_reported_as_fresh(tmp_path, ca
     with pytest.raises(subject.GateBlocked):
         subject.execute(ns, value, TRIGGER, {}, {})
     assert "SMOKE_OK" not in capsys.readouterr().out
+
+
+def test_readonly_diagnostics_survive_public_failure_without_authorizing_rollout(tmp_path, capsys):
+    ns, calls = setup(tmp_path)
+    ns["event"] = calls.append
+    ns["require"] = lambda condition, _: condition or pytest.fail("changed private files")
+    sources = dict.fromkeys(["gate", "instances", "backups", "capacity"], "")
+    sources["audit"] = 'def run(ns, evolution, sources): ns["event"]("audit")'
+    sources["health_diagnostics"] = (
+        "def run(vantage, include_private): return [vantage, include_private]\n"
+        'def emit(records): print("DIAGNOSTIC_CAPTURED")'
+    )
+
+    def public():
+        raise RuntimeError("Authorization: Bearer private-response")
+
+    evolution = {
+        "run": lambda *args: 0,
+        "public_health": public,
+        "capacity": lambda *args: calls.append("capacity"),
+    }
+    assert subject.execute(ns, request("evolution_check"), TRIGGER, evolution, sources) == 2
+    assert calls == ["preflight", "health", "snapshot", "audit", "capacity", "unchanged"]
+    output = capsys.readouterr().out
+    assert "DIAGNOSTIC_CAPTURED" in output
+    assert "VASA_RECOVERY_PRESERVATION_OK" in output
+    assert "VASA_REQUEST_STATE=SUCCEEDED" not in output
+    assert "private-response" not in output
+    assert not (
+        tmp_path / ".local/deployment-requests/grant-evolution-pool-2026-10-17.json"
+    ).exists()
+
+
+def test_diagnostic_failure_still_checks_container_preservation(tmp_path, capsys):
+    ns, calls = setup(tmp_path)
+    ns["require"] = lambda condition, _: condition or pytest.fail("changed private files")
+    sources = {"audit": 'def run(*args): raise RuntimeError("private-body")'}
+    with pytest.raises(RuntimeError):
+        subject.readonly_diagnostics(ns, {}, sources)
+    assert calls == ["snapshot", "unchanged"]
+    assert "private-body" not in capsys.readouterr().out

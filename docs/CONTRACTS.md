@@ -373,3 +373,38 @@ consumed in the VPS ledger before any mutating attempt and cannot be recycled by
 new requests. SSH/CI transient retries are bounded; never retry mutation after an
 uncertain interruption or hard gate. Existing app/voice rollout/rollback, rootless
 Docker, no-call/backups and secret-safe output remain authoritative.
+
+## Public-health recovery diagnostics freeze — 2026-10-17
+
+This task is read-only on the VPS. No new Evolution grant, image replacement,
+pairing change, app activation, migration or edge/security policy change.
+Keep the existing maintenance public_health acceptance policy unchanged until
+explicit approval. New evidence is diagnostic, never a rollout-success override.
+
+Health specialist owns deploy/health_diagnostics.py and
+ tests/unit/test_health_diagnostics.py only. Stdlib standalone module, injectable
+into the existing SSH payload. Interface run(vantage: str, include_private:
+bool=False) -> list[dict[str, object]] returns sanitized records; emit(records)
+prints VASA_HEALTH_DIAGNOSTIC=<strict bounded JSON>; safe_line(line: str)->bool
+validates that same exact output. CLI supports --vantage github|vps|cloud and
+--include-private, no caller-controlled URLs/headers/commands. Fixed public
+https://vasa.litatech.xyz endpoints and optional private172.16.2.1:18081 only.
+Compare urllib/curl default/shared diagnostic UA, GET/HEAD, curl IPv4/IPv6, fixed
+Host/SNI, DNS family counts, source/destination IP fingerprints (never raw IPs),
+proxy presence, TLS verification, fixed Cloudflare/proxy classifications, timings,
+UTC timestamp and strictly validated CF Ray ID. No response bodies, credentials,
+raw headers, proxy URLs, redirect destinations, environment values or exceptions.
+Bound count/time/bytes and subprocess arguments; retain configured proxy/trust.
+Shared UA is identification only, no browser impersonation or gate bypass.
+
+Release-audit specialist owns deploy/recovery_audit.py,
+tests/unit/test_recovery_audit.py and docs/RELEASE_RECOVERY_PLAN.md only. Interface
+run(ns, evolution, sources)->None uses validated controller callbacks for read-only
+canonical file fingerprints/structural config audit, all-service identity/image
+fingerprints, prior Evolution image/revision and preserved pairing/schema receipts.
+Emit only strict VASA_RECOVERY_AUDIT=<JSON>, with safe_line validator. Never print
+file contents, private environment values, URLs/credentials or arbitrary paths.
+Known operator paths may be named; other paths fingerprinted/classified. No move,
+stash, clean, checkout, restart or build. Plan must reuse existing isolated release
+model and retain migration/backup/activation approval gates. Root owns integration,
+workflow/policy/remote files, shared docs and final validation/evidence.

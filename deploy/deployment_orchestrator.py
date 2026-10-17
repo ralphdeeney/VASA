@@ -18,6 +18,8 @@ from deploy.deployment_policy import (
     EVOLUTION_UPSTREAM,
     REPOSITORY,
 )
+from deploy.health_diagnostics import safe_line as safe_health_line
+from deploy.recovery_audit import safe_line as safe_audit_line
 from deploy.request_validator import RequestRejected, load_request, validate_request
 
 STATES = {
@@ -35,6 +37,7 @@ STATES = {
 }
 FIXED_MARKERS = {
     "VASA_VPS_CONNECTIVITY_OK",
+    "VASA_RECOVERY_PRESERVATION_OK",
     "EVOLUTION_POOL_PREFLIGHT_OK",
     "VASA_DEPLOYMENT_OK",
     "VASA_EVOLUTION_POOL_DEPLOYMENT_OK",
@@ -194,7 +197,9 @@ def markers(stdout: str) -> list[str]:
     result = []
     for line in stdout.splitlines():
         key, _, value = line.partition("=")
-        if len(line) <= 160 and (
+        if safe_health_line(line) or safe_audit_line(line):
+            result.append(line)
+        elif len(line) <= 160 and (
             line in FIXED_MARKERS
             or MARKER_PATTERN.fullmatch(line)
             or value in SAFE_VALUES.get(key, set())
@@ -366,6 +371,10 @@ def run_request() -> int:
         facts["head_sha"] = api(f"repos/{REPOSITORY}/git/ref/heads/{BRANCH}")["object"]["sha"]
         validate_request(request, facts)
         journal.state("READY")
+        if request["operation"] == "evolution_check":
+            from deploy.health_diagnostics import emit, run
+
+            emit(run("github"))
         environment = dict(os.environ)
         environment.update(
             VASA_REQUEST_FILE=paths[0],

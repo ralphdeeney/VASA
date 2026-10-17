@@ -68,6 +68,31 @@ def resume_verified(ns, request, previous, evolution):
     return True
 
 
+def readonly_diagnostics(ns, evolution, sources):
+    """Collect evidence before strict health acceptance, never authorize a mutation."""
+    if not ({"audit", "health_diagnostics"} & sources.keys()):
+        return
+    before = ns["snapshot_services"](ns["DEPENDENCIES"] + ns["SERVICES"])
+    hashes = ns["private_hashes"]()
+    try:
+        if "audit" in sources:
+            audit = {"__name__": "vasa_readonly_audit"}
+            exec(compile(sources["audit"], "audit", "exec"), audit)
+            audit["run"](ns, evolution, sources)
+        if "health_diagnostics" in sources:
+            diagnostics = {"__name__": "vasa_readonly_health"}
+            exec(compile(sources["health_diagnostics"], "health_diagnostics", "exec"), diagnostics)
+            diagnostics["emit"](diagnostics["run"]("vps", True))
+        cap = {"__name__": "vasa_readonly_capacity"}
+        exec(compile(sources["capacity"], "capacity", "exec"), cap)
+        print("EVOLUTION_CONNECTIONS_AFTER", flush=True)
+        evolution["capacity"](ns, cap)
+    finally:
+        ns["assert_unchanged"](before)
+        ns["require"](ns["private_hashes"]() == hashes, "Read-only runtime files changed.")
+        print("VASA_RECOVERY_PRESERVATION_OK", flush=True)
+
+
 def ensure_current(request):
     try:
         expires = datetime.fromisoformat(request["expires_at"].replace("Z", "+00:00"))
@@ -121,6 +146,7 @@ def execute(ns, request, trigger, evolution, sources):
                     ):
                         raise GateBlocked()
                     ns["health"]()
+                    readonly_diagnostics(ns, evolution, sources)
                     evolution["public_health"]()
                 elif request["operation"] == "application_check":
                     ns["snapshot_services"](ns["DEPENDENCIES"] + ns["SERVICES"])
@@ -221,6 +247,7 @@ def execute(ns, request, trigger, evolution, sources):
                     raise GateBlocked()
                 if operation == "evolution_check":
                     ns["health"]()
+                    readonly_diagnostics(ns, evolution, sources)
                     evolution["public_health"]()
             elif operation == "application_check":
                 ns["snapshot_services"](ns["DEPENDENCIES"] + ns["SERVICES"])

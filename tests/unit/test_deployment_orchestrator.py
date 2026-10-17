@@ -283,3 +283,45 @@ def test_optional_provider_smoke_keeps_only_fixed_failures_and_bounded_timings()
         "LLM_FIRST_TOKEN_MS=123.45",
         "DEEPGRAM_TOTAL_MS=456.78",
     ]
+
+
+def test_external_comparison_runs_only_after_ci_for_readonly_evolution(monkeypatch):
+    from deploy import health_diagnostics
+
+    events = []
+    states, commands, _ = configured_run(monkeypatch, [result(0, "VASA_VPS_CONNECTIVITY_OK")])
+    document = subject.load_request("")
+    document["operation"] = "evolution_check"
+    monkeypatch.setattr(subject, "wait_ci", lambda *args: events.append("ci"))
+    monkeypatch.setattr(health_diagnostics, "run", lambda vantage: events.append(vantage) or [])
+    assert subject.run_request() == 0
+    assert events == ["ci", "github"]
+    assert len(commands) == 1
+    assert states[-1] == "SUCCEEDED"
+
+
+def test_ci_failure_prevents_even_readonly_comparison(monkeypatch):
+    from deploy import health_diagnostics
+
+    states, commands, _ = configured_run(monkeypatch, [])
+    subject.load_request("")["operation"] = "evolution_check"
+
+    def failed(*args):
+        raise subject.Blocked("ci_failed")
+
+    monkeypatch.setattr(subject, "wait_ci", failed)
+    monkeypatch.setattr(health_diagnostics, "run", lambda *args: pytest.fail("CI was bypassed"))
+    assert subject.run_request() == 1
+    assert commands == []
+    assert "SUCCEEDED" not in states
+
+
+def test_malicious_json_cannot_smuggle_secrets_through_diagnostic_markers():
+    assert (
+        subject.markers(
+            'VASA_HEALTH_DIAGNOSTIC={"vantage":"secret","vantage":"vps"}\n'
+            'VASA_RECOVERY_AUDIT={"kind":"secret","kind":"release"}\n'
+            'VASA_RECOVERY_AUDIT={"kind":"operator","path":"private-secret"}'
+        )
+        == []
+    )

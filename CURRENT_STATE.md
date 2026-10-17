@@ -1,3 +1,31 @@
+## 2026-10-17 — Public-health recovery diagnostics (live VPS comparison pending)
+
+No new Evolution grant or replacement is authorized. The consumed grant remains
+unchanged, as do maintenance health acceptance, provider settings, pairing and
+infrastructure. Diagnostic-only identified User-Agent success cannot authorize
+rollout. See docs/HEALTH_READINESS_CONTRACT.md and docs/RELEASE_RECOVERY_PLAN.md.
+
+New bounded standalone probes compare urllib/curl default/shared honest UA,
+HTTP method/protocol, IPv4/IPv6, DNS families, fixed Host/SNI, proxy presence,
+source/destination fingerprints and sanitized Cloudflare timestamp/Ray metadata.
+The request workflow gathers GitHub-runner evidence after CI; the read-only VPS
+path audits exact image/revision/rollback identity, pairing/schema receipts,
+canonical operator-file shape/fingerprints and service/private-file preservation,
+then gathers private/public probes BEFORE the existing blocking public gate.
+
+Controlled cloud evidence reproduces Python default UA403 vs same-client,
+same-URL identified UA200/200/401 (login/ready/dashboard). Curl succeeds. The
+specific edge/security rule remains unproven; VPS/runner corroboration is pending.
+No WAF/bot/auth/rate-limit setting is weakened. Operators can review exact UTC
+and Ray IDs without bodies, raw headers, secrets or caller information.
+
+Local full suite1,377 passed81.04s with one upstream deprecation warning;
+additional two TLS-reporting regressions passed. Ruff/format, strict mypy69source
+and7deployment modules, workflow/Bash checks pass. Full Go tests/vet, call/media
+race and real PostgreSQL120-cycle lifecycle/race checks reran successfully.
+Automatic read-only evidence and final CI remain pending; no deployment claimed.
+SMTP remains deferred. All unknown operator and private runtime files preserved.
+
 ## 2026-10-17 — Automatic requests proven; guarded pool rollout rolled back
 
 The push-driven read-only request succeeded automatically in Actions39006681009

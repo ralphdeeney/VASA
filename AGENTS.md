@@ -28,3 +28,10 @@ remote outcomes require receipt-based verification, never blind restart.
 GitHub Actions is the only VPS bridge; no direct Codex SSH. Preserve live data,
 private runtime files, pairing and all unrelated infrastructure. Human live-call
 acceptance and unavailable external credentials remain explicit boundaries.
+
+Public-health recovery: read docs/HEALTH_READINESS_CONTRACT.md. Diagnostic UA or
+runner/private-origin success is evidence, not a maintenance override. Changing
+readiness policy requires explicit approval before it can permit rollout;
+renewing an Evolution grant is separate authorization. Do not silently combine
+them. Preserve the canonical operator files and use the existing isolated-release
+model only through its approved activation/migration gates.
