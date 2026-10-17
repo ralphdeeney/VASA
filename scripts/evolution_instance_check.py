@@ -23,14 +23,19 @@ async def inspect(restore: bool) -> None:
             settings.evolution_instance_key.get_secret_value(),
         )
         resources.push_async_callback(client.aclose)
+        print("EVOLUTION_INSTANCE_STAGE=database", flush=True)
         targets = await resolve_all(database)
         expected = {external for _, _, external in targets}
+        print("EVOLUTION_INSTANCE_REGISTERED_COUNT=" + str(len(expected)), flush=True)
         if not expected or len(expected) > 32:
             raise ValueError("instances")
+        print("EVOLUTION_INSTANCE_STAGE=list", flush=True)
         result = await client._request(
             "GET", "/instance/all", settings.evolution_admin_key.get_secret_value()
         )
         rows = result.get("data")
+        if isinstance(rows, list):
+            print("EVOLUTION_INSTANCE_UPSTREAM_COUNT=" + str(len(rows)), flush=True)
         if (
             not isinstance(rows, list)
             or len(rows) != len(expected)
@@ -38,6 +43,7 @@ async def inspect(restore: bool) -> None:
             or {row["id"] for row in rows} != expected
         ):
             raise ValueError("unexpected instances")
+        print("EVOLUTION_INSTANCE_STAGE=status", flush=True)
         for external in expected:
             status = await client.status(external)
             if restore and not (status.connected and status.logged_in):

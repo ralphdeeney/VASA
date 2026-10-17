@@ -40,7 +40,10 @@ async def test_existing_instance_connection_only(monkeypatch, capsys, restore, c
     await probe.inspect(restore)
     assert client.connect.await_count == int(restore and not connected)
     client._request.assert_awaited_once_with("GET", "/instance/all", "private-secret")
-    assert capsys.readouterr().out == "EVOLUTION_REGISTERED_INSTANCES_OK\n"
+    output = capsys.readouterr().out
+    assert output.endswith("EVOLUTION_REGISTERED_INSTANCES_OK\n")
+    assert "private-secret" not in output
+    assert "existing" not in output
     database.aclose.assert_awaited_once()
     client.aclose.assert_awaited_once()
 

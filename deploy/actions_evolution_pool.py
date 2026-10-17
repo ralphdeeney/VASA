@@ -21,7 +21,16 @@ def emit_probe(ns, script, expected, *arguments):
     )
     lines = result.stdout.splitlines()
     for line in lines:
-        if re.fullmatch(r"EVOLUTION_CALL_GATE_(?:DB|REDIS)_ACTIVE=[0-9]{1,10}", line) or line in {
+        if (
+            re.fullmatch(r"EVOLUTION_CALL_GATE_(?:DB|REDIS)_ACTIVE=[0-9]{1,10}", line)
+            or re.fullmatch(r"EVOLUTION_INSTANCE_(?:REGISTERED|UPSTREAM)_COUNT=[0-9]{1,5}", line)
+            or line
+            in {
+                "EVOLUTION_INSTANCE_STAGE=database",
+                "EVOLUTION_INSTANCE_STAGE=list",
+                "EVOLUTION_INSTANCE_STAGE=status",
+            }
+        ) or line in {
             "EVOLUTION_CALL_GATE_OK",
             "EVOLUTION_CALL_GATE_FAILED=active_calls",
             "EVOLUTION_CALL_GATE_FAILED=inspection_failed",
