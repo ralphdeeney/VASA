@@ -105,3 +105,27 @@ Local full suite:1,469 passed in77.18s; Ruff/format, strict mypy, actionlint,
 all shell syntax and diff checks passed. Signup screenshots show local fixture UI
 with the existing text wordmark, NOT the missing authoritative logo or deployed UI.
 They are saved under screenshots/ at320/375/393/1280px.
+
+## Actual CI and isolated preparation outcome
+
+Source c57931fb5ab9e76f1ed3e2fc73dbe3918d8c1f5a passed CI39073902107 with
+1,469 tests. Automatic normal deploy39073902103 correctly refused the preserved
+three-file dirty checkout before changes. Codex then triggered the existing
+check/recovery=prepare, Actions39074100085, which SUCCEEDED with
+`VASA_RECOVERY_PREPARE_OK`. It restored/tested a fresh48,670-byte application
+backup (hash in result.json), confirmed schema0007 already current, verified the
+rollback image and built `vasa-app:release-c57931fb5ab9e76f1ed3e2fc73dbe3918d8c1f5a`.
+The controller verified unchanged running container identities, operator/private
+files and canonical checkout. No service was replaced/restarted, no live migration
+ran and no release was activated. Existing active app/voice remains858b5f8.
+
+CLI GitHub authentication expired during monitoring; Codex recovered through the
+connected GitHub integration and fetched the successful job status and only fixed
+allowlisted preparation markers. No duplicate operation or credential request was
+needed. Both GitHub and VPS approved SMTP bindings remain absent. Actual sender/
+mailbox delivery and original logo remain unavailable, so these are genuine
+external acceptance gates, not implied successes from mocks or image preparation.
+
+Activation remains held by the existing exact-target/SQL review gate documented
+in ../DB_MIGRATION_PLAN.md; no approval was fabricated from a request flag. The
+prepared candidate is concrete and reviewable. See result.json for actual facts.

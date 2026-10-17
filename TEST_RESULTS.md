@@ -779,3 +779,10 @@ cancellation capacity, auth/tenant/token/workflow rules and contact-recipient ga
 Read-only staging investigation39073685888 succeeded; SMTP GitHub/runtime bindings
 absent, five services healthy/restarts0, DB0007, operator files preserved. No real
 SMTP delivery result or deployed branding change is inferred. Original logo missing.
+
+
+Signup/SMTP CI39073902107 passed1469 in75.55s. Existing isolated preparation
+39074100085 passed backup restore/schema-current/rollback/candidate-build and
+service/operator/private preservation gates, marker VASA_RECOVERY_PREPARE_OK.
+Normal deploy39073902103 remained blocked before changes at the dirty tree.
+Original logo and actual SMTP mailbox acceptance remain unavailable, not passed.

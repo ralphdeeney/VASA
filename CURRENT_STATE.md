@@ -700,3 +700,14 @@ exactly three preserved untracked operator edge/tunnel files, approved GitHub an
 VPS SMTP bindings absent. Full local1469 tests plus static/workflow/shell checks
 pass. Existing application activation safety remains; isolated preparation is next.
 No migration, Evolution/voice restart, provider or tunnel change is authorized.
+
+
+Signup/SMTP delivery outcome: code c57931f pushed; CI39073902107 passed1469.
+Normal deploy39073902103 safely refused preserved operator files. Isolated
+prepare39074100085 succeeded (`VASA_RECOVERY_PREPARE_OK`): fresh backup restored,
+schema0007 current, rollback verified and candidate vasa-app:release-c57931f...
+built without any running service/file changes. App/voice remains858b5f8. Not
+activated: exact-release approval, original logo and private SMTP/verified sender/
+test inbox/real mailbox receipt remain gates. CLI auth expired; connected GitHub
+integration recovered status/logs without new credentials or duplicate run.
+See docs/signup-email/result.json. No real email sent or delivery claimed.

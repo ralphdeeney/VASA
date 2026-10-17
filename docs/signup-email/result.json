@@ -1,0 +1,68 @@
+{
+  "source_commit": "c57931fb5ab9e76f1ed3e2fc73dbe3918d8c1f5a",
+  "implementation": "signup layout and secure optional Reloop SMTP prepared",
+  "logo_asset": {
+    "status": "blocked_original_image_missing",
+    "asset_path": null,
+    "invented_logo": false
+  },
+  "python_tests_passed": 1469,
+  "browser_layouts_passed": 40,
+  "viewport_widths": [
+    320,
+    375,
+    393,
+    768,
+    1280
+  ],
+  "static_checks": [
+    "ruff",
+    "format",
+    "strict mypy",
+    "actionlint",
+    "shell syntax",
+    "git diff"
+  ],
+  "actions": {
+    "initial_readonly": 39073685888,
+    "ci": 39073902107,
+    "normal_deploy": 39073902103,
+    "isolated_preparation": 39074100085
+  },
+  "normal_deploy": "blocked before changes by preserved untracked operator files",
+  "isolated_preparation": {
+    "status": "success",
+    "marker": "VASA_RECOVERY_PREPARE_OK",
+    "target_sha": "c57931fb5ab9e76f1ed3e2fc73dbe3918d8c1f5a",
+    "candidate_image": "vasa-app:release-c57931fb5ab9e76f1ed3e2fc73dbe3918d8c1f5a",
+    "previous_active_sha": "858b5f853957d719a34ea96f28b5ea726100d402",
+    "backup_restored_and_verified": true,
+    "backup_bytes": 48670,
+    "backup_sha256": "2ec3a3239982f7350f0d44b29a38ab59829659b5137cb31864ca2eae87d5a339",
+    "rollback_verified": true,
+    "clone_schema": "0007 already current",
+    "live_checkout_and_services_unchanged": true,
+    "live_migration_applied": false,
+    "activated": false
+  },
+  "smtp": {
+    "github_approved_bindings": "all absent",
+    "existing_vps_runtime_bindings": "all absent",
+    "local_approved_bindings": "all absent",
+    "private_web_only_file": ".local/smtp.env",
+    "credentials_used": false,
+    "sender_domain_verified_by_this_task": false,
+    "test_inbox_provided": false,
+    "smtp_live_test": "not run",
+    "mailbox_delivery": "not verified",
+    "signup_requires_real_delivery_attestation": true
+  },
+  "auth_recovery": "CLI token became invalid; connected GitHub integration independently recovered run status and sanitized logs; no duplicate run or new credentials",
+  "remaining_gates": [
+    "original authoritative logo file",
+    "private SMTP credential and verified sender plus test inbox",
+    "actual mailbox receipt before delivery attestation",
+    "existing exact-release activation authorization"
+  ],
+  "production_claim": "No branding/email change activated; no email delivery claimed operational."
+}
