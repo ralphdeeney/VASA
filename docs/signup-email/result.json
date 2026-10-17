@@ -2,11 +2,16 @@
   "source_commit": "c57931fb5ab9e76f1ed3e2fc73dbe3918d8c1f5a",
   "implementation": "signup layout and secure optional Reloop SMTP prepared",
   "logo_asset": {
-    "status": "blocked_original_image_missing",
-    "asset_path": null,
+    "status": "implemented_original_artwork",
+    "asset_path": "src/vasa/dashboard/assets/vasa-logo.png",
+    "dimensions": [
+      661,
+      548
+    ],
+    "sha256": "2cacf60a5f268dc6851a3c2849ff9eb61e284eb36e22f4b3b4d9c39e900fff29",
     "invented_logo": false
   },
-  "python_tests_passed": 1469,
+  "python_tests_passed": 1470,
   "browser_layouts_passed": 40,
   "viewport_widths": [
     320,
@@ -52,17 +57,21 @@
     "private_web_only_file": ".local/smtp.env",
     "credentials_used": false,
     "sender_domain_verified_by_this_task": false,
-    "test_inbox_provided": false,
+    "test_inbox_provided": true,
     "smtp_live_test": "not run",
     "mailbox_delivery": "not verified",
-    "signup_requires_real_delivery_attestation": true
+    "signup_requires_real_delivery_attestation": true,
+    "status": "domain setup and live delivery deferred by operator"
   },
   "auth_recovery": "CLI token became invalid; connected GitHub integration independently recovered run status and sanitized logs; no duplicate run or new credentials",
   "remaining_gates": [
-    "original authoritative logo file",
-    "private SMTP credential and verified sender plus test inbox",
+    "private SMTP credential and verified sender",
     "actual mailbox receipt before delivery attestation",
     "existing exact-release activation authorization"
   ],
-  "production_claim": "No branding/email change activated; no email delivery claimed operational."
+  "production_claim": "No branding/email change activated; no email delivery claimed operational.",
+  "logo_followup": {
+    "status": "local full suite and 40 browser layouts passed; awaiting preparation",
+    "source_commit": "this commit"
+  }
 }

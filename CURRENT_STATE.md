@@ -711,3 +711,13 @@ activated: exact-release approval, original logo and private SMTP/verified sende
 test inbox/real mailbox receipt remain gates. CLI auth expired; connected GitHub
 integration recovered status/logs without new credentials or duplicate run.
 See docs/signup-email/result.json. No real email sent or delivery claimed.
+
+
+Signup logo follow-up: operator supplied original JPEG and approved lossless Python/Pillow
+cleanup. Original green artwork now ships as fixed first-party transparent PNG
+`/dashboard/assets/vasa-logo.png` (661x548). All 40 browser layouts pass, including
+320/375/393px; full suite 1470 passed (77.86s), Ruff/format/strict application mypy,
+actionlint and shell syntax pass. SMTP domain/live delivery explicitly deferred;
+email-dependent signup remains unavailable until verified mailbox receipt. No
+Evolution/provider/tunnel changes. Isolated release preparation precedes the
+existing exact-release/SQL approval gate.

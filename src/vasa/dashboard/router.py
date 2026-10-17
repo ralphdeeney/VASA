@@ -77,15 +77,20 @@ async def identity_page(request: Request) -> HTMLResponse:
         (_ROOT / "templates" / "identity.html").read_text, encoding="utf-8"
     )
     navigation = "" if is_signup else '<a class="button" href="/signup">Get started</a>'
+    logo = (
+        '<img src="/dashboard/assets/vasa-logo.png" alt="VASA" class="identity-logo">'
+        if is_signup
+        else ""
+    )
     help_text = (
         'Already have an account? <a href="/login">Sign in</a>'
         if is_signup
         else '<a href="/login">Sign in</a> · <a href="/signup">Create account</a>'
     )
     return HTMLResponse(
-        template.replace("<!-- identity-signup-navigation -->", navigation).replace(
-            "<!-- identity-account-help -->", help_text
-        ),
+        template.replace("<!-- identity-signup-navigation -->", navigation)
+        .replace("<!-- identity-account-help -->", help_text)
+        .replace("<!-- identity-brand-logo -->", logo),
         headers=_HEADERS,
     )
 
@@ -115,3 +120,10 @@ async def site_script(request: Request) -> FileResponse:
     # The route set is explicit; this cannot select arbitrary filesystem paths.
     filename = request.url.path.rsplit("/", 1)[-1]
     return FileResponse(_ROOT / "assets" / filename, media_type="text/javascript", headers=_HEADERS)
+
+
+@router.get("/dashboard/assets/vasa-logo.png")
+async def identity_logo() -> FileResponse:
+    return FileResponse(
+        _ROOT / "assets" / "vasa-logo.png", media_type="image/png", headers=_HEADERS
+    )

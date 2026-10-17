@@ -129,3 +129,17 @@ external acceptance gates, not implied successes from mocks or image preparation
 Activation remains held by the existing exact-target/SQL review gate documented
 in ../DB_MIGRATION_PLAN.md; no approval was fabricated from a request flag. The
 prepared candidate is concrete and reviewable. See result.json for actual facts.
+
+## Original logo integration
+
+The signup form uses `/dashboard/assets/vasa-logo.png`, a tightly cropped,
+transparent PNG extracted from the operator-supplied JPEG. The 661 × 548 asset
+preserves original green artwork pixels and proportions; only the white background
+is made transparent. It is served by a fixed first-party route with `nosniff`.
+Other shared identity pages retain their existing navigation and layout.
+
+Domain verification and live SMTP delivery remain deliberately deferred. Public
+signup/email-dependent workflows remain gated by verified delivery; the branding
+release does not attest email readiness or change provider configuration.
+
+Logo SHA256: `2cacf60a5f268dc6851a3c2849ff9eb61e284eb36e22f4b3b4d9c39e900fff29`.

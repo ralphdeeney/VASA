@@ -786,3 +786,13 @@ Signup/SMTP CI39073902107 passed1469 in75.55s. Existing isolated preparation
 service/operator/private preservation gates, marker VASA_RECOVERY_PREPARE_OK.
 Normal deploy39073902103 remained blocked before changes at the dirty tree.
 Original logo and actual SMTP mailbox acceptance remain unavailable, not passed.
+
+
+Signup logo follow-up: operator supplied original JPEG and approved lossless Python/Pillow
+cleanup. Original green artwork now ships as fixed first-party transparent PNG
+`/dashboard/assets/vasa-logo.png` (661x548). All 40 browser layouts pass, including
+320/375/393px; full suite 1470 passed (77.86s), Ruff/format/strict application mypy,
+actionlint and shell syntax pass. SMTP domain/live delivery explicitly deferred;
+email-dependent signup remains unavailable until verified mailbox receipt. No
+Evolution/provider/tunnel changes. Isolated release preparation precedes the
+existing exact-release/SQL approval gate.

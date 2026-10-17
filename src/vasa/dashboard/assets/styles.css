@@ -227,3 +227,9 @@ th { color: var(--muted); font-size: .8rem; }
 }
 /* An idle live region should not display an empty notification banner. */
 .identity-page #identity-message:empty { display: none; }
+.identity-page .identity-logo {
+  display: block;
+  width: min(100%, 260px);
+  height: auto;
+  margin: 0 auto 24px;
+}

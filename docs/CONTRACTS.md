@@ -447,3 +447,15 @@ is explicitly allowed for a test only, superseding the rotated-only requirement
 for that test. It is not actually available in attachments or approved bindings.
 No key may be printed/committed or passed through frontend/logs. Real send still
 requires protected configuration, verified sender and an operator test inbox.
+
+## Authoritative logo continuation — 2026-10-17
+
+The user supplied 102660.jpg (green monogram + VASA wordmark) and the explicitly
+authorized test inbox. Root owns asset preparation/provenance and integration/
+commits. UI specialist owns fixed first-party PNG route, signup-only accessible
+image/template/CSS and focused tests. Browser specialist owns local responsive/
+CSP image-load evidence. Preserve exact brand shape/proportions/tones; do not use
+a generic icon or change other identity pages. No SMTP key or verified sender
+is available yet: request protected configuration asynchronously, never a chat
+secret or frontend field. Test inbox is recipient only, not an approved sender.
+Existing activation/dirty-check/migration gates remain authoritative.
