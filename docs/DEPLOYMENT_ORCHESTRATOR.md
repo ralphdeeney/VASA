@@ -158,3 +158,23 @@ operator checkout still blocks ordinary app deployment; one-shot Evolution grant
 is consumed and cannot be silently renewed after rollback. SMTP remains deferred.
 Neither existing push nor direct workflow dispatch needs a new credential or
 manual Actions operation. No protected gate was bypassed.
+
+### Verified recovery/maintenance continuation (2026-10-17)
+
+Controller/docs/test-only pushes now skip ordinary application replacement;
+explicit request commits still trigger this orchestrator and exact-SHA CI.
+Runtime/Compose changes retain normal application deployment behavior. Read-only
+Evolution checks require independent-runner identified HTTPS readiness and
+anonymous identity/instance/admin401 boundaries before SSH, then private/public
+VPS health and unchanged-container/private-file verification. They write a
+private completed receipt with time and identified-health contract attestation.
+
+The separately approved renewal mechanism binds a distinct UUID/grant, absolute
+expiry, fresh successful read-only receipt and exact source/safety-input manifest.
+Request flags cannot confer approval or extend expiry. Source tip, readiness and
+public health are rechecked before the single-use claim under the existing lock.
+A successful replacement writes an append-only private per-request deployment
+receipt. Historical grants remain untouched. The approved attempt succeeded in
+39013405431 and is consumed; no automatic retry/replacement is authorized.
+Routine read-only verification remains available without another maintenance
+approval. See health-recovery/authorized-rollout-result.json for real evidence.

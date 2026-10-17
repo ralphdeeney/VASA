@@ -1,3 +1,9 @@
+Current execution: identifying-client correction verified in Actions39013001527;
+one separately authorized rollout39013405431 succeeded; independent audit
+39013697523 passed. Both historical and renewed grants are consumed. Public
+identified and private200/200/401 contract remains required; further maintenance
+needs new approval. See health-recovery/authorized-rollout-result.json.
+
 # Readiness contract and public-edge recovery review
 
 Status: the operator explicitly approved the identifying health-client correction

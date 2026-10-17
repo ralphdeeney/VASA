@@ -1,0 +1,104 @@
+{
+  "status": "deployed_and_verified",
+  "environment": "staging",
+  "source_commit": "390aa0d4c784d9952bd93e3224d82cf9edfe02d9",
+  "deployed_evolution_revision": "68e193f44cfd655597da36e1fee0d52ac15bce17",
+  "upstream_commit": "e21ce0dd7634f3047410c893b5e4d1c082034b84",
+  "pool_patch_sha256": "daba5ba8222345396ce5934e8a7ef07c353a4ed73fedcbeb785c75a6fb0b5361",
+  "previous_image": "sha256:d0b8a492d7976e56f90333ea4f472fbcc75c50ecdbe073df8ff78a268460c0d3",
+  "deployed_image": "sha256:ce9c60d7f0c26f45e3cbd3b628173a580957b747461b5592db210f9d63dd6ec9",
+  "application_voice_release": "858b5f853957d719a34ea96f28b5ea726100d402",
+  "canonical_checkout": "502b8d8715aaeb34d3f129628fa754ccba447f13",
+  "runs": {
+    "readiness": 39013001527,
+    "rollout": 39013405431,
+    "post_rollout": 39013697523,
+    "source_ci": 39013398872,
+    "request_ci": 39013405514,
+    "post_ci": 39013698097
+  },
+  "rollout_run_completed_at": "2026-10-17T07:26:54Z",
+  "post_rollout_observed_at": "2026-10-17T07:30:57Z",
+  "required_markers": [
+    "EVOLUTION_BACKUP_RESTORE_OK",
+    "EVOLUTION_ROLLBACK_IMAGE_VERIFIED",
+    "EVOLUTION_PAIRING_AND_SCHEMA_PRESERVED",
+    "VASA_EVOLUTION_POOL_DEPLOYMENT_OK",
+    "EVOLUTION_PUBLIC_HEALTH_OK",
+    "VASA_RECOVERY_PRESERVATION_OK"
+  ],
+  "connections": {
+    "before": {
+      "evolution": 1,
+      "api": 1,
+      "voice": 1,
+      "other": 0,
+      "total": 3
+    },
+    "immediate_after_three_samples": {
+      "evolution": 2,
+      "api": 1,
+      "voice": 1,
+      "other": 0,
+      "total": 4
+    },
+    "settled_readonly": {
+      "evolution": 1,
+      "api": 1,
+      "voice": 1,
+      "other": 0,
+      "total": 3
+    },
+    "postgres_maximum": 100
+  },
+  "calls": {
+    "durable": 0,
+    "redis": 0,
+    "media_sockets": 0
+  },
+  "all_five_services_healthy": true,
+  "all_five_restart_counts": 0,
+  "only_evolution_replaced": true,
+  "operator_and_private_files_preserved": true,
+  "backup_restore_verified": true,
+  "database_identity_preserved": true,
+  "registered_instances": 1,
+  "paired_metadata_preserved": true,
+  "whatsapp_connected": false,
+  "whatsapp_logged_in": false,
+  "public_identified_statuses": {
+    "login": 200,
+    "readiness": 200,
+    "dashboard": 401
+  },
+  "private_statuses": {
+    "login": 200,
+    "readiness": 200,
+    "dashboard": 401
+  },
+  "anonymous_identity_instance_admin_status": 401,
+  "maintenance_grant_consumed": true,
+  "replacement_attempts": 1,
+  "rollback_performed": false,
+  "immutable_private_receipt": ".local/deployment-requests/1d64d376-3568-4510-8f51-38560fc402e9.deployment.json",
+  "tests": {
+    "python": 1425,
+    "ruff": "passed",
+    "format": "passed",
+    "strict_mypy": "passed",
+    "actionlint": "passed",
+    "shell_syntax": "passed",
+    "go_full": "passed",
+    "go_vet": "passed",
+    "call_media_race": "passed",
+    "real_postgresql_120_cycle_lifecycle_race": "passed"
+  },
+  "limitations": [
+    "Idle counts do not prove real WhatsApp reconnect leak recurrence is impossible.",
+    "Historical 95 connections are not the immediate pre-rollout baseline.",
+    "Specific Cloudflare security rule remains unproven; default urllib403 remains observed.",
+    "Historical recovery audit upstream/rollback comparison fields compare against pre-fix image; new revision/digest intentionally differ.",
+    "Human pairing and live-call acceptance remain pending; reconnect/audio issue not claimed fixed.",
+    "SMTP deferred."
+  ]
+}

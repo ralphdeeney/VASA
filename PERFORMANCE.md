@@ -367,3 +367,14 @@ Final benchmark refreshed after disabling stochastic VITS noise; model hashes
 and independent recognition acceptance unchanged. Native TTS repeated output
 is byte-identical; the report records both noise scales as zero. Measurements
 remain sequential CPU components, not phone/LLM latency or concurrency.
+
+## Evolution pool rollout observations — 2026-10-17
+
+Actual fresh idle baseline total3 (Evolution1/API1/voice1), max100. Guarded
+rollout39013405431 produced three stable immediate samples total4 (Evolution2);
+independent audit39013697523 settled to total3 (Evolution1). No artificial real
+WhatsApp reconnect traffic was used. These counts are not a measured reduction
+from the historical95 incident and alone cannot prove leak prevention. The
+reviewed process-owned bounded pool implementation passed real PostgreSQL
+120-cycle reuse/shutdown/race tests and is now the verified running image.
+No STT/TTS/LLM or live-call performance claim is made.

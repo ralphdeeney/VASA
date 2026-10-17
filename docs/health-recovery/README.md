@@ -145,3 +145,52 @@ read-only receipt binds the identified-health contract. The historical consumed
 grant remains untouched. No Evolution replacement or application activation has
 yet occurred in this continuation. Fresh evidence and final outcomes will be
 recorded below; historical results above are not current live proof.
+
+## Authorized recovery completed — actual staging evidence
+
+The separately authorized one-use rollout succeeded in
+[Actions39013405431](https://github.com/ralphdeeney/VASA/actions/runs/39013405431)
+with `VASA_EVOLUTION_POOL_DEPLOYMENT_OK`; there was no rollback and no second
+replacement. Source390aa0d4c784d9952bd93e3224d82cf9edfe02d9, deployed request
+revision68e193f44cfd655597da36e1fee0d52ac15bce17. Pinned upstream and reviewed
+pool/logging patches remain unchanged. Fresh backups of all three relevant
+databases were restored/tested in disposable databases, rollback image verified,
+repeated durable/Redis/media no-call checks passed, voice admission was temporarily
+paused and resumed without recreating voice. Pairing/schema/credential identities
+were verified unchanged. The successful immutable private receipt is
+`.local/deployment-requests/1d64d376-3568-4510-8f51-38560fc402e9.deployment.json`;
+backup archives, hashes and credentials remain private. Both grants are consumed.
+Another Evolution replacement needs renewed authorization.
+
+[Independent post-rollout audit39013697523](https://github.com/ralphdeeney/VASA/actions/runs/39013697523)
+succeeded after CI. Running image:
+`sha256:ce9c60d7f0c26f45e3cbd3b628173a580957b747461b5592db210f9d63dd6ec9`.
+All five services healthy/restart_count0. Only Evolution container identity
+changed. API/voice/PostgreSQL/Redis identities, operator/private file hashes,
+canonical checkout502b8d8 and active app/voice release858b5f8 remain unchanged.
+The three untracked operator files remain preserved and untracked. No unrelated
+application release, migration, tunnel, proxy or Cloudflare change was made.
+
+Immediate baseline: Evolution1/API1/voice1/other0,total3,max100. Three immediate
+post-samples: Evolution2/API1/voice1,total4. Settled independent audit:
+Evolution1/API1/voice1,total3. These are actual idle measurements, not a claimed
+95-to3 reduction or proof against every future real reconnect. Full Go tests,
+vet, call/media race and real PostgreSQL120-cycle lifecycle/reuse/shutdown/race
+tests passed; source/request/post CI each passed1,425 Python tests with required
+static checks. No artificial WhatsApp reconnect traffic was generated.
+
+Public identified-client and private login/readiness/dashboard:200/200/401.
+Anonymous identity/instance/admin APIs:401 from runner and VPS public/private.
+Default urllib403 remains a separate observed edge decision; its exact Cloudflare
+rule remains unproven. No edge policy was weakened. The legacy audit fields
+`upstream_matches`/`rollback_image_matches` compare against the historical pre-fix
+revision/image; their false values after successful replacement are expected.
+The running revision is68e193f, verified by its image label, while its pinned
+vendor upstream remains e21ce0dd plus reviewed patches.
+
+See [actual result](authorized-rollout-result.json),
+[post-rollout HTTP observations](post-rollout-observations.json) and
+[preservation/image audit](post-rollout-audit.json). The registered instance and
+paired metadata remain intact, but WhatsApp is disconnected/logged-out. Human
+connection/pairing of the existing instance and an explicitly authorized human
+call are next. Reconnect/audio distortion is NOT claimed solved. SMTP deferred.

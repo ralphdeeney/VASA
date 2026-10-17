@@ -751,3 +751,17 @@ private, authorization, no-call and preservation gates. After binding the scoped
 renewal, full local suite1,425 passed in80.70s; Ruff/format, strict mypy,
 actionlint and shell checks pass. These results authorize proceeding through
 fresh maintenance gates; they do not establish a deployed fixed Evolution image.
+
+## Evolution rollout verified — 2026-10-17
+
+Code/source CI39013398872:1,425 passed; request CI39013405514:1,425 passed.
+Post-audit CI39013698097 passed. Full local1,425 passed; Ruff/format, strict
+mypy69 application and7 deployment modules, actionlint, all5 shell syntax checks,
+Go full tests/vet, call/media race and real PostgreSQL120-cycle lifecycle/race
+passed. Fresh real backup restoration and repeated no-call/identity/public health
+passed in successful rollout39013405431; no rollback. Independent read-only
+post-audit39013697523 succeeded, confirming new image/revision, all five healthy
+services/restart_count0, unchanged other container/private/operator identities,
+registered/paired metadata and settled connections3. Public/private200/200/401;
+anonymous identity/instances/admin401. WhatsApp offline; human live-call acceptance
+and SMTP remain deferred. Detailed evidence under docs/health-recovery/.

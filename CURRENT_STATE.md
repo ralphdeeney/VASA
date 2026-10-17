@@ -1,3 +1,23 @@
+## Current verified outcome — 2026-10-17
+
+The authorized Evolution pool-fix rollout SUCCEEDED in Actions39013405431,
+marker `VASA_EVOLUTION_POOL_DEPLOYMENT_OK`; independent post-rollout
+Actions39013697523 also SUCCEEDED. Deployed Evolution revision:
+`68e193f44cfd655597da36e1fee0d52ac15bce17`; source390aa0d4c784d9952bd93e3224d82cf9edfe02d9.
+Image `sha256:ce9c60d7f0c26f45e3cbd3b628173a580957b747461b5592db210f9d63dd6ec9`.
+Verified fresh backup restoration, rollback image, repeated zero-call gates,
+pairing/schema/credential preservation, all five healthy services/restart_count0,
+public/private readiness and authentication boundaries. Only Evolution replaced;
+app/voice release858b5f8 and canonical502b8d8/operator/private files unchanged.
+The historical and renewed grants are consumed. No additional replacement is
+authorized. Idle connections3 before,4 across three immediate post-samples,
+3 at settled independent audit (Evolution1/API1/voice1, max100). This is not a
+claimed measured95-to3 reduction or proof that real-call reconnect is solved.
+WhatsApp remains registered with paired metadata intact, disconnected/logged-out.
+Human connection/pairing and live-call acceptance remain pending. SMTP deferred.
+Full evidence: docs/health-recovery/authorized-rollout-result.json and README.md.
+Historical entries below are superseded by this verified current outcome.
+
 ## 2026-10-17 — Public-health trigger verified; policy/rollout approvals held
 
 Read-only Actions39010351757 reproduced the same controlled result on VPS and

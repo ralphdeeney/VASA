@@ -85,3 +85,11 @@ and private runtime files remained unchanged during audit/network probes.
 The active Evolution image matches the verified fallback rollback tag; its
 revision is the pre-fix pinned upstream and backup identity matches. No pool fix
 or new grant is deployed. Detailed safe evidence:health-recovery/README.md.
+
+The 2026-10-17 Evolution maintenance completed through isolated
+`.local/evolution-releases/<exact-SHA>` without activating an application release.
+Canonical502b8d8, active app/voice858b5f8 and the three untracked operator files
+remain unchanged, as freshly verified by Actions39013697523. Future application
+activation must continue through the existing isolated-release backup/migration/
+authorization gates; never clean, stash or track the operator files to pass a
+normal clean-checkout gate. This maintenance grants no application migration.
