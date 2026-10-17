@@ -78,3 +78,13 @@ def test_targeted_compose_rejects_untrusted_image(tmp_path):
     pool.compose_evolution(ns, "vasa-evolution:pool-" + "a" * 40, "up", "--no-deps", "evolution")
     assert calls[0][0][-3:] == ("up", "--no-deps", "evolution")
     assert "down" not in calls[0][0]
+
+
+def test_evolution_modes_do_not_require_application_migration_approval():
+    from pathlib import Path
+
+    script = Path("deploy/actions-ssh.sh").read_text()
+    approval = script.split('VASA_MIGRATION_SQL_SHA256=${VASA_MIGRATION_SQL_SHA256:-}')[1]
+    approval = approval.split('[[ "$VASA_RECOVERY" == none || (')[0]
+    assert 'if [[ "$VASA_RECOVERY" == activate ]]; then' in approval
+    assert "evolution_" not in approval

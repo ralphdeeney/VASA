@@ -12,7 +12,7 @@ VASA_RECOVERY=${VASA_RECOVERY:-none}
 [[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate || "$VASA_RECOVERY" == prepare || "$VASA_RECOVERY" == activate || "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]] || exit 1
 VASA_RELEASE_SHA=${VASA_RELEASE_SHA:-}
 VASA_MIGRATION_SQL_SHA256=${VASA_MIGRATION_SQL_SHA256:-}
-if [[ "$VASA_RECOVERY" == activate || "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]]; then
+if [[ "$VASA_RECOVERY" == activate ]]; then
   [[ "$VASA_RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
   [[ "$VASA_MIGRATION_SQL_SHA256" =~ ^[0-9a-f]{64}$ ]] || exit 1
 else
