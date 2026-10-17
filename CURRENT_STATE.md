@@ -649,3 +649,16 @@ are now blocking checks. Controller-only pushes avoid unrelated app activation.
 Authorization B is conditional; renewed grant support is dormant until fresh
 read-only readiness succeeds. Existing consumed grant and operator files remain
 untouched. Evolution remains undeployed pending fresh live proof.
+
+## 2026-10-17 — Fresh health verified; one conditional maintenance grant bound
+
+Read-only Actions39013001527 succeeded: real `EVOLUTION_PUBLIC_HEALTH_OK`,
+identified public login/readiness/dashboard200/200/401 from runner and VPS,
+private200/200/401 and anonymous identity/instances/admin401. Five containers,
+operator/private files and database identities unchanged; calls/media0;
+Evolution1/web1/voice1/other0,total3,max100. Existing WhatsApp remains registered,
+paired metadata preserved, disconnected/logged out. App/voice active858b5f8.
+The separately approved new one-use grant is bound to this private receipt,
+exact reviewed source hashes and absolute expiry. Full local1,425 tests and all
+static checks pass. No replacement has yet occurred. See the new authorization
+record and sanitized readiness evidence in docs/health-recovery/.

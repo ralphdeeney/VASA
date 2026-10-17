@@ -1,0 +1,103 @@
+[
+  {
+    "external_network": false,
+    "fingerprint": "ef7697d0bc9b5eadcd2185fcaa07c339f6143f94cc29043374ad3ea8d1ab2755",
+    "kind": "operator",
+    "path": "edge/Caddyfile",
+    "present": true,
+    "private_origin": true,
+    "regular": true,
+    "reverse_proxy": true,
+    "tracked": false,
+    "tunnel": false
+  },
+  {
+    "external_network": false,
+    "fingerprint": "bb2b26e7065e07ea0e1897fa84abae6d1b7e5aec8d7cde8d95fd28d363a73ce6",
+    "kind": "operator",
+    "path": "edge/docker-compose.edge.yml",
+    "present": true,
+    "private_origin": false,
+    "regular": true,
+    "reverse_proxy": false,
+    "tracked": false,
+    "tunnel": false
+  },
+  {
+    "external_network": false,
+    "fingerprint": "21d12f63150987d077094c035a2ec8259983af0de5a2a6652db9f1fb8fe6b3cb",
+    "kind": "operator",
+    "path": "tunnel/docker-compose.yml",
+    "present": true,
+    "private_origin": false,
+    "regular": true,
+    "reverse_proxy": false,
+    "tracked": false,
+    "tunnel": true
+  },
+  {
+    "kind": "inventory",
+    "tracked_changes": 0,
+    "unknown_paths_hash": "02b6f988997ca5c1b88a6f45c03c5fb59297447aa53ddf4bed23fb622e68fc7c",
+    "untracked": 3
+  },
+  {
+    "container_hash": "752b0f3f8ab3bf8e03c4da8fe6bddb092f2f8564ed0a7133fa29c872e5860c72",
+    "image": "sha256:ac08538c6f8b9904c33c8224c5e5706dbe760aca29db1d096972b4052c22a75d",
+    "kind": "service",
+    "restarts": 0,
+    "service": "postgres"
+  },
+  {
+    "container_hash": "f2c723b763fce970f1c3522c2405cc7f5ce3557c299c778af32968a51e3d99cb",
+    "image": "sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499",
+    "kind": "service",
+    "restarts": 0,
+    "service": "redis"
+  },
+  {
+    "container_hash": "abc9f42c272b684708d742379f271457e75fa0e0cb27da70426247eef484eb52",
+    "image": "sha256:d0b8a492d7976e56f90333ea4f472fbcc75c50ecdbe073df8ff78a268460c0d3",
+    "kind": "service",
+    "restarts": 0,
+    "service": "evolution"
+  },
+  {
+    "container_hash": "ae1ea046ecfa974c1b9e89c7b9006de6d395fff0a681db9694348bbee79efa51",
+    "image": "sha256:3879cd67ffdb4db97d7f518f112bae73690cf9f3bc22ede8993acfee38529af3",
+    "kind": "service",
+    "restarts": 0,
+    "service": "vasa"
+  },
+  {
+    "container_hash": "c242dfd8ca15ce7d6383a34293c749013efad66cdcaeaedc3d98824eb4a8a3bd",
+    "image": "sha256:3879cd67ffdb4db97d7f518f112bae73690cf9f3bc22ede8993acfee38529af3",
+    "kind": "service",
+    "restarts": 0,
+    "service": "voice"
+  },
+  {
+    "active_sha": "858b5f853957d719a34ea96f28b5ea726100d402",
+    "canonical_sha": "502b8d8715aaeb34d3f129628fa754ccba447f13",
+    "journal_known": true,
+    "kind": "release"
+  },
+  {
+    "grant_consumed": true,
+    "identity_baseline": "matches",
+    "image": "sha256:d0b8a492d7976e56f90333ea4f472fbcc75c50ecdbe073df8ff78a268460c0d3",
+    "kind": "evolution",
+    "original_image_known": true,
+    "original_image_matches": false,
+    "rollback_image_matches": true,
+    "upstream": "e21ce0dd7634f3047410c893b5e4d1c082034b84",
+    "upstream_matches": true
+  },
+  {
+    "containers_unchanged": true,
+    "database_identity_unchanged": true,
+    "kind": "preservation",
+    "operator_files_unchanged": true,
+    "private_files_unchanged": true
+  }
+]

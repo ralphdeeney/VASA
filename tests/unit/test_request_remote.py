@@ -423,10 +423,8 @@ def test_diagnostic_failure_still_checks_container_preservation(tmp_path, capsys
     assert "private-body" not in capsys.readouterr().out
 
 
-def test_renewed_grant_is_dormant_and_old_consumed_grant_remains_authoritative(tmp_path):
-    from deploy.deployment_policy import RENEWED_EVOLUTION_GRANT
-
-    assert RENEWED_EVOLUTION_GRANT is None
+def test_absent_renewal_preserves_old_consumed_grant_authority(tmp_path):
+    # Historical namespaces without a separately reviewed renewal retain the old grant.
     ns, _ = setup(tmp_path)
     assert subject.renewed_prerequisite(ns, request(), tmp_path) == "evolution-pool-2026-10-17"
 

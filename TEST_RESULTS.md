@@ -744,3 +744,10 @@ deployment modules' strict mypy passed. Actionlint, Bash syntax and diff checks
 passed. Full pinned Go tests/vet, call/media race tests and real PostgreSQL
 120-cycle lifecycle/reuse/shutdown/race verification passed. No live replacement
 is inferred from these tests. Fresh automatic read-only readiness is next.
+
+Fresh identified-health source/request CI runs39012987764/39013001437 each
+passed1,425 tests; read-only request39013001527 succeeded with required public,
+private, authorization, no-call and preservation gates. After binding the scoped
+renewal, full local suite1,425 passed in80.70s; Ruff/format, strict mypy,
+actionlint and shell checks pass. These results authorize proceeding through
+fresh maintenance gates; they do not establish a deployed fixed Evolution image.

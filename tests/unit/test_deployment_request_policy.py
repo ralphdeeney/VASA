@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from deploy.deployment_policy import EVOLUTION_REQUEST_ID, OPERATIONS
+from deploy.deployment_policy import OPERATIONS, active_evolution_grant
 from deploy.request_validator import RequestRejected, load_request, validate_request
 
 NOW = datetime(2026, 10, 17, 12, tzinfo=UTC)
@@ -11,9 +11,13 @@ REQUEST_ID = "b0ead602-d4e2-41eb-a625-6d5f0d053889"
 
 
 def request(operation="application_check"):
-    policy = OPERATIONS[operation]
+    policy = dict(OPERATIONS[operation])
+    if operation == "evolution_pool_rollout":
+        policy["authorization"] = active_evolution_grant()["grant_id"]
     return {
-        "request_id": EVOLUTION_REQUEST_ID if operation == "evolution_pool_rollout" else REQUEST_ID,
+        "request_id": active_evolution_grant()["request_id"]
+        if operation == "evolution_pool_rollout"
+        else REQUEST_ID,
         "operation": operation,
         "target_commit": "a" * 40,
         "branch": "build/vasa-foundation",
@@ -180,6 +184,7 @@ def test_renewed_policy_binding_and_absolute_expiry(monkeypatch):
     }
     monkeypatch.setattr(deployment_policy, "RENEWED_EVOLUTION_GRANT", grant)
     doc = request("evolution_pool_rollout")
+    doc["authorization"] = deployment_policy.EVOLUTION_GRANT
     with pytest.raises(RequestRejected, match="policy_mismatch"):
         validate_request(doc, context(doc), now=NOW)
     doc.update(request_id=REQUEST_ID, authorization=grant["grant_id"])
