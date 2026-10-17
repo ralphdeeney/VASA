@@ -1,0 +1,16 @@
+{
+  "request_id": "592f68b7-efbb-4bbc-b628-eea754ff4eb5",
+  "operation": "evolution_check",
+  "target_commit": "be39ad7be11d5546c4fd6b304dfb17d54600407d",
+  "branch": "build/vasa-foundation",
+  "environment": "staging",
+  "scope": "evolution-readonly",
+  "policy": "evolution-readonly-v1",
+  "authorization": "routine-staging-v1",
+  "reason": "Read-only urllib/curl runner/VPS/private health comparison and preserved rollback/checkouts audit; no new rollout authorization",
+  "created_at": "2026-10-17T06:33:26Z",
+  "expires_at": "2026-10-17T18:33:26Z",
+  "expected_markers": [
+    "EVOLUTION_POOL_PREFLIGHT_OK"
+  ]
+}
