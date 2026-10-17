@@ -1,3 +1,46 @@
+## 2026-10-17 — Evolution fix tested; live rollout blocked by VPS access
+
+Implementation: f7016fbe005c409cb01a73b11fbd8a913646683a (pushed).
+Full automated suite: 1,223 passed, one upstream deprecation warning, 74.89s;
+Ruff, formatting, strict mypy, actionlint and Bash validation pass. Native Go
+lifecycle, race detector, real PostgreSQL 120-cycle reuse/shutdown, vet and
+existing call/media tests passed separately. No speech/provider changes.
+
+Last successful read-only Actions preflight: 38988440298. All five VASA
+containers passed existing-state health checks; durable calls=0, Redis calls=0,
+non-DNS media sockets=0. Exact registered/upstream instance count=1/1 and its
+paired device exists. Its live status was disconnected/logged-out, so container
+health must not be confused with WhatsApp readiness. PostgreSQL max=100;
+Evolution sockets=95, API=1, voice=1, other=0, total=97.
+
+Maintenance run 38988550199 stopped at rollback_image before target build,
+voice pause or Evolution replacement. Raw Docker errors were withheld, so this
+stage alone does not prove which image operation failed. The controller now
+supports building a verified rollback from the pinned pre-fix public source plus
+the existing logging patch, with dedicated lifecycle/failure tests. That fallback
+has NOT yet been exercised on the VPS.
+
+Subsequent Actions check 38988774741, including a fresh-runner retry, failed
+SSH host-key scanning before login. Public /login and /health/ready both return
+HTTP 530 with a Cloudflare Tunnel error. Current live container health cannot
+be established. No direct Codex SSH, Cloudflare change, daemon restart, migration
+or Evolution replacement was performed. There is no measured post-fix VPS
+connection count because the fixed image has not been deployed.
+
+Last verified active app/voice SHA remains
+858b5f853957d719a34ea96f28b5ea726100d402; Evolution remains the previous pinned
+build of upstream e21ce0dd7634f3047410c893b5e4d1c082034b84, not this fix.
+Canonical /opt/vasa/operator files remain preserved; release preparation uses
+an isolated .local/evolution-releases directory. SMTP remains explicitly deferred.
+
+Required external action: restore VPS SSH availability to the existing Actions
+bridge and the separately managed tunnel; do not weaken pinned SSH host trust.
+Then run VASA staging VPS, mode=check/recovery=evolution_check, followed by
+mode=check/recovery=evolution_deploy if preflight passes. Backups, repeated
+no-call checks, paired-device checks, targeted replacement and rollback remain
+mandatory. Require VASA_EVOLUTION_POOL_DEPLOYMENT_OK and record the actual
+post-rollout counts/health before a human WhatsApp call. Delivery is NOT complete.
+
 ## 2026-10-17 — Authorized Evolution pool lifecycle remediation
 
 Confirmed pinned upstream reconnect path creates an independent PostgreSQL
