@@ -88,3 +88,45 @@ def test_evolution_modes_do_not_require_application_migration_approval():
     approval = approval.split('[[ "$VASA_RECOVERY" == none || (')[0]
     assert 'if [[ "$VASA_RECOVERY" == activate ]]; then' in approval
     assert "evolution_" not in approval
+
+
+@pytest.mark.parametrize("available,build_failed", [(True, False), (False, False), (False, True)])
+def test_rollback_image_acquisition_never_mutates_running_services(
+    tmp_path, capsys, available, build_failed
+):
+    commands = []
+    image = "sha256:" + "b" * 64
+    fallback = "sha256:" + "c" * 64
+
+    def require(condition, message):
+        if not condition:
+            raise ValueError(message)
+
+    def run(*args, **kwargs):
+        commands.append(args)
+        if args[:2] == ("docker", "build") and build_failed:
+            raise ValueError("private-build-output")
+        if args[:3] == ("docker", "image", "inspect"):
+            return image if available else fallback
+        return ""
+
+    ns = {
+        "capture": lambda *a, **k: SimpleNamespace(returncode=0 if available else 1, stdout=image),
+        "run": run,
+        "require": require,
+        "assert_unchanged": lambda before: commands.append(("unchanged",)),
+    }
+    before = {"evolution": {"image": image}}
+    if build_failed:
+        with pytest.raises(ValueError):
+            pool.acquire_rollback(ns, before, tmp_path, "vasa-evolution:rollback-" + "a" * 40)
+    else:
+        actual = pool.acquire_rollback(ns, before, tmp_path, "vasa-evolution:rollback-" + "a" * 40)
+        assert actual == (image if available else fallback)
+        assert commands[-1] == ("unchanged",)
+    assert not any(
+        "compose" in command or "pause" in command or "commit" in command for command in commands
+    )
+    if not available:
+        assert "--rollback-source" in commands[0]
+    assert "private-build-output" not in capsys.readouterr().out

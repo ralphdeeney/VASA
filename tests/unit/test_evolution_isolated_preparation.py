@@ -124,3 +124,30 @@ def test_cli_help_runs_without_site_packages():
     )
     assert result.returncode == 0
     assert "--isolated" in result.stdout and "--destination" in result.stdout
+
+
+def test_rollback_source_retains_original_pool_code_and_preserves_existing_files(isolated_source):
+    root, source, _ = isolated_source
+    before = preparation.fingerprints(root / ".local")
+    destination = root / ".local/evolution-rollback-source"
+    preparation.prepare(source, destination=destination, isolated=True, rollback_source=True)
+    assert (destination / "main.go").read_text() == "logging-safe\npool-original\n"
+    manifest = json.loads((root / ".local/evolution-rollback-source-manifest.json").read_text())
+    assert set(manifest["patches"]) == {"evolution-log-redaction.patch"}
+    for name, digest in before.items():
+        assert hashlib.sha256((root / ".local" / name).read_bytes()).hexdigest() == digest
+    preparation.prepare(source, destination=destination, isolated=True, rollback_source=True)
+    with pytest.raises(SystemExit, match="isolated preparation"):
+        preparation.prepare(source, rollback_source=True)
+
+
+def test_portable_python_uses_existing_system_ca_bundle(isolated_source, monkeypatch):
+    from types import SimpleNamespace
+
+    _, source, destination = isolated_source
+    monkeypatch.setattr(
+        preparation.ssl, "get_default_verify_paths", lambda: SimpleNamespace(cafile=None)
+    )
+    preparation.prepare(source, destination=destination, isolated=True)
+    assert b"BEGIN CERTIFICATE" in (destination / "vasa-host-trust.pem").read_bytes()
+    assert b"PRIVATE KEY" not in (destination / "vasa-host-trust.pem").read_bytes()

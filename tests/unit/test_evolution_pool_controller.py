@@ -10,6 +10,9 @@ from deploy import actions_evolution_pool as pool
 
 TARGET = "a" * 40
 CANONICAL = "b" * 40
+OLD_IMAGE = "sha256:" + "1" * 64
+CANDIDATE_IMAGE = "sha256:" + "2" * 64
+FALLBACK_IMAGE = "sha256:" + "3" * 64
 SECRET = "Authorization: Bearer private-secret caller-id raw-provider-body"
 CAPACITY = """
 def diagnose_sockets(ns):
@@ -45,6 +48,8 @@ class Runtime:
         active_at: int = 0,
         replacement_fails: bool = False,
         health_fails: bool = False,
+        missing_image: bool = False,
+        fallback_build_fails: bool = False,
     ):
         self.root = root
         (root / ".local").mkdir()
@@ -55,10 +60,13 @@ class Runtime:
         self.replacement_fails = replacement_fails
         self.health_fails = health_fails
         self.health_calls = 0
-        self.evolution_image = "old-image"
+        self.missing_image = missing_image
+        self.fallback_build_fails = fallback_build_fails
+        self.rollback_image = OLD_IMAGE
+        self.evolution_image = OLD_IMAGE
         self.before = {
             service: {
-                "image": "old-image" if service == "evolution" else service + "-image",
+                "image": OLD_IMAGE if service == "evolution" else service + "-image",
                 "id": service + "-container",
             }
             for service in ("postgres", "redis", "evolution", "vasa", "voice")
@@ -110,19 +118,28 @@ class Runtime:
         self.events.append(("command", args, kwargs))
         if args[:3] == ("docker", "image", "inspect"):
             image = args[-1]
-            return "candidate-image" if "pool-" in image else "old-image"
+            return CANDIDATE_IMAGE if "pool-" in image else self.rollback_image
+        if args[:2] == ("docker", "build") and "rollback-" in args[3]:
+            if self.fallback_build_fails:
+                raise RuntimeError(SECRET)
+            self.rollback_image = FALLBACK_IMAGE
         if args[:2] == ("docker", "compose") and "up" in args:
             image = json.loads(kwargs["input_text"])["services"]["evolution"]["image"]
             if "pool-" in image:
                 if self.replacement_fails:
                     raise RuntimeError(SECRET)
-                self.evolution_image = "candidate-image"
+                self.evolution_image = CANDIDATE_IMAGE
             else:
-                self.evolution_image = "old-image"
+                self.evolution_image = self.rollback_image
         return ""
 
     def capture(self, *args, **kwargs):
         self.events.append(("capture", args))
+        if args[:3] == ("docker", "image", "inspect"):
+            return SimpleNamespace(
+                returncode=int(self.missing_image),
+                stdout=SECRET if self.missing_image else OLD_IMAGE + "\n",
+            )
         if args[-1] in ("/proc/net/udp", "/proc/net/udp6"):
             return SimpleNamespace(returncode=0, stdout="sl local_address rem_address st\n")
         if "GATE" in args:
@@ -206,7 +223,7 @@ def test_success_replaces_only_evolution_preserves_other_services(tmp_path, caps
     assert "--no-deps" in command and "--no-build" in command and "--wait" in command
     assert ("docker", "pause", "voice-container") in runtime.commands()
     assert ("docker", "unpause", "voice-container") in runtime.commands()
-    assert runtime.evolution_image == "candidate-image"
+    assert runtime.evolution_image == CANDIDATE_IMAGE
     assert ("unchanged", ("postgres", "redis", "vasa", "voice")) in runtime.events
     backup_index = runtime.events.index(("backup_verified",))
     pause_index = next(
@@ -235,7 +252,7 @@ def test_post_pause_call_race_defers_and_always_unpauses(tmp_path, capsys):
     assert not runtime.replacements()
     assert ("docker", "pause", "voice-container") in runtime.commands()
     assert ("docker", "unpause", "voice-container") in runtime.commands()
-    assert runtime.evolution_image == "old-image"
+    assert runtime.evolution_image == OLD_IMAGE
     assert not (tmp_path / ".local/actions-evolution-pool.json").exists()
     output = capsys.readouterr().out
     assert "EVOLUTION_ROLLOUT_DEFERRED=active_or_unknown_after_quiesce" in output
@@ -255,7 +272,7 @@ def test_failed_replacement_or_health_restores_verified_old_image(tmp_path, caps
     assert "pool-" in replacements[0][2]["input_text"]
     assert "rollback-" in replacements[1][2]["input_text"]
     assert all(event[1][-1] == "evolution" for event in replacements)
-    assert runtime.evolution_image == "old-image"
+    assert runtime.evolution_image == OLD_IMAGE
     assert runtime.health_calls >= 1
     assert ("docker", "unpause", "voice-container") in runtime.commands()
     assert not (tmp_path / ".local/actions-evolution-pool.json").exists()
@@ -314,7 +331,7 @@ def test_excessive_connections_after_replacement_roll_back(tmp_path, capsys):
     failing_capacity = CAPACITY.replace("else 2", "else 95")
     with pytest.raises(Refusal):
         pool.run(runtime.ns, TARGET, True, "GATE", "INSTANCES", BACKUPS, failing_capacity)
-    assert runtime.evolution_image == "old-image"
+    assert runtime.evolution_image == OLD_IMAGE
     assert len(runtime.replacements()) == 2
     output = capsys.readouterr().out
     assert "VASA_EVOLUTION_POOL_ROLLBACK_OK" in output
@@ -338,5 +355,84 @@ def test_rollback_failure_still_unpauses_voice_without_secret_output(tmp_path, c
     assert ("docker", "unpause", "voice-container") in runtime.commands()
     output = capsys.readouterr().out
     assert "VASA_EVOLUTION_POOL_ROLLBACK_FAILED" in output
+    assert "VASA_EVOLUTION_POOL_DEPLOYMENT_OK" not in output
+    assert SECRET not in output
+
+
+def test_missing_old_image_builds_verified_rollback_before_target_or_runtime_changes(
+    tmp_path, capsys
+):
+    runtime = Runtime(tmp_path, missing_image=True)
+    assert runtime.run() == 0
+    commands = runtime.commands()
+    fallback_prepare = next(
+        i for i, command in enumerate(commands) if "--rollback-source" in command
+    )
+    fallback_build = next(
+        i
+        for i, command in enumerate(commands)
+        if command[:2] == ("docker", "build") and "rollback-" in command[3]
+    )
+    fallback_verify = next(
+        i
+        for i, command in enumerate(commands)
+        if command[:3] == ("docker", "image", "inspect") and "rollback-" in command[-1]
+    )
+    target_build = next(
+        i
+        for i, command in enumerate(commands)
+        if command[:2] == ("docker", "build") and "pool-" in command[3]
+    )
+    pause = commands.index(("docker", "pause", "voice-container"))
+    assert fallback_prepare < fallback_build < fallback_verify < target_build < pause
+    assert "VASA_REVISION=e21ce0dd7634f3047410c893b5e4d1c082034b84" in commands[fallback_build]
+    assert commands[fallback_build][-1].endswith("/.local/evolution-rollback-source")
+    assert runtime.evolution_image == CANDIDATE_IMAGE
+    assert runtime.rollback_image == FALLBACK_IMAGE
+    assert ("unchanged", tuple(runtime.before)) in runtime.events
+    assert not any(command[:2] == ("docker", "commit") for command in commands)
+    output = capsys.readouterr().out
+    assert "EVOLUTION_ROLLBACK_IMAGE=previous_source_build" in output
+    assert "EVOLUTION_ROLLBACK_IMAGE_VERIFIED" in output
+    assert SECRET not in output
+
+
+def test_failed_fallback_build_preserves_checkout_and_all_running_services(tmp_path, capsys):
+    runtime = Runtime(tmp_path, missing_image=True, fallback_build_fails=True)
+    with pytest.raises(RuntimeError):
+        runtime.run()
+    assert runtime.evolution_image == OLD_IMAGE
+    assert runtime.replacements() == []
+    assert not any(command[:2] == ("docker", "pause") for command in runtime.commands())
+    assert not any(
+        command[:2] == ("docker", "build") and "pool-" in command[3]
+        for command in runtime.commands()
+    )
+    assert not any(
+        event[:2] in (("git", "checkout"), ("git", "pull"), ("git", "reset"))
+        for event in runtime.events
+    )
+    assert not (tmp_path / ".local/actions-evolution-pool.json").exists()
+    assert not any(event[0] == "backup_verified" for event in runtime.events)
+    output = capsys.readouterr().out
+    assert "EVOLUTION_ROLLBACK_IMAGE_VERIFIED" not in output
+    assert "VASA_EVOLUTION_POOL_DEPLOYMENT_OK" not in output
+    assert SECRET not in output
+
+
+def test_health_failure_rolls_back_to_verified_fallback_image(tmp_path, capsys):
+    runtime = Runtime(tmp_path, missing_image=True, health_fails=True)
+    with pytest.raises(Refusal):
+        runtime.run()
+    assert runtime.evolution_image == FALLBACK_IMAGE
+    assert len(runtime.replacements()) == 2
+    assert "rollback-" in runtime.replacements()[1][2]["input_text"]
+    assert ("docker", "unpause", "voice-container") in runtime.commands()
+    assert runtime.health_calls == 2
+    assert ("unchanged", ("postgres", "redis", "vasa", "voice")) in runtime.events
+    assert not (tmp_path / ".local/actions-evolution-pool.json").exists()
+    output = capsys.readouterr().out
+    assert "EVOLUTION_ROLLBACK_IMAGE_VERIFIED" in output
+    assert "VASA_EVOLUTION_POOL_ROLLBACK_OK" in output
     assert "VASA_EVOLUTION_POOL_DEPLOYMENT_OK" not in output
     assert SECRET not in output

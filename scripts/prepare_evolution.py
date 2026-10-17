@@ -27,11 +27,18 @@ def fingerprints(directory: Path) -> dict[str, str]:
 
 
 def prepare(
-    source: Path | None, *, destination: Path | None = None, isolated: bool = False
+    source: Path | None,
+    *,
+    destination: Path | None = None,
+    isolated: bool = False,
+    rollback_source: bool = False,
 ) -> None:
     local = ROOT / ".local"
     local.mkdir(mode=0o700, exist_ok=True)
-    expected = local / ("evolution-pool-source" if isolated else "evolution-source")
+    if rollback_source and not isolated:
+        raise SystemExit("Rollback source requires isolated preparation.")
+    name = "evolution-rollback-source" if rollback_source else "evolution-pool-source"
+    expected = local / (name if isolated else "evolution-source")
     if destination is not None and (not isolated or destination.absolute() != expected.absolute()):
         raise SystemExit("Explicit destination must be the isolated pool source directory.")
     if isolated and destination is None:
@@ -45,7 +52,7 @@ def prepare(
     if patch_sha != LOG_PATCH_SHA256:
         raise SystemExit("Logging patch checksum differs from the reviewed artifact.")
     patches = [(patch_path, patch_sha)]
-    if isolated:
+    if isolated and not rollback_source:
         pool_patch = ROOT / "docker/evolution-db-pool.patch"
         pool_sha = hashlib.sha256(pool_patch.read_bytes()).hexdigest()
         if pool_sha != POOL_PATCH_SHA256:
@@ -120,9 +127,13 @@ def prepare(
     # Preserve the cloud host's authoritative CA trust inside the build/runtime.
     # Go module checksums and HTTPS verification remain enabled.
     ca_path = ssl.get_default_verify_paths().cafile
-    if ca_path is None:
+    # Portable uv Python can lack its compiled-in OpenSSL bundle on Ubuntu.
+    # Use the system's existing certificate bundle; never disable TLS verification.
+    candidates = [ca_path, "/etc/ssl/certs/ca-certificates.crt", "/etc/pki/tls/certs/ca-bundle.crt"]
+    trusted = next((Path(path) for path in candidates if path and Path(path).is_file()), None)
+    if trusted is None:
         raise SystemExit("No trusted host CA bundle is available for verified downloads.")
-    ca_bundle = Path(ca_path).read_bytes()
+    ca_bundle = trusted.read_bytes()
     if b"PRIVATE KEY" in ca_bundle or b"BEGIN CERTIFICATE" not in ca_bundle:
         raise SystemExit("Host CA bundle is not a certificate-only trust source.")
     (destination / "vasa-host-trust.pem").write_bytes(ca_bundle)
@@ -184,5 +195,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "--destination", type=Path, help="Explicit .local/evolution-pool-source destination"
     )
+    parser.add_argument(
+        "--rollback-source",
+        action="store_true",
+        help="Isolated pre-fix source with logging patch only",
+    )
     args = parser.parse_args()
-    prepare(args.source, destination=args.destination, isolated=args.isolated)
+    prepare(
+        args.source,
+        destination=args.destination,
+        isolated=args.isolated,
+        rollback_source=args.rollback_source,
+    )

@@ -128,6 +128,49 @@ def verify_identity(ns, module, receipt):
     print("EVOLUTION_PAIRING_AND_SCHEMA_PRESERVED", flush=True)
 
 
+def acquire_rollback(ns, before, source, rollback):
+    """Retain old image or rebuild its pinned pre-fix public recipe; never commit runtime."""
+    running = before["evolution"]["image"]
+    inspected = ns["capture"]("docker", "image", "inspect", "--format", "{{.Id}}", running)
+    if inspected.returncode == 0 and inspected.stdout.strip() == running:
+        ns["run"]("docker", "image", "tag", running, rollback)
+        expected = running
+    else:
+        print("EVOLUTION_ROLLBACK_IMAGE=previous_source_build", flush=True)
+        old_source = source / ".local/evolution-rollback-source"
+        ns["run"](
+            "python3",
+            str(source / "scripts/prepare_evolution.py"),
+            "--isolated",
+            "--rollback-source",
+            "--destination",
+            str(old_source),
+            timeout=300,
+        )
+        ns["run"](
+            "docker",
+            "build",
+            "--tag",
+            rollback,
+            "--file",
+            str(source / "docker/evolution.Dockerfile"),
+            "--build-arg",
+            "VASA_REVISION=e21ce0dd7634f3047410c893b5e4d1c082034b84",
+            str(old_source),
+            timeout=1800,
+        )
+        expected = None
+    image = ns["run"]("docker", "image", "inspect", "--format", "{{.Id}}", rollback)
+    ns["require"](
+        re.fullmatch(r"sha256:[a-f0-9]{64}", image) is not None
+        and (expected is None or image == expected),
+        "Rollback image unavailable.",
+    )
+    ns["assert_unchanged"](before)
+    print("EVOLUTION_ROLLBACK_IMAGE_VERIFIED", flush=True)
+    return image
+
+
 def run(ns, target, deploy, gate, instances, backup_source, capacity_source):
     root = ns["ROOT"]
     ns["preflight"]()
@@ -176,13 +219,8 @@ def run(ns, target, deploy, gate, instances, backup_source, capacity_source):
         candidate = "vasa-evolution:pool-" + target
         rollback = "vasa-evolution:rollback-" + target
         print("EVOLUTION_POOL_STAGE=rollback_image", flush=True)
-        ns["run"]("docker", "image", "inspect", "--format", "{{.Id}}", before["evolution"]["image"])
-        ns["run"]("docker", "image", "tag", before["evolution"]["image"], rollback)
-        require(
-            ns["run"]("docker", "image", "inspect", "--format", "{{.Id}}", rollback)
-            == before["evolution"]["image"],
-            "Rollback image unavailable.",
-        )
+        acquire_rollback(ns, before, source, rollback)
+        require(ns["private_hashes"]() == hashes, "Runtime files changed.")
         print("EVOLUTION_POOL_STAGE=prepare_source", flush=True)
         ns["run"](
             "python3",

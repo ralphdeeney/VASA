@@ -17,7 +17,9 @@ No bootstrap, application migration or automatic Evolution rollout on push.
 
 The maintenance controller checks durable unfinished calls, bounded Redis call
 state and all non-Docker-DNS Evolution UDP sockets, plus the exact registered
-connected instance set. Unknown/nonzero state defers. After backups, pause voice
+instance set and verified paired-device membership. A saved offline instance
+is eligible for maintenance; post-rollout must be connected and logged in.
+Unknown/nonzero call state defers. After backups, pause voice
 and recheck to close the VASA answer-admission race; then replace only Evolution,
 restore only existing registered device connections, resume voice and validate
 all five services, unchanged other container identities and private files.
@@ -29,7 +31,10 @@ Backups cover application, Evolution auth and Evolution users databases, with
 private receipts/hashes and restoration into disposable databases before restart.
 Schema/device/instance credential fingerprints must remain unchanged; no live
 schema upgrade is approved. A verified rollback image is retained and only
-Evolution is restored if validation fails. Capacity is sampled three times after
+Evolution is restored if validation fails. If the old running image is missing
+from Docker storage, build the pinned pre-fix vendor source with only the existing
+logging patch in a separate verified cache, before any target/runtime change.
+Never use docker commit or read container environment values. Capacity is sampled three times after
 rollout; total Evolution sockets must remain within the two existing 25-open
 process pools, and decrease from an exhausted baseline.
 
