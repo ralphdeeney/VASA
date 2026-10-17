@@ -68,7 +68,7 @@ def test_completed_request_does_not_repeat_operation(tmp_path, capsys):
     receipt(tmp_path, value, "SUCCEEDED")
     ns, calls = setup(tmp_path)
     assert subject.execute(ns, value, TRIGGER, {}, {}) == 0
-    assert calls == ["preflight", "health"]
+    assert calls == ["preflight", "snapshot", "health"]
     assert "VASA_REQUEST_ALREADY_SUCCEEDED" in capsys.readouterr().out
 
 
@@ -346,3 +346,37 @@ def test_evolution_check_reports_public_gate_failure_without_mutation(tmp_path, 
     assert "EVOLUTION_PUBLIC_FAILURE=certificate" in output
     assert "private network exception" not in output
     assert "VASA_REQUEST_STATE=SUCCEEDED" not in output
+
+
+@pytest.mark.parametrize("preflight", [0, 2])
+def test_completed_evolution_check_requires_fresh_call_instance_and_public_gates(
+    tmp_path, capsys, preflight
+):
+    value = request("evolution_check")
+    value["expected_markers"] = ["EVOLUTION_POOL_PREFLIGHT_OK"]
+    receipt(tmp_path, value, "SUCCEEDED")
+    ns, calls = setup(tmp_path)
+    evolution = {
+        "run": lambda *args: preflight,
+        "public_health": lambda: calls.append("public_health"),
+    }
+    sources = dict.fromkeys(["gate", "instances", "backups", "capacity"], "source")
+    if preflight:
+        with pytest.raises(subject.GateBlocked):
+            subject.execute(ns, value, TRIGGER, evolution, sources)
+        assert "EVOLUTION_POOL_PREFLIGHT_OK" not in capsys.readouterr().out
+        assert calls == ["preflight"]
+    else:
+        assert subject.execute(ns, value, TRIGGER, evolution, sources) == 0
+        assert calls == ["preflight", "health", "public_health"]
+
+
+def test_completed_paid_smoke_is_not_recharged_or_reported_as_fresh(tmp_path, capsys):
+    value = request("provider_smoke")
+    value["expected_markers"] = ["LLM_SMOKE_OK", "DEEPGRAM_SMOKE_OK"]
+    receipt(tmp_path, value, "SUCCEEDED")
+    ns, calls = setup(tmp_path)
+    ns["provider_smoke"] = lambda: pytest.fail("unauthorized extra API charge")
+    with pytest.raises(subject.GateBlocked):
+        subject.execute(ns, value, TRIGGER, {}, {})
+    assert "SMOKE_OK" not in capsys.readouterr().out

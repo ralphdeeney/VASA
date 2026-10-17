@@ -108,8 +108,27 @@ def execute(ns, request, trigger, evolution, sources):
                 if request["operation"] in {"evolution_pool_rollout", "application_deploy"}:
                     if not resume_verified(ns, request, previous, evolution):
                         raise GateBlocked()
-                else:
+                elif request["operation"] == "evolution_check":
+                    # Historical success is not proof of today's call/instance state.
+                    if evolution["run"](
+                        ns,
+                        trigger,
+                        False,
+                        sources["gate"],
+                        sources["instances"],
+                        sources["backups"],
+                        sources["capacity"],
+                    ):
+                        raise GateBlocked()
                     ns["health"]()
+                    evolution["public_health"]()
+                elif request["operation"] == "application_check":
+                    ns["snapshot_services"](ns["DEPENDENCIES"] + ns["SERVICES"])
+                    ns["health"]()
+                else:
+                    # A completed paid smoke request cannot authorize another charge
+                    # or print historical provider success as a fresh observation.
+                    raise GateBlocked()
                 print("VASA_REQUEST_ALREADY_SUCCEEDED", flush=True)
                 for marker in request["expected_markers"]:
                     print(marker, flush=True)

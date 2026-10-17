@@ -169,6 +169,20 @@ def public_health():
                 status = response.status
         except urllib.error.HTTPError as error:
             status = error.code
+            if status == 403:
+                headers = error.headers or {}
+                # Fixed structural indicators only; never print header values/body.
+                denial = (
+                    "cloudflare_challenge"
+                    if headers.get("cf-mitigated", "").lower() == "challenge"
+                    else "proxy_policy"
+                    if headers.get("x-mitmproxy-blocked-reason", "")
+                    in {"ROBOTS_DENIED", "DOMAIN_BLOCKED"}
+                    else "cloudflare_response"
+                    if headers.get("server", "").lower() == "cloudflare"
+                    else "unclassified"
+                )
+                print("EVOLUTION_PUBLIC_DENIAL=" + denial, flush=True)
         except (urllib.error.URLError, OSError) as error:
             reason = error.reason if isinstance(error, urllib.error.URLError) else error
             category = (

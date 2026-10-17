@@ -117,3 +117,12 @@ Read-only evolution_check now runs the same fixed public origin checks and emits
 EVOLUTION_PUBLIC_STATUS=login/readiness/dashboard:<HTTP code>, or one fixed
 EVOLUTION_PUBLIC_FAILURE code. TLS verification remains enabled; no arbitrary
 URL, response, redirect destination or exception text reaches logs.
+
+Post-rollback read-only request3ec8f9e / Actions39007779782 reproduced public
+login403 from the VPS while all five services remained healthy and PostgreSQL
+connections returned to3 total (Evolution1). Codex sees login/readiness200 and
+dashboard401. The denial's precise edge/policy cause is not established yet.
+403 is not accepted as a successful login probe. A bounded denial classifier
+reports only a fixed Cloudflare-challenge/proxy-policy/Cloudflare-response/unknown
+category; raw headers and bodies remain suppressed. No Cloudflare change is
+within this task's authority.

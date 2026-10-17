@@ -534,3 +534,32 @@ def test_public_health_diagnostics_never_expose_response_or_network_error(
     assert "EVOLUTION_PUBLIC_FAILURE=" + category in output
     assert SECRET not in output
     assert "https://private" not in output
+
+
+@pytest.mark.parametrize(
+    "headers,category",
+    [
+        ({"cf-mitigated": "challenge", "private": SECRET}, "cloudflare_challenge"),
+        ({"x-mitmproxy-blocked-reason": "ROBOTS_DENIED"}, "proxy_policy"),
+        ({"server": "cloudflare", "cf-ray": SECRET}, "cloudflare_response"),
+        ({"server": SECRET}, "unclassified"),
+    ],
+)
+def test_public_denial_reports_only_fixed_edge_classification(
+    monkeypatch, capsys, headers, category
+):
+    import urllib.error
+
+    def open_url(*args, **kwargs):
+        raise urllib.error.HTTPError("https://private/", 403, SECRET, headers, None)
+
+    monkeypatch.setattr(
+        pool.urllib.request, "build_opener", lambda *args: SimpleNamespace(open=open_url)
+    )
+    with pytest.raises(pool.Deferred):
+        PUBLIC_HEALTH()
+    output = capsys.readouterr().out
+    assert "EVOLUTION_PUBLIC_DENIAL=" + category in output
+    assert "EVOLUTION_PUBLIC_STATUS=login:403" in output
+    assert SECRET not in output
+    assert "https://private/" not in output

@@ -90,6 +90,12 @@ SAFE_VALUES = {
         "provider_error",
         "internal_error",
     },
+    "EVOLUTION_PUBLIC_DENIAL": {
+        "cloudflare_challenge",
+        "proxy_policy",
+        "cloudflare_response",
+        "unclassified",
+    },
     "EVOLUTION_PUBLIC_FAILURE": {"certificate", "timeout", "network", "invalid_status"},
     "EVOLUTION_ROLLBACK_IMAGE": {"previous_source_build"},
     "EVOLUTION_INSTANCE_STAGE": {"database", "list", "paired_device", "status"},

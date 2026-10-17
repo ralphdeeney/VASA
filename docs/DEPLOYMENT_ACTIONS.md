@@ -1,3 +1,25 @@
+## 2026-10-17 — Automated maintenance attempt and verified rollback
+
+See [autonomous delivery](DEPLOYMENT_ORCHESTRATOR.md). A newly pushed
+request-only commit automatically starts the shared, serialized Actions bridge,
+requires exact source/envelope CI and trusted actor authorization, then dispatches
+only an allowlisted controller operation. No manual Actions selection is needed.
+Actions39006681009 proved read-only delivery and durable GitHub/VPS journals.
+
+Guarded rollout39006923768 built a fallback old image and candidate, verified
+three-database restore checks, confirmed no calls, preserved paired identity and
+sampled candidate Evolution connections2/2/2,total4 (before1,total3). Final public
+health failed; verified rollback restored the old image. This was not a final
+successful pool deployment and does not prove a live reconnect fix. No decrease
+from the historical95 connections is claimed against today's smaller baseline.
+WhatsApp remains disconnected/logged-out independently of five-service health.
+The one-shot maintenance grant is consumed; no blind replacement retry is allowed.
+
+Routine app deployment still refuses preserved operator files in canonical
+/opt/vasa. The active app/voice release remains858b5f853957d719a34ea96f28b5ea726100d402.
+No database migration, SMTP/provider change, pairing change, direct Codex SSH,
+unrelated infrastructure or public networking change was performed.
+
 ## 2026-10-17 — Evolution fix tested; live rollout blocked by VPS access
 
 Implementation: f7016fbe005c409cb01a73b11fbd8a913646683a (pushed).

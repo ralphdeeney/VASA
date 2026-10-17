@@ -18,8 +18,15 @@ The controller restored the previous Evolution image and verified rollback:
 VASA_EVOLUTION_POOL_ROLLBACK_OK. No fixed image is claimed deployed. The grant is
 consumed; it cannot be renewed by request data or blindly retried. The instance
 remained disconnected/logged-out with its paired device preserved. Human live-call
-acceptance and SMTP remain deferred. The public origin currently responds from
-Codex; a read-only VPS diagnostic must identify the endpoint/status/network gate.
+acceptance and SMTP remain deferred. Actions39007779782 reproduced the hard gate without mutation:
+EVOLUTION_PUBLIC_STATUS=login:403. Codex sees login200, readiness200 and
+dashboard401. This proves a vantage-specific public health denial, not its
+Cloudflare/policy cause; no security policy is bypassed. The final read-only
+edge-header classification is pending. Verify39007772940/39007779791 passed
+1,330 tests. Final local suite:1,337 passed, one upstream deprecation
+warning,78.21s. Ruff/format, strict mypy69 source modules plus5 new typed
+deployment modules, actionlint and Bash validation pass. Native Go full tests/
+vet, call/media race tests and real PostgreSQL120-cycle lifecycle tests pass.
 
 Reporting/recovery hardening distinguishes a prepared rollback image from an
 actual rollback, recognizes pre-login scan failures on stderr without logging
