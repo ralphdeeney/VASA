@@ -1,0 +1,16 @@
+{
+  "request_id": "d73c3c38-085b-4d79-92fd-c0584f2ca826",
+  "operation": "evolution_check",
+  "target_commit": "0fe9f2724902fc57eff3dc1632b128ea60588652",
+  "branch": "build/vasa-foundation",
+  "environment": "staging",
+  "scope": "evolution-readonly",
+  "policy": "evolution-readonly-v1",
+  "authorization": "routine-staging-v1",
+  "reason": "Read-only classify public login denial after verified rollback; no security or container changes",
+  "created_at": "2026-10-17T05:57:41Z",
+  "expires_at": "2026-10-17T17:57:41Z",
+  "expected_markers": [
+    "EVOLUTION_POOL_PREFLIGHT_OK"
+  ]
+}
