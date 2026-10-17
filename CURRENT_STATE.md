@@ -21,9 +21,13 @@ remained disconnected/logged-out with its paired device preserved. Human live-ca
 acceptance and SMTP remain deferred. Actions39007779782 reproduced the hard gate without mutation:
 EVOLUTION_PUBLIC_STATUS=login:403. Codex sees login200, readiness200 and
 dashboard401. This proves a vantage-specific public health denial, not its
-Cloudflare/policy cause; no security policy is bypassed. The final read-only
-edge-header classification is pending. Verify39007772940/39007779791 passed
-1,330 tests. Final local suite:1,337 passed, one upstream deprecation
+Cloudflare/policy cause; no security policy is bypassed. Final read-only Actions39008142381 and the direct-dispatch retry39008329597
+reproduced the same gate:EVOLUTION_PUBLIC_DENIAL=cloudflare_response, login403.
+There was no challenge indicator; the exact rule/origin cause is unproven.
+Direct workflow dispatch using existing Codex GitHub auth succeeded; no new
+credential is needed. Both blocked read-only runs changed no containers. Verify39007772940/39007779791 passed
+1,330 tests. Verify39008139299/39008142406 also passed1,337 tests.
+Final local suite:1,337 passed, one upstream deprecation
 warning,78.21s. Ruff/format, strict mypy69 source modules plus5 new typed
 deployment modules, actionlint and Bash validation pass. Native Go full tests/
 vet, call/media race tests and real PostgreSQL120-cycle lifecycle tests pass.

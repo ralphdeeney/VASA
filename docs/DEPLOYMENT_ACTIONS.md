@@ -1,3 +1,35 @@
+
+### Final automated-delivery evidence — 2026-10-17
+
+Code0fe9f2724902fc57eff3dc1632b128ea60588652 and read-only request envelope
+71f0cb4a87c097b394a2c29f5e89d353fed91f8b passed Verify39008139299/39008142406
+(1,337 tests each; local1,337 in78.21s, one upstream deprecation warning).
+Ruff/format, strict mypy69 source+5 deployment modules, actionlint/Bash and
+native Go full tests/vet, call/media race and real PostgreSQL120-cycle checks pass.
+
+Automatic push request39008142381 and Codex-triggered workflow_dispatch
+39008329597 both correctly blocked without mutation at public login403 from the
+VPS. The allowlisted denial classifier reports cloudflare_response, not a
+challenge; it does not identify the actual policy/rule/origin cause. External
+Codex checks remain login200/readiness200/dashboard401. All five services remain
+healthy, connections Evolution1/web1/voice1,total3, calls0, media sockets0; saved
+paired-device membership remains intact and the instance is still offline.
+
+The first read-only automatic demonstration39006681009 succeeded. The actual
+pool attempt39006923768 passed backups/restoration, rollback-image preparation,
+no-call and candidate identity/pool checks but rolled back at public health:
+VASA_EVOLUTION_POOL_ROLLBACK_OK. Candidate Evolution connections2/2/2,total4;
+there is no final VASA_EVOLUTION_POOL_DEPLOYMENT_OK and no fixed image deployed.
+App/voice remain858b5f853957d719a34ea96f28b5ea726100d402. No call-reconnect
+resolution or live WhatsApp acceptance is claimed.
+
+Remaining gates: public login403 from the VPS requires approved edge/origin
+investigation (no Cloudflare/security change is authorized here); canonical dirty
+operator checkout still blocks ordinary app deployment; one-shot Evolution grant
+is consumed and cannot be silently renewed after rollback. SMTP remains deferred.
+Neither existing push nor direct workflow dispatch needs a new credential or
+manual Actions operation. No protected gate was bypassed.
+
 ## 2026-10-17 — Automated maintenance attempt and verified rollback
 
 See [autonomous delivery](DEPLOYMENT_ORCHESTRATOR.md). A newly pushed
