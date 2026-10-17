@@ -1,0 +1,16 @@
+--- a/deploy/actions_evolution_pool.py
++++ b/deploy/actions_evolution_pool.py
+@@ -165,7 +165,12 @@
+         ("dashboard", "/dashboard", {302, 303, 307, 308, 401, 403}),
+     ):
+         try:
+-            with opener.open("https://vasa.litatech.xyz" + path, timeout=15) as response:
++            health_request = urllib.request.Request(
++                "https://vasa.litatech.xyz" + path,
++                headers={"User-Agent": "VASA-Health-Diagnostic/1.0"},
++                method="GET",
++            )
++            with opener.open(health_request, timeout=15) as response:
+                 status = response.status
+         except urllib.error.HTTPError as error:
+             status = error.code

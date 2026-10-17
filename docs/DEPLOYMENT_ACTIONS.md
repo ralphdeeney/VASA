@@ -1,3 +1,48 @@
+## 2026-10-17 — Public-health trigger verified; policy/rollout approvals held
+
+Read-only Actions39010351757 reproduced the same controlled result on VPS and
+GitHub runner: default Python urllib public login/ready/dashboard403; identical
+urllib GET with honest VASA-Health-Diagnostic/1.0 UA200/200/401. Curl default and
+identified UA also200/200/401. Private VPS origin default urllib200/200/401.
+The proven trigger is client identification on public ingress, not a VPS-only IP
+block or an unhealthy application. Exact edge/security rule still needs operator
+Cloudflare-event review; response headers alone do not identify the enforcing rule.
+
+VPS explicit IPv4/IPv6 login both200; HEAD405 is method behavior. urllib pairs
+bothHTTP/1.1; curlHTTP/2. VPS/runner proxy absent; source fingerprints differ by
+vantage but match between clients within each vantage. No TLS/proxy bypass.
+Private API JSON live/ready and worker readiness pass. All five containers,
+private files, operator files and database identities unchanged. PostgreSQL stays
+Evolution1/web1/voice1,total3 before/after; calls0/media sockets0.
+
+Exact active Evolution image:
+sha256:d0b8a492d7976e56f90333ea4f472fbcc75c50ecdbe073df8ff78a268460c0d3
+matches the verified previous-source fallback rollback tag, revision
+ e21ce0dd7634f3047410c893b5e4d1c082034b84. Pairing/credential/schema identity
+matches archived backup receipt; WhatsApp remains offline/logged-out. Grant
+consumed, no renewal/restart/replacement; the pool fix is NOT deployed.
+
+Canonical502b8d8 has zero tracked changes and exactly three untracked operator
+files:edge/Caddyfile,edge/docker-compose.edge.yml,tunnel/docker-compose.yml.
+Active app/voice remains858b5f853957d719a34ea96f28b5ea726100d402. Preserve files;
+reuse the existing isolated-release preparation/activation model with its gates.
+No tunnel/n8n/Cloudflare/provider/SMTP configuration changed.
+
+Evidence and approval-ready, unapplied minimal client patch:
+docs/health-recovery/README.md, http-observations.json, recovery-audit.json,
+summary.json, proposed-identified-health-client.patch. Existing health gate and
+trusted grant/schema policy are byte-unchanged. The read-only request correctly
+ends BLOCKED at the legacy public403 gate after publishing diagnostic evidence.
+Separate explicit readiness-policy approval and renewed maintenance authorization
+are required before any new Evolution replacement. No mocked readiness or silent
+policy override. See docs/HEALTH_READINESS_CONTRACT.md and RELEASE_RECOVERY_PLAN.md.
+
+Codebe39ad7/requestd9a09e8 Verify39010346087/39010351765 each passed1,379 tests.
+Local full1,377 plus two TLS-reporting regressions pass; Ruff/format, strict mypy
+69source+7deployment modules, workflow/shell validation pass. Go full tests/vet,
+call/media race and real PostgreSQL120-cycle lifecycle/race checks reran and pass.
+SMTP remains explicitly deferred; no call-reconnect resolution is claimed.
+
 
 ### Final automated-delivery evidence — 2026-10-17
 

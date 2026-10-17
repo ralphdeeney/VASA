@@ -72,3 +72,16 @@ real-call testing remains required before any reconnect-resolution claim.
 
 SMTP, Cloudflare security configuration, n8n and unrelated services remain outside
 this recovery operation.
+
+## Live read-only audit result
+
+Actions39010351757 on2026-10-17 confirmed zero tracked changes and exactly the
+three named untracked operator files, unchanged fingerprints. Canonical HEAD is
+502b8d8715aaeb34d3f129628fa754ccba447f13; active app/voice is
+858b5f853957d719a34ea96f28b5ea726100d402. The clean-tree refusal is caused by
+those untracked infrastructure files, not by tracked application-code drift.
+Do not delete or track them as an automated workaround. All five VASA services
+and private runtime files remained unchanged during audit/network probes.
+The active Evolution image matches the verified fallback rollback tag; its
+revision is the pre-fix pinned upstream and backup identity matches. No pool fix
+or new grant is deployed. Detailed safe evidence:health-recovery/README.md.

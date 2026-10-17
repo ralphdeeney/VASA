@@ -39,7 +39,9 @@ without moving, checking out, stashing, cleaning or changing tracked state.
 Initial controlled external evidence: default Python urllib gets403; the same
 client, URL, method, Host/SNI and trusted TLS with `User-Agent:
 VASA-Health-Diagnostic/1.0` gets login/ready200 and dashboard401. Curl succeeds.
-VPS and GitHub-runner evidence is recorded in the automatic request run. This
+VPS and GitHub-runner evidence is recorded in automatic request39010351757;
+both reproduce this exact controlled result. Private origin default urllib
+returns200/200/401. See health-recovery/README.md for UTC/Rays and safe evidence. This
 isolates client identification as a reproducible trigger; it does not identify a
 Cloudflare rule or distinguish every possible bot/edge/proxy policy source.
 

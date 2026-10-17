@@ -1,0 +1,123 @@
+{
+  "active_app_voice_sha": "858b5f853957d719a34ea96f28b5ea726100d402",
+  "all_five_vasa_containers_unchanged": true,
+  "canonical_sha": "502b8d8715aaeb34d3f129628fa754ccba447f13",
+  "ci_run_ids": [
+    39010346087,
+    39010351765
+  ],
+  "ci_tests_passed": 1379,
+  "connections_after": {
+    "evolution": 1,
+    "other": 0,
+    "total": 3,
+    "voice": 1,
+    "web": 1
+  },
+  "connections_before": {
+    "evolution": 1,
+    "other": 0,
+    "total": 3,
+    "voice": 1,
+    "web": 1
+  },
+  "database_identity_unchanged": true,
+  "date": "2026-10-17",
+  "effective_policy": "unchanged_legacy_urllib_public_check",
+  "evolution_image": "sha256:d0b8a492d7976e56f90333ea4f472fbcc75c50ecdbe073df8ff78a268460c0d3",
+  "evolution_upstream": "e21ce0dd7634f3047410c893b5e4d1c082034b84",
+  "grant_consumed": true,
+  "head_login": 405,
+  "maintenance_policy_change_approved": false,
+  "new_evolution_grant_created": false,
+  "operator_files_unchanged": true,
+  "pairing_schema_backup_identity_matches": true,
+  "private_files_unchanged": true,
+  "private_origin": {
+    "dashboard": 401,
+    "login": 200,
+    "ready": 200
+  },
+  "proven_trigger": "default_urllib_user_agent_on_public_ingress",
+  "public_curl": {
+    "cloud": [
+      200,
+      200,
+      401
+    ],
+    "github": [
+      200,
+      200,
+      401
+    ],
+    "vps": [
+      200,
+      200,
+      401
+    ]
+  },
+  "public_default_urllib": {
+    "cloud": [
+      403,
+      403,
+      403
+    ],
+    "github": [
+      403,
+      403,
+      403
+    ],
+    "vps": [
+      403,
+      403,
+      403
+    ]
+  },
+  "public_identified_urllib": {
+    "cloud": [
+      200,
+      200,
+      401
+    ],
+    "github": [
+      200,
+      200,
+      401
+    ],
+    "vps": [
+      200,
+      200,
+      401
+    ]
+  },
+  "request_commit": "d9a09e8d92a7968debb15e7be6d15c3fddd16405",
+  "request_run_id": 39010351757,
+  "request_state": "BLOCKED",
+  "rollback_image_matches": true,
+  "source_commit": "be39ad7be11d5546c4fd6b304dfb17d54600407d",
+  "specific_security_rule": "unknown_requires_operator_events",
+  "tracked_changes": 0,
+  "untracked_files": [
+    "edge/Caddyfile",
+    "edge/docker-compose.edge.yml",
+    "tunnel/docker-compose.yml"
+  ],
+  "vps_allowed_event": {
+    "method": "GET",
+    "path": "/login",
+    "ray": "a4bd4aeb7bff255d-EWR",
+    "user_agent": "VASA-Health-Diagnostic/1.0",
+    "utc": "2026-10-17T06:37:05Z"
+  },
+  "vps_denied_event": {
+    "method": "GET",
+    "path": "/login",
+    "ray": "a4bd4aeaac4f0956-EWR",
+    "ua_profile": "urllib_default",
+    "utc": "2026-10-17T06:37:05Z"
+  },
+  "vps_ipv4_login": 200,
+  "vps_ipv6_login": 200,
+  "whatsapp_connected": false,
+  "whatsapp_logged_in": false
+}
