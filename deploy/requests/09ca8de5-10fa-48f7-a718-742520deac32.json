@@ -1,0 +1,16 @@
+{
+  "request_id": "09ca8de5-10fa-48f7-a718-742520deac32",
+  "operation": "evolution_check",
+  "target_commit": "68e193f44cfd655597da36e1fee0d52ac15bce17",
+  "branch": "build/vasa-foundation",
+  "environment": "staging",
+  "scope": "evolution-readonly",
+  "policy": "evolution-readonly-v1",
+  "authorization": "routine-staging-v1",
+  "reason": "Post-success read-only audit of deployed Evolution pool image, stable connections, all five services, operator/private files, paired metadata, public readiness and anonymous authorization boundaries; no mutation",
+  "created_at": "2026-10-17T07:27:21Z",
+  "expires_at": "2026-10-17T19:27:21Z",
+  "expected_markers": [
+    "EVOLUTION_POOL_PREFLIGHT_OK"
+  ]
+}
