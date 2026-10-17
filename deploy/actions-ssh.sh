@@ -9,10 +9,10 @@ case "${VASA_DEPLOY_MODE:-}" in
 esac
 VASA_PROVIDER_SMOKE=${VASA_PROVIDER_SMOKE:-false}
 VASA_RECOVERY=${VASA_RECOVERY:-none}
-[[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate || "$VASA_RECOVERY" == prepare || "$VASA_RECOVERY" == activate ]] || exit 1
+[[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate || "$VASA_RECOVERY" == prepare || "$VASA_RECOVERY" == activate || "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]] || exit 1
 VASA_RELEASE_SHA=${VASA_RELEASE_SHA:-}
 VASA_MIGRATION_SQL_SHA256=${VASA_MIGRATION_SQL_SHA256:-}
-if [[ "$VASA_RECOVERY" == activate ]]; then
+if [[ "$VASA_RECOVERY" == activate || "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]]; then
   [[ "$VASA_RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
   [[ "$VASA_MIGRATION_SQL_SHA256" =~ ^[0-9a-f]{64}$ ]] || exit 1
 else
@@ -56,6 +56,11 @@ if [[ ! -s "$vasa_ssh_dir/known_hosts" ]]; then
   exit 1
 fi
 vasa_remote_payload=deploy/actions_vps.py
+if [[ "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]]; then
+  vasa_remote_payload="$vasa_ssh_dir/evolution-task.py"
+  python3 deploy/actions_evolution_payload.py > "$vasa_remote_payload"
+  chmod 600 "$vasa_remote_payload"
+fi
 if [[ -n "${VASA_LIVE_ACCEPTANCE_FILE:-}" ]]; then
   [[ "$VASA_DEPLOY_MODE" == check && "$VASA_RECOVERY" == none && "$VASA_PROVIDER_SMOKE" == false ]] || exit 1
   vasa_remote_payload="$vasa_ssh_dir/private-task.py"

@@ -12,7 +12,7 @@ on:
       recovery:
         description: Recovery inspection, preparation, or explicitly approved live migration/activation (check mode only)
         type: choice
-        options: [none, investigate, prepare, activate]
+        options: [none, investigate, prepare, activate, evolution_check, evolution_deploy]
         default: none
         required: false
       release_sha:
@@ -67,7 +67,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Check approved SMTP secret bindings without revealing values
-        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'check' && inputs.recovery != 'none'
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'check' && inputs.recovery != 'none' && !startsWith(inputs.recovery, 'evolution_')
         env:
           SMTP_HOST: ${{ secrets.VASA_SMTP_HOST || secrets.SMTP_HOST }}
           SMTP_USER: ${{ secrets.VASA_SMTP_USERNAME || secrets.SMTP_USERNAME || secrets.SMTP_USER }}

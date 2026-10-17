@@ -1,0 +1,283 @@
+--- a/pkg/whatsmeow/service/whatsmeow.go
++++ b/pkg/whatsmeow/service/whatsmeow.go
+@@ -328,14 +328,14 @@
+ 	if w.config.WaDebug != "" {
+ 		dbLog := waLog.Stdout("Database", w.config.WaDebug, true)
+ 		if w.config.PostgresAuthDB != "" {
+-			container, err = sqlstore.New(context.Background(), "postgres", w.config.PostgresAuthDB, dbLog)
++			container, err = postgresSessionStore(context.Background(), w.authDB, dbLog)
+ 		} else {
+ 			dsn := fmt.Sprintf("file:%s/dbdata/main.db?_pragma=foreign_keys(1)&_busy_timeout=5000&cache=shared&mode=rwc&_journal_mode=WAL", w.exPath)
+ 			container, err = sqlstore.New(context.Background(), "sqlite", dsn, dbLog)
+ 		}
+ 	} else {
+ 		if w.config.PostgresAuthDB != "" {
+-			container, err = sqlstore.New(context.Background(), "postgres", w.config.PostgresAuthDB, nil)
++			container, err = postgresSessionStore(context.Background(), w.authDB, nil)
+ 		} else {
+ 			dsn := fmt.Sprintf("file:%s/dbdata/main.db?_pragma=foreign_keys(1)&_busy_timeout=5000&cache=shared&mode=rwc&_journal_mode=WAL", w.exPath)
+ 			container, err = sqlstore.New(context.Background(), "sqlite", dsn, nil)
+--- /dev/null
++++ b/pkg/whatsmeow/service/session_store.go
+@@ -0,0 +1,25 @@
++package whatsmeow_service
++
++import (
++	"context"
++	"database/sql"
++	"errors"
++
++	"go.mau.fi/whatsmeow/store/sqlstore"
++	waLog "go.mau.fi/whatsmeow/util/log"
++)
++
++// postgresSessionStore borrows the process-owned auth pool. Container.Close must
++// never be called by an instance: it would close the shared pool for all clients.
++// The initializer owns pool limits and closes it after process/client shutdown.
++func postgresSessionStore(ctx context.Context, db *sql.DB, log waLog.Logger) (*sqlstore.Container, error) {
++	if db == nil {
++		return nil, errors.New("auth_pool_required")
++	}
++	container := sqlstore.NewWithDB(db, "postgres", log)
++	if err := container.Upgrade(ctx); err != nil {
++		// This is a borrowed pool, including when initialization fails.
++		return nil, err
++	}
++	return container, nil
++}
+--- /dev/null
++++ b/pkg/whatsmeow/service/session_store_test.go
+@@ -0,0 +1,233 @@
++package whatsmeow_service
++
++import (
++	"context"
++	"database/sql"
++	"errors"
++	"fmt"
++	"net/url"
++	"os"
++	"strings"
++	"sync"
++	"testing"
++	"time"
++
++	"github.com/DATA-DOG/go-sqlmock"
++	"go.mau.fi/whatsmeow/store/sqlstore"
++	"go.mau.fi/whatsmeow/store/sqlstore/upgrades"
++)
++
++func expectCurrentSessionSchema(mock sqlmock.Sqlmock) {
++	mock.ExpectQuery("SELECT EXISTS").WithArgs("whatsmeow_version", "compat").WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
++	mock.ExpectQuery("SELECT version, compat FROM whatsmeow_version LIMIT 1").WillReturnRows(sqlmock.NewRows([]string{"version", "compat"}).AddRow(len(upgrades.Table), len(upgrades.Table)))
++}
++
++func TestPostgresSessionStoreRequiresOwnerPool(t *testing.T) {
++	if container, err := postgresSessionStore(context.Background(), nil, nil); err == nil || container != nil {
++		t.Fatal("missing owner pool accepted")
++	}
++}
++
++func TestPostgresSessionStoreReusesBoundedPoolAcross120Restarts(t *testing.T) {
++	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
++	if err != nil {
++		t.Fatal("mock initialization failed")
++	}
++	db.SetMaxOpenConns(2)
++	db.SetMaxIdleConns(2)
++	for i := 0; i < 120; i++ {
++		expectCurrentSessionSchema(mock)
++		if _, err = postgresSessionStore(context.Background(), db, nil); err != nil {
++			t.Fatal("borrowed store initialization failed")
++		}
++	}
++	if db.Stats().MaxOpenConnections != 2 || db.Stats().OpenConnections > 2 {
++		t.Fatal("owner bounds changed")
++	}
++	mock.ExpectPing()
++	if err = db.Ping(); err != nil {
++		t.Fatal("shared pool closed by store")
++	}
++	mock.ExpectClose()
++	if err = db.Close(); err != nil {
++		t.Fatal("owner shutdown failed")
++	}
++	if err = mock.ExpectationsWereMet(); err != nil {
++		t.Fatal("owner lifecycle expectations failed")
++	}
++}
++
++func TestPostgresSessionStoreFailureDoesNotCloseAnotherClientPool(t *testing.T) {
++	db, mock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
++	if err != nil {
++		t.Fatal("mock initialization failed")
++	}
++	mock.ExpectQuery("SELECT EXISTS").WillReturnError(errors.New("test upgrade failure"))
++	if _, err = postgresSessionStore(context.Background(), db, nil); err == nil {
++		t.Fatal("upgrade failure ignored")
++	}
++	mock.ExpectPing()
++	if err = db.Ping(); err != nil {
++		t.Fatal("failure closed shared pool")
++	}
++	expectCurrentSessionSchema(mock)
++	if _, err = postgresSessionStore(context.Background(), db, nil); err != nil {
++		t.Fatal("retry failed")
++	}
++	mock.ExpectClose()
++	_ = db.Close()
++	if err = mock.ExpectationsWereMet(); err != nil {
++		t.Fatal("failure ownership expectations failed")
++	}
++}
++
++func TestPostgresSessionStoreConcurrentBorrowers(t *testing.T) {
++	db, mock, err := sqlmock.New()
++	if err != nil {
++		t.Fatal("mock initialization failed")
++	}
++	db.SetMaxOpenConns(2)
++	db.SetMaxIdleConns(2)
++	mock.MatchExpectationsInOrder(false)
++	for i := 0; i < 120; i++ {
++		expectCurrentSessionSchema(mock)
++	}
++	var wg sync.WaitGroup
++	failures := make(chan bool, 120)
++	for i := 0; i < 120; i++ {
++		wg.Add(1)
++		go func() {
++			defer wg.Done()
++			_, err := postgresSessionStore(context.Background(), db, nil)
++			failures <- err != nil
++		}()
++	}
++	wg.Wait()
++	close(failures)
++	for failed := range failures {
++		if failed {
++			t.Fatal("concurrent borrower failed")
++		}
++	}
++	if db.Stats().MaxOpenConnections != 2 || db.Stats().OpenConnections > 2 {
++		t.Fatal("concurrent owner bounds changed")
++	}
++	mock.ExpectClose()
++	_ = db.Close()
++	if err = mock.ExpectationsWereMet(); err != nil {
++		t.Fatal("concurrent ownership expectations failed")
++	}
++}
++
++// Explicit opt-in integration target; requires a disposable dedicated database.
++// Never use an application/staging database or emit connection URLs/device data.
++func TestPostgresSessionStoreRealPoolLifecycle(t *testing.T) {
++	raw := os.Getenv("VASA_EVOLUTION_POOL_TEST_DSN")
++	if raw == "" {
++		t.Skip("set VASA_EVOLUTION_POOL_TEST_DSN to a disposable loopback database")
++	}
++	parsed, err := url.Parse(raw)
++	if err != nil || parsed.Hostname() != "127.0.0.1" || parsed.Port() != "54329" || !strings.HasPrefix(parsed.Path, "/vasa_pool_test_") || parsed.Scheme != "postgres" {
++		t.Fatal("disposable loopback database required")
++	}
++	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
++	defer cancel()
++	observer, err := sql.Open("postgres", raw)
++	if err != nil {
++		t.Fatal("observer initialization failed")
++	}
++	defer observer.Close()
++	count := func(name string) int {
++		var n int
++		if err := observer.QueryRowContext(ctx, "SELECT count(*) FROM pg_stat_activity WHERE application_name=$1", name).Scan(&n); err != nil {
++			t.Fatal("aggregate connection inspection failed")
++		}
++		return n
++	}
++	dsn := func(name string) string {
++		u := *parsed
++		q := u.Query()
++		q.Set("application_name", name)
++		u.RawQuery = q.Encode()
++		return u.String()
++	}
++	originalName := fmt.Sprintf("vasa-pool-original-%d", time.Now().UnixNano())
++	var original []*sqlstore.Container
++	defer func() {
++		for _, c := range original {
++			_ = c.Close()
++		}
++	}()
++	for i := 0; i < 8; i++ {
++		c, err := sqlstore.New(ctx, "postgres", dsn(originalName), nil)
++		if err != nil {
++			t.Fatal("original path initialization failed")
++		}
++		original = append(original, c)
++	}
++	if count(originalName) < 8 {
++		t.Fatal("original path did not allocate independent pools")
++	}
++	for _, c := range original {
++		_ = c.Close()
++	}
++	original = nil
++	deadline := time.Now().Add(3 * time.Second)
++	for count(originalName) != 0 && time.Now().Before(deadline) {
++		time.Sleep(10 * time.Millisecond)
++	}
++	if count(originalName) != 0 {
++		t.Fatal("original pools did not close")
++	}
++	sharedName := fmt.Sprintf("vasa-pool-shared-%d", time.Now().UnixNano())
++	owner, err := sql.Open("postgres", dsn(sharedName))
++	if err != nil {
++		t.Fatal("owner initialization failed")
++	}
++	defer owner.Close()
++	owner.SetMaxOpenConns(2)
++	owner.SetMaxIdleConns(2)
++	// Existing schema is current after original-path initialization: no concurrent migrations.
++	var wg sync.WaitGroup
++	failures := make(chan bool, 120)
++	for i := 0; i < 120; i++ {
++		wg.Add(1)
++		go func() {
++			defer wg.Done()
++			c, err := postgresSessionStore(ctx, owner, nil)
++			if err == nil {
++				_, err = c.GetAllDevices(ctx)
++			}
++			failures <- err != nil
++		}()
++	}
++	wg.Wait()
++	close(failures)
++	for failed := range failures {
++		if failed {
++			t.Fatal("real concurrent reuse failed")
++		}
++	}
++	if count(sharedName) > 2 || owner.Stats().MaxOpenConnections != 2 {
++		t.Fatal("shared pool exceeded configured bound")
++	}
++	// Cancelled startup must not close the pool used by other active instances.
++	cancelled, stop := context.WithCancel(ctx)
++	stop()
++	if _, err = postgresSessionStore(cancelled, owner, nil); err == nil {
++		t.Fatal("cancelled startup accepted")
++	}
++	if err = owner.PingContext(ctx); err != nil {
++		t.Fatal("cancelled startup closed owner pool")
++	}
++	if err = owner.Close(); err != nil {
++		t.Fatal("owner shutdown failed")
++	}
++	deadline = time.Now().Add(3 * time.Second)
++	for count(sharedName) != 0 && time.Now().Before(deadline) {
++		time.Sleep(10 * time.Millisecond)
++	}
++	if count(sharedName) != 0 {
++		t.Fatal("owner shutdown retained connections")
++	}
++}

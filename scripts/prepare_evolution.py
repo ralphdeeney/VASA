@@ -1,4 +1,4 @@
-"""Fetch the reviewed source, apply a logging-only patch, and preserve a verified cache."""
+"""Prepare pinned Calls source with reviewed patches and immutable isolated caches."""
 
 import argparse
 import hashlib
@@ -11,11 +11,11 @@ import tarfile
 import tempfile
 from pathlib import Path
 
-from dotenv import dotenv_values
-
 COMMIT = "e21ce0dd7634f3047410c893b5e4d1c082034b84"
 REPOSITORY = "https://github.com/luis-kovi/evolution-go-calls.git"
 ROOT = Path(__file__).resolve().parents[1]
+LOG_PATCH_SHA256 = "f73b15b2dce8572e91ee923faa27e9a30d3624eab244517fd412459a1cb5b91f"
+POOL_PATCH_SHA256 = "daba5ba8222345396ce5934e8a7ef07c353a4ed73fedcbeb785c75a6fb0b5361"
 
 
 def fingerprints(directory: Path) -> dict[str, str]:
@@ -26,13 +26,32 @@ def fingerprints(directory: Path) -> dict[str, str]:
     }
 
 
-def prepare(source: Path | None) -> None:
+def prepare(
+    source: Path | None, *, destination: Path | None = None, isolated: bool = False
+) -> None:
     local = ROOT / ".local"
     local.mkdir(mode=0o700, exist_ok=True)
-    destination = local / "evolution-source"
-    manifest_path = local / "evolution-source-manifest.json"
+    expected = local / ("evolution-pool-source" if isolated else "evolution-source")
+    if destination is not None and (not isolated or destination.absolute() != expected.absolute()):
+        raise SystemExit("Explicit destination must be the isolated pool source directory.")
+    if isolated and destination is None:
+        raise SystemExit("Isolated preparation requires an explicit destination.")
+    destination = expected
+    manifest_path = local / (destination.name + "-manifest.json")
+    if destination.is_symlink() or manifest_path.is_symlink():
+        raise SystemExit("Source or manifest symlinks are forbidden.")
     patch_path = ROOT / "docker/evolution-log-redaction.patch"
     patch_sha = hashlib.sha256(patch_path.read_bytes()).hexdigest()
+    if patch_sha != LOG_PATCH_SHA256:
+        raise SystemExit("Logging patch checksum differs from the reviewed artifact.")
+    patches = [(patch_path, patch_sha)]
+    if isolated:
+        pool_patch = ROOT / "docker/evolution-db-pool.patch"
+        pool_sha = hashlib.sha256(pool_patch.read_bytes()).hexdigest()
+        if pool_sha != POOL_PATCH_SHA256:
+            raise SystemExit("Pool patch checksum differs from the reviewed artifact.")
+        patches.append((pool_patch, pool_sha))
+    patch_records = {path.name: digest for path, digest in patches}
     if destination.exists():
         if not manifest_path.exists():
             raise SystemExit("Existing source has no manifest; preserve it before rebuilding.")
@@ -41,10 +60,14 @@ def prepare(source: Path | None) -> None:
             manifest["commit"] != COMMIT
             or manifest["patch_sha256"] != patch_sha
             or manifest["files"] != fingerprints(destination)
+            or (isolated and manifest.get("patches") != patch_records)
         ):
             raise SystemExit(
                 "Existing source differs from its verified manifest; preserve it first."
             )
+        if isolated:
+            print("Prepared verified isolated Calls source; no secrets accessed.")
+            return
     else:
         with tempfile.TemporaryDirectory(prefix="vasa-calls-source-") as temporary:
             checkout = source or Path(temporary) / "checkout"
@@ -70,12 +93,13 @@ def prepare(source: Path | None) -> None:
             staging.mkdir()
             with tarfile.open(fileobj=io.BytesIO(archive)) as source_tar:
                 source_tar.extractall(staging, filter="data")
-            subprocess.run(
-                ["patch", "--batch", "--forward", "-p1", "-i", str(patch_path)],
-                cwd=staging,
-                check=True,
-                stdout=subprocess.DEVNULL,
-            )
+            for reviewed_patch, _ in patches:
+                subprocess.run(
+                    ["patch", "--batch", "--forward", "-p1", "-i", str(reviewed_patch)],
+                    cwd=staging,
+                    check=True,
+                    stdout=subprocess.DEVNULL,
+                )
             # Upstream ignores Go tests in Docker; retain them for actual source verification.
             (staging / ".dockerignore").write_text(".git\nevolution-go\n.env\n.env.*\n")
             import shutil
@@ -86,6 +110,7 @@ def prepare(source: Path | None) -> None:
                     {
                         "commit": COMMIT,
                         "patch_sha256": patch_sha,
+                        **({"patches": patch_records} if isolated else {}),
                         "files": fingerprints(destination),
                     },
                     indent=2,
@@ -103,11 +128,21 @@ def prepare(source: Path | None) -> None:
     (destination / "vasa-host-trust.pem").write_bytes(ca_bundle)
     manifest_path.write_text(
         json.dumps(
-            {"commit": COMMIT, "patch_sha256": patch_sha, "files": fingerprints(destination)},
+            {
+                "commit": COMMIT,
+                "patch_sha256": patch_sha,
+                **({"patches": patch_records} if isolated else {}),
+                "files": fingerprints(destination),
+            },
             indent=2,
         )
         + "\n"
     )
+    if isolated:
+        print("Prepared verified isolated Calls source; no secrets accessed.")
+        return
+    from dotenv import dotenv_values
+
     vasa_file = local / "vasa.env"
     evolution_file = local / "evolution.env"
     if vasa_file.exists() != evolution_file.exists():
@@ -143,4 +178,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--source", type=Path, help="Already verified checkout (otherwise fetch it)"
     )
-    prepare(parser.parse_args().source)
+    parser.add_argument(
+        "--isolated", action="store_true", help="Prepare build source only; never access secrets"
+    )
+    parser.add_argument(
+        "--destination", type=Path, help="Explicit .local/evolution-pool-source destination"
+    )
+    args = parser.parse_args()
+    prepare(args.source, destination=args.destination, isolated=args.isolated)

@@ -9,12 +9,14 @@ COPY --chown=builder:builder vasa-host-trust.pem ./
 ENV SSL_CERT_FILE=/build/vasa-host-trust.pem
 RUN go mod download && go mod verify
 COPY --chown=builder:builder . .
-RUN go test -p 2 ./pkg/call/... && go vet -p 2 ./pkg/call/... && CGO_ENABLED=1 go build -p 2 -ldflags "-X main.version=0.7.2-rekovi-calls.1-vasa" -o server ./cmd/evolution-go
+RUN GOMAXPROCS=1 go test -p 1 ./pkg/call/... ./pkg/whatsmeow/service && go vet -p 1 ./pkg/call/... ./pkg/whatsmeow/service && CGO_ENABLED=1 GOMAXPROCS=1 go build -p 1 -ldflags "-X main.version=0.7.2-rekovi-calls.1-vasa" -o server ./cmd/evolution-go
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl tzdata ffmpeg libjpeg62-turbo libwebp7 poppler-utils && rm -rf /var/lib/apt/lists/*
 RUN useradd --create-home --uid 1000 vasa && mkdir -p /app/dbdata /app/logs && chown -R vasa:vasa /app
 WORKDIR /app
+ARG VASA_REVISION=e21ce0dd7634f3047410c893b5e4d1c082034b84
+LABEL org.opencontainers.image.revision=$VASA_REVISION
 COPY --from=build --chown=vasa:vasa /build/server /app/server
 COPY --from=build --chown=vasa:vasa /build/manager/dist /app/manager/dist
 COPY --from=build --chown=vasa:vasa /build/VERSION /app/VERSION

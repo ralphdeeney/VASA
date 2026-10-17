@@ -330,3 +330,14 @@ normal deploy/bootstrap guards remain unchanged. investigate() uses approved
 read-only Git/Docker/HTTP operations and prints fixed metadata JSON, no raw diff,
 secret values, arbitrary logs or environment contents. Controller owns integration;
 recovery tests have separate ownership. No direct Codex SSH.
+
+2026-10-16 authorized Evolution pool repair wave: source specialist owns only
+`docker/evolution-db-pool.patch` and associated Go test payloads. Preparation
+specialist owns `scripts/prepare_evolution.py` and its Python tests, integrating
+that patch with existing source fingerprints without overwriting old caches.
+Root owns Actions workflow/controller, backup/no-call/rollback gates and final
+integration. PostgreSQL reconnect stores reuse the existing process-owned auth
+pool; per-client disconnect must never close that shared pool. Existing SQLite
+selection, call/media APIs, runtime secrets and public ingress remain unchanged.
+SMTP remains explicitly deferred. Deployment is Evolution-only and manual through
+Actions; any active-call evidence or inability to prove quiescence refuses restart.

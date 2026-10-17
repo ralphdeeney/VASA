@@ -1,3 +1,42 @@
+## 2026-10-17 — Authorized Evolution pool lifecycle remediation
+
+Confirmed pinned upstream reconnect path creates an independent PostgreSQL
+Whatsmeow store pool on each StartClient without closing the previous pool.
+The reviewed patch borrows the existing process-owned bounded auth database
+pool via NewWithDB; its owner retains shutdown responsibility. SQLite database
+selection, transport, call/media APIs and speech providers are unchanged.
+
+Local Go unit, race, real PostgreSQL 120-cycle reuse/shutdown and existing
+call/media tests passed. The isolated source manifest pins both reviewed patches;
+existing cached source and runtime secrets are preserved. Live rollout is pending.
+
+GitHub Actions only: dispatch VASA staging VPS with mode=check,
+recovery=evolution_check for read-only health/capacity/call inspection; use
+recovery=evolution_deploy for the explicitly authorized Evolution-only rollout.
+No bootstrap, application migration or automatic Evolution rollout on push.
+
+The maintenance controller checks durable unfinished calls, bounded Redis call
+state and all non-Docker-DNS Evolution UDP sockets, plus the exact registered
+connected instance set. Unknown/nonzero state defers. After backups, pause voice
+and recheck to close the VASA answer-admission race; then replace only Evolution,
+restore only existing registered device connections, resume voice and validate
+all five services, unchanged other container identities and private files.
+The private control endpoint must not have independent external call initiators.
+The upstream image has no call-list API; zero UDP alone is never accepted as
+proof of no calls. A stale unfinished durable record also blocks maintenance.
+
+Backups cover application, Evolution auth and Evolution users databases, with
+private receipts/hashes and restoration into disposable databases before restart.
+Schema/device/instance credential fingerprints must remain unchanged; no live
+schema upgrade is approved. A verified rollback image is retained and only
+Evolution is restored if validation fails. Capacity is sampled three times after
+rollout; total Evolution sockets must remain within the two existing 25-open
+process pools, and decrease from an exhausted baseline.
+
+SMTP is explicitly deferred by the operator. No credentials are requested or
+invented and live email acceptance is not claimed. Human real-call stability
+validation remains separate from pool health evidence.
+
 2026-10-16 staging capacity finding (not an inference benchmark):
 Actions 38956286230 read-only inspection confirmed PostgreSQL max_connections=100
 and established sockets: Evolution 95, VASA API4, voice 1. New connections fail
