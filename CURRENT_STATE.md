@@ -908,3 +908,14 @@ passed navigation, retained draft, history/deep links and no mutations/overflow.
 Reproduce browser check: node tests/dashboard/workspace_navigation.cjs
 (with Playwright and Chromium installed). Deployment pending exact-SHA CI and
 guarded isolated-release activation; no live QR requested or account altered.
+
+Customer navigation deployment VERIFIED: source/deployed SHA
+6060e768634de6656bf900ef6b1e08b59b4fb8ed. Exact-SHA CI39103542246 succeeded.
+Normal push39103542125 safely refused preserved local checkout; no files
+overwritten. Fresh read-only39103555290 passed no-call/instance checks, existing
+WhatsApp connected/logged in. Existing isolated activation39103762560 succeeded
+with VASA_RELEASE_ACTIVATION_OK and VASA_DEPLOYMENT_OK; backup restoration
+verified, schema0007 already current (no live migration). Dependencies/Evolution,
+operator/private files unchanged. Public login/readiness200, dashboard401; served
+JS/CSS match the tested commit byte-for-byte. Human QR scan was not performed
+and no pairing state was changed for testing.
