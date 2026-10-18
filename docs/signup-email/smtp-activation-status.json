@@ -64,9 +64,33 @@
   "compatible_release_preparation_run": 39099295306,
   "compatible_release_preparation_result": "VASA_RECOVERY_PREPARE_OK",
   "live_saas_acceptance": {
-    "run": 39099264955,
-    "result": "failed at fixture_pending_cleanup before account preparation",
-    "safe_bridge_diagnostics": "added; one diagnostic cleanup-only recovery permitted before bounded full retry",
-    "email_workflows": "not tested live"
-  }
+    "initial_run": 39099264955,
+    "initial_result": "failed before fixture preparation; raw bridge diagnostics previously suppressed, exact initial cause unproven",
+    "diagnostic_cleanup_only_run": 39099522728,
+    "diagnostic_cleanup_only_result": "LIVE_SAAS_CLEANUP_ONLY_OK; no recycle/restart",
+    "bounded_retry_run": 39099586463,
+    "result": "LIVE_SAAS_ACCEPTANCE_PARTIAL_OK",
+    "passed": [
+      "login_session_persistence",
+      "logout_revocation",
+      "workspace_tenant_platform_boundaries",
+      "admin_directory_audit",
+      "mobile_desktop"
+    ],
+    "fixture_prepare": "LIVE_SAAS_FIXTURE_PREPARE_OK",
+    "fixture_cleanup": "LIVE_SAAS_FIXTURE_CLEANUP_OK",
+    "email_workflows": "LIVE_SAAS_EMAIL_FLOWS=blocked_smtp",
+    "real_email_delivery_claimed": false
+  },
+  "latest_code_commit": "928f6c741ed709e1b91341987dc81eb1283d3491",
+  "latest_code_ci": {
+    "run": 39099518804,
+    "result": "success",
+    "python_tests": 1530
+  },
+  "remaining_operator_actions": [
+    "Enter key at the masked prepared helper prompt in private VPS terminal; do not paste into chat",
+    "Reconnect the existing WhatsApp instance with phone owner; never recreate it",
+    "Confirm actual intended-inbox receipt after a successful SMTP acceptance run"
+  ]
 }

@@ -867,3 +867,23 @@ this runner now. Full local1530 tests passed79.48s;35 focused runner/payload tes
 pass. Plan: one diagnostic cleanup-only call, no web-pool recycle/restart, then
 bounded full acceptance retry only if bridge/cleanup succeeds. No live email
 acceptance is represented by these disposable session/admin fixtures.
+
+
+SMTP delivery final independent verification2026-10-18: code928f6c741ed709e1b91341987dc81eb1283d3491
+passed CI39099518804 (1530tests; local79.48s, all static/workflow/shell checks).
+Diagnostic cleanup-only39099522728 succeeded without recycle/restart. Bounded
+live browser retry39099586463 SUCCEEDED with LIVE_SAAS_ACCEPTANCE_PARTIAL_OK:
+login_session_persistence,logout_revocation,workspace_tenant_platform_boundaries,
+admin_directory_audit,mobile_desktop all passed. Disposable identities were
+prepared and cleanup confirmed; no real email sent. Initial39099264955 cause
+remains unproven because old runner suppressed bridge detail; not an ongoing
+application failure and not evidence of invalid credentials/database defects.
+Live SMTP acceptance39099196078 stopped SMTP_PRIVATE_CONFIGURATION_REQUIRED;
+no protected key/inbox proof available. Operator received exact masked command
+under prepared729906439f4047c8a0a9163e9ba991677183e505/scripts/configure_smtp.py.
+Compatible application candidatea109c792c799c6437aed843cbba7a5638f285d20 is
+prepared/restore-tested (39099295306); active app/voice remains858b5f8. No new
+activation was attempted while existing WhatsApp remains disconnected/loggedout.
+Email/signup verification/recovery/invitations remain live-pending; do not enable
+signup until real mailbox receipt is confirmed. Human key entry and existing
+phone-owner pairing remain exact external gates. All existing safety remains.
