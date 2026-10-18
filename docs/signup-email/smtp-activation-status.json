@@ -4,10 +4,10 @@
   "domain_verification": "operator reported verified; not inferred from mock delivery",
   "sender": "VASA <noreply@send.litatech.xyz>",
   "recipient_privately_provided": true,
-  "credential_entry": "private VPS TTY only; no chat secret field available",
-  "smtp_authentication": "not run; protected key unavailable",
-  "smtp_message_acceptance": "not run",
-  "actual_mailbox_delivery": "not confirmed",
+  "credential_entry": "protected GitHub Actions VASA_RELOOP_API_KEY; encrypted pinned SSH stdin; never retrieved by Codex",
+  "smtp_authentication": "PASSED real VPS STARTTLS with certificate verification and Reloop AUTH",
+  "smtp_message_acceptance": "VASA_SMTP_ACCEPTANCE_OK",
+  "actual_mailbox_delivery": "awaiting operator confirmation; SMTP acceptance alone does not attest delivery",
   "public_signup_enabled": false,
   "live_auth_email_workflows": "blocked on protected configuration, real inbox receipt and permitted activation",
   "baseline_actions": {
@@ -23,7 +23,7 @@
     "whatsapp_connected": false,
     "whatsapp_logged_in": false
   },
-  "activation": "not attempted; unchanged offline-instance gate does not pass",
+  "activation": "not attempted while actual inbox receipt is pending; active app/voice still858b5f8",
   "previous_active_release": "858b5f853957d719a34ea96f28b5ea726100d402",
   "key_used": false,
   "no_evolution_or_tunnel_change": true,
@@ -37,8 +37,8 @@
     "live_services_unchanged": true
   },
   "automated_verification": {
-    "python_tests": 1530,
-    "duration_seconds": 79.48,
+    "python_tests": 1540,
+    "duration_seconds": 78.5,
     "focused_operator_and_deployment_tests": 116,
     "real_public_layouts": 10,
     "ruff": "pass",
@@ -52,10 +52,12 @@
   "tooling_ci_run": 39099016045,
   "tooling_ci_result": "1508 passed",
   "smtp_acceptance_action": {
-    "run": 39099196078,
-    "result": "SMTP_PRIVATE_CONFIGURATION_REQUIRED",
-    "smtp_authentication": "not attempted",
-    "email_sent": false
+    "run": 39101294179,
+    "result": "VASA_SMTP_ACCEPTANCE_OK",
+    "smtp_authentication": "passed",
+    "message_submitted": true,
+    "mailbox_verified": false,
+    "running_services_and_private_files_unchanged": true
   },
   "narrow_smtp_compatibility": "only first complete approved web binding permitted; existing SMTP/other providers/voice remain protected",
   "compatible_release_commit": "a109c792c799c6437aed843cbba7a5638f285d20",
@@ -82,15 +84,42 @@
     "email_workflows": "LIVE_SAAS_EMAIL_FLOWS=blocked_smtp",
     "real_email_delivery_claimed": false
   },
-  "latest_code_commit": "928f6c741ed709e1b91341987dc81eb1283d3491",
+  "latest_code_commit": "a1fbcb757c9a08b81a3ada5026393201bb2582e3",
   "latest_code_ci": {
-    "run": 39099518804,
+    "run": 39101084441,
     "result": "success",
-    "python_tests": 1530
+    "python_tests": 1540
   },
   "remaining_operator_actions": [
-    "Enter key at the masked prepared helper prompt in private VPS terminal; do not paste into chat",
-    "Reconnect the existing WhatsApp instance with phone owner; never recreate it",
-    "Confirm actual intended-inbox receipt after a successful SMTP acceptance run"
-  ]
+    "Confirm actual receipt of VASA SMTP acceptance test in the privately supplied inbox; no more key entry or pairing requested"
+  ],
+  "smtp_private_setup": {
+    "run": 39101100189,
+    "result": "VASA_SMTP_PRIVATE_CONFIG_WRITTEN",
+    "file": ".local/smtp.env",
+    "mode": "0600",
+    "scope": "web service only",
+    "running_services_unchanged": true,
+    "other_private_files_unchanged": true,
+    "key_exposed": false,
+    "delivery_verified": false
+  },
+  "current_whatsapp_readonly": {
+    "run": 39100780437,
+    "registered_instances": 1,
+    "upstream_instances": 1,
+    "connected": true,
+    "logged_in": true,
+    "no_active_calls": "EVOLUTION_CALL_GATE_OK"
+  },
+  "current_prepared_release": {
+    "sha": "a1fbcb757c9a08b81a3ada5026393201bb2582e3",
+    "run": 39101433730,
+    "result": "VASA_RECOVERY_PREPARE_OK",
+    "backup_restore_verified": true,
+    "backup_bytes": 48933,
+    "schema": "0007 already current",
+    "rollback_verified": true,
+    "live_services_unchanged": true
+  }
 }

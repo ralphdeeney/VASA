@@ -905,3 +905,23 @@ Full local1540 tests pass78.50s; focused21 protected setup tests, strict helper/
 payloadmypy, Ruff/format/actionlint/shell/diff pass. No real SMTP submission yet;
 CI-gated setup and preactivation SMTP acceptance are next. Actual mailbox receipt
 remains a separate human gate before enabling signup/claiming email delivery.
+
+
+Reloop private setup and live SMTP ACCEPTANCE VERIFIED2026-10-18:
+codea1fbcb757c9a08b81a3ada5026393201bb2582e3 CI39101084441 passed1540
+(82.76sCI/78.50slocal). Protected setup39101100189 emitted
+VASA_SMTP_PRIVATE_CONFIG_WRITTEN, preserving services/otherprivatefiles/Gitstate.
+No key was retrieved by Codex, logged, passed in argv or committed. Web-only
+smtp.env0600 has approved Reloop sender/STARTTLS/key and VERIFIED=false.
+Actual VPS test39101294179 emitted VASA_SMTP_ACCEPTANCE_OK: STARTTLS cert
+verification, SMTP auth and submission succeeded. Actual inbox receipt NOT yet
+confirmed; operator asked through async question. Do not enable signup/attest
+mail delivery from SMTP acceptance alone. Fresh39100780437 confirms existing
+registered/upstream instance1, CONNECTED=1 LOGGED_IN=1, CALL_GATE_OK and pool
+preflightpass; no pairing mutation/restart by Codex. Candidatea1fbcb7 preparation
+39101433730 passed:48,933-byte backup restored, schema0007 alreadycurrent,
+rollback verified, runningservices/operatorfiles/privatehashes preserved.
+Current app/voice remains858b5f8; no activation yet while actual email receipt
+is pending. Operator no longer needs to enter a terminal key or reconnect
+WhatsApp. Next: confirm test email receipt, explicitly record private delivery
+attestation, then fresh guarded activation and real email token-flow acceptance.
