@@ -109,3 +109,56 @@ def test_non_actions_environment_refused(protected, monkeypatch):
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
     with pytest.raises(ValueError):
         payload.build()
+
+
+@pytest.mark.parametrize(
+    "failure", ["none", "failed_run", "wrong_branch", "wrong_workflow", "no_marker", "api_error"]
+)
+def test_authenticated_receipt_is_required_and_never_echoes_logs(monkeypatch, capsys, failure):
+    import json
+
+    run = {
+        "status": "completed",
+        "conclusion": "success",
+        "event": "workflow_dispatch",
+        "head_branch": "build/vasa-foundation",
+        "repository": {"full_name": "ralphdeeney/VASA"},
+        "workflow_id": 123,
+    }
+    if failure == "failed_run":
+        run["conclusion"] = "failure"
+    if failure == "wrong_branch":
+        run["head_branch"] = "other"
+    if failure == "wrong_workflow":
+        run["workflow_id"] = 999
+
+    def command(args, **kwargs):
+        if args[1] == "api":
+            value = {"id": 123} if "workflows/" in args[-1] else run
+            return SimpleNamespace(
+                returncode=int(failure == "api_error"), stdout=json.dumps(value), stderr=KEY
+            )
+        return SimpleNamespace(
+            returncode=0,
+            stdout=KEY
+            + ("\n2026-10-18 VASA_SMTP_ACCEPTANCE_OK\n" if failure != "no_marker" else ""),
+            stderr=KEY,
+        )
+
+    monkeypatch.setattr(payload.subprocess, "run", command)
+    if failure == "none":
+        payload.verify_acceptance("39101294179")
+    else:
+        with pytest.raises(ValueError):
+            payload.verify_acceptance("39101294179")
+    assert capsys.readouterr().out == ""
+
+
+def test_attestation_does_not_build_without_operator_confirmation(protected, monkeypatch):
+    monkeypatch.setenv("VASA_RECOVERY", "smtp_verify")
+    monkeypatch.delenv("VASA_SMTP_RECEIPT_CONFIRMED", raising=False)
+    monkeypatch.setattr(
+        payload, "verify_acceptance", lambda run: pytest.fail("Operator confirmation first")
+    )
+    with pytest.raises(ValueError, match="operator_confirmation_required"):
+        payload.build()

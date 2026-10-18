@@ -9,7 +9,7 @@ case "${VASA_DEPLOY_MODE:-}" in
 esac
 VASA_PROVIDER_SMOKE=${VASA_PROVIDER_SMOKE:-false}
 VASA_RECOVERY=${VASA_RECOVERY:-none}
-[[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate || "$VASA_RECOVERY" == prepare || "$VASA_RECOVERY" == activate || "$VASA_RECOVERY" == smtp_configure || "$VASA_RECOVERY" == smtp_check || "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]] || exit 1
+[[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate || "$VASA_RECOVERY" == prepare || "$VASA_RECOVERY" == activate || "$VASA_RECOVERY" == smtp_configure || "$VASA_RECOVERY" == smtp_verify || "$VASA_RECOVERY" == smtp_check || "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]] || exit 1
 VASA_RELEASE_SHA=${VASA_RELEASE_SHA:-}
 VASA_MIGRATION_SQL_SHA256=${VASA_MIGRATION_SQL_SHA256:-}
 VASA_SMTP_TEST_RECIPIENT=${VASA_SMTP_TEST_RECIPIENT:-}
@@ -61,11 +61,12 @@ if [[ ! -s "$vasa_ssh_dir/known_hosts" ]]; then
   exit 1
 fi
 vasa_remote_payload=deploy/actions_vps.py
-if [[ "$VASA_RECOVERY" == smtp_configure ]]; then
+if [[ "$VASA_RECOVERY" == smtp_configure || "$VASA_RECOVERY" == smtp_verify ]]; then
   [[ -z "${VASA_REQUEST_FILE:-}" && -z "${VASA_LIVE_ACCEPTANCE_FILE:-}" ]] || exit 1
   vasa_remote_payload="$vasa_ssh_dir/smtp-task.py"
   python3 deploy/actions_smtp_payload.py > "$vasa_remote_payload"
   chmod 600 "$vasa_remote_payload"
+  unset GH_TOKEN
 fi
 unset VASA_RELOOP_API_KEY
 if [[ "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]]; then

@@ -7,7 +7,7 @@
   "credential_entry": "protected GitHub Actions VASA_RELOOP_API_KEY; encrypted pinned SSH stdin; never retrieved by Codex",
   "smtp_authentication": "PASSED real VPS STARTTLS with certificate verification and Reloop AUTH",
   "smtp_message_acceptance": "VASA_SMTP_ACCEPTANCE_OK",
-  "actual_mailbox_delivery": "awaiting operator confirmation; SMTP acceptance alone does not attest delivery",
+  "actual_mailbox_delivery": "CONFIRMED by operator: received VASA SMTP acceptance test",
   "public_signup_enabled": false,
   "live_auth_email_workflows": "blocked on protected configuration, real inbox receipt and permitted activation",
   "baseline_actions": {
@@ -90,9 +90,7 @@
     "result": "success",
     "python_tests": 1540
   },
-  "remaining_operator_actions": [
-    "Confirm actual receipt of VASA SMTP acceptance test in the privately supplied inbox; no more key entry or pairing requested"
-  ],
+  "remaining_operator_actions": [],
   "smtp_private_setup": {
     "run": 39101100189,
     "result": "VASA_SMTP_PRIVATE_CONFIG_WRITTEN",
@@ -121,5 +119,10 @@
     "schema": "0007 already current",
     "rollback_verified": true,
     "live_services_unchanged": true
+  },
+  "receipt_confirmation": {
+    "operator_confirmed": true,
+    "smtp_acceptance_run": 39101294179,
+    "private_attestation": "pending authenticated guarded operation"
   }
 }

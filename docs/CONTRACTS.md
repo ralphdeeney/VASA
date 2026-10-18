@@ -500,3 +500,17 @@ are removed. First creation is private web-only smtp.env0600, verified=false;
 identical retry is idempotent, conflicting/existing attested configuration is never
 overwritten. A specialist audits this path read-only after implementation. No
 Evolution restart/migration or other provider/private change is authorized.
+
+## Confirmed delivery activation — 2026-10-18
+
+Operator explicitly confirms actual receipt of test email accepted by Actions
+39101294179. Root owns smtp_verify workflow/payload and helper keyword
+configure(root, secret=..., delivery_verified=True). It may atomically change
+ONLY verified=false to true when the complete private file exactly matches the
+protected key/approved sender. Existing unknown files/settings are refused.
+The Actions operator confirmation must be accompanied by authenticated proof of
+that successful SMTP workflow run, not an arbitrary approved flag. No further
+email is sent for attestation. Specialist owns only new tests/unit/test_smtp_receipt.py
+regressions for exact file/credential/mode preservation. Root owns integration,
+shared tests/docs/commits and existing guarded activation. No migration or
+Evolution/dependency/network changes; fresh no-call preflight before activation.

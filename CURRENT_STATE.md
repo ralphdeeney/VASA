@@ -850,3 +850,17 @@ Current app/voice remains858b5f8; no activation yet while actual email receipt
 is pending. Operator no longer needs to enter a terminal key or reconnect
 WhatsApp. Next: confirm test email receipt, explicitly record private delivery
 attestation, then fresh guarded activation and real email token-flow acceptance.
+
+
+Operator confirmed actual inbox receipt of SMTP test39101294179. Added explicit
+smtp_verify operation: requires trusted Actions context, operator-confirmed
+receipt run ID, authenticated API proof of successful staging workflow/branch and
+SMTP success marker. Protected key must match completeexisting0600config. Only
+VERIFIED=false->true may be atomicallychanged; no new verifiedfile, sender/key
+replacement or arbitrary settings permitted. Retryidempotent; no extra mail sent.
+Private service/hash/Git preservation remains. Full1557 tests pass80.76s,38focused
+SMTPhelper/payload tests, Ruff/format/mypy/workflow/shellchecks pass. Next: CI-gated
+attestation, fresh no-call preflight, then existing guarded activation of the
+previously prepared a1fbcb757c9a08b81a3ada5026393201bb2582e3 release, same
+reviewed0007SQLhash and no live migration ifschema0007. No Evolution/network
+changes and no activation claim before VASA_DEPLOYMENT_OK.

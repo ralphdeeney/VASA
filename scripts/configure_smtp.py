@@ -7,6 +7,7 @@ import re
 import stat
 import subprocess
 import sys
+import tempfile
 import warnings
 from pathlib import Path
 
@@ -21,6 +22,7 @@ FAILURE_CODES = frozenset(
         "private_terminal_required",
         "invalid_key_format",
         "unsafe_file_mode",
+        "existing_configuration_required",
     }
 )
 
@@ -43,7 +45,7 @@ def smtp_content(key: str) -> str:
     )
 
 
-def configure(root: Path, *, secret: str | None = None) -> bool:
+def configure(root: Path, *, secret: str | None = None, delivery_verified: bool = False) -> bool:
     uid = os.getuid()
     if uid == 0 or pwd.getpwuid(uid).pw_name != "vasa-builder":
         raise ConfigurationRefused("wrong_user")
@@ -73,11 +75,39 @@ def configure(root: Path, *, secret: str | None = None) -> bool:
             and path.stat().st_uid == uid
             and stat.S_IMODE(path.stat().st_mode) == 0o600
             and path.stat().st_size <= 16384
-            and path.read_text() == smtp_content(secret)
         ):
-            return False
+            previous = smtp_content(secret)
+            desired = (
+                previous.replace("VERIFIED=false", "VERIFIED=true")
+                if delivery_verified
+                else previous
+            )
+            current = path.read_text()
+            if current == desired:
+                return False
+            if delivery_verified and current == previous:
+                original = path.stat()
+                fd, name = tempfile.mkstemp(prefix=".smtp-attest-", dir=private)
+                temporary = Path(name)
+                try:
+                    with os.fdopen(fd, "w", encoding="utf-8") as stream:
+                        stream.write(desired)
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                    if (
+                        path.is_symlink()
+                        or path.stat().st_ino != original.st_ino
+                        or path.read_text() != previous
+                    ):
+                        raise ConfigurationRefused("existing_configuration_preserved")
+                    os.replace(temporary, path)
+                finally:
+                    temporary.unlink(missing_ok=True)
+                return True
         # Never overwrite an existing credential, operator option or attestation.
         raise ConfigurationRefused("existing_configuration_preserved")
+    if delivery_verified:
+        raise ConfigurationRefused("existing_configuration_required")
     if secret is None:
         if not sys.stdin.isatty() or not sys.stderr.isatty():
             raise ConfigurationRefused("private_terminal_required")
