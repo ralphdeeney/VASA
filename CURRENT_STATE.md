@@ -760,3 +760,21 @@ Public read-only10layouts pass;login/ready200, dashboard/admin401, signup/email
 disabled, targetlogo notdeployed. SMTP credential, real inbox receipt and existing
 WhatsApp login/connection remain external gates. Instructions:
 docs/signup-email/SMTP_ACTIVATION.md; evidence:smtp-activation-status.json.
+
+
+SMTP tooling729906439f4047c8a0a9163e9ba991677183e505 passed CI39099016045
+(1508tests/90.17s). Isolated prepare39099028451 succeeded:restore-tested backup,
+rollback image and candidate verified; schema0007 already current; no live changes.
+The masked operator helper is available in that prepared source. Explicit SMTP
+check39099196078 correctly stopped SMTP_PRIVATE_CONFIGURATION_REQUIRED before
+auth/send. Protected credential and inbox confirmation remain external gates.
+The first binding would otherwise hit the old release's broad environment-diff
+guard. A narrowly scoped compatibility rule now admits only the seven complete
+first web SMTP fields for the exact operator-approved Reloop sender/STARTTLS/key
+contract and owned0600file. Existing SMTP replacement, arbitrary provider/private
+changes, wrong SMTP values and voice SMTP injection still fail. No attestation is
+changed automatically. Sixteen boundary regressions added; updated full local
+1524 tests passed80.09s,121 focused compatibility/deploy tests pass, static checks
+pass. An independent Actions live SaaS session/admin/tenant/browser run is next;
+real email verification/recovery/invitations remain blocked, never represented
+by fake-mailbox results. No activation attempted while WhatsApp remains offline.

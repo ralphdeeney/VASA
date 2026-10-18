@@ -964,6 +964,57 @@ def smtp_acceptance(target, recipient):
         print("SMTP_MAILBOX_VERIFIED=false", flush=True)
 
 
+SMTP_ENVIRONMENT_KEYS = frozenset(
+    {
+        "VASA_SMTP_HOST",
+        "VASA_SMTP_PORT",
+        "VASA_SMTP_USERNAME",
+        "VASA_SMTP_PASSWORD",
+        "VASA_SMTP_SENDER",
+        "VASA_SMTP_STARTTLS",
+        "VASA_SMTP_DELIVERY_VERIFIED",
+    }
+)
+
+
+def compatible_release_environment(service, old, new):
+    """Preserve all provider settings; allow only the explicitly approved first SMTP binding."""
+    excluded = {"VASA_PUBLIC_ORIGIN", "VASA_SAAS_ENABLED"}
+    old_smtp = {k: v for k, v in old.items() if k in SMTP_ENVIRONMENT_KEYS}
+    new_smtp = {k: v for k, v in new.items() if k in SMTP_ENVIRONMENT_KEYS}
+    if service == "vasa" and old_smtp != new_smtp:
+        require(
+            not old_smtp and set(new_smtp) == SMTP_ENVIRONMENT_KEYS,
+            "Existing SMTP configuration changes require separate review.",
+        )
+        private = ROOT / ".local/smtp.env"
+        require(
+            private.is_file()
+            and not private.is_symlink()
+            and private.stat().st_uid == os.getuid()
+            and private.stat().st_mode & 0o777 == 0o600,
+            "Approved SMTP binding requires an owned private configuration file.",
+        )
+        require(
+            new_smtp["VASA_SMTP_HOST"] == "smtp.reloop.sh"
+            and str(new_smtp["VASA_SMTP_PORT"]) == "587"
+            and new_smtp["VASA_SMTP_SENDER"] == "VASA <noreply@send.litatech.xyz>"
+            and new_smtp["VASA_SMTP_STARTTLS"] == "true"
+            and new_smtp["VASA_SMTP_DELIVERY_VERIFIED"] in ("true", "false")
+            and isinstance(new_smtp["VASA_SMTP_USERNAME"], str)
+            and re.fullmatch(r"[A-Za-z0-9_./:+-]{16,4096}", new_smtp["VASA_SMTP_USERNAME"])
+            is not None
+            and new_smtp["VASA_SMTP_USERNAME"] == new_smtp["VASA_SMTP_PASSWORD"],
+            "SMTP binding differs from the approved Reloop configuration.",
+        )
+        excluded |= SMTP_ENVIRONMENT_KEYS
+    require(
+        {k: v for k, v in old.items() if k not in excluded}
+        == {k: v for k, v in new.items() if k not in excluded},
+        "Provider or private configuration differs.",
+    )
+
+
 def activate_recovery(target, sql_hash):
     """Explicitly approved additive migration and targeted immutable-image rollout."""
     require(re.fullmatch(r"[0-9a-f]{40}", target) is not None, "Invalid activation target.")
@@ -1084,11 +1135,8 @@ def activate_recovery(target, sql_hash):
                 == {k: v for k, v in new.items() if k not in {"image", "environment"}},
                 "App topology or command differs.",
             )
-            excluded = {"VASA_PUBLIC_ORIGIN", "VASA_SAAS_ENABLED"}
-            require(
-                {k: v for k, v in old.get("environment", {}).items() if k not in excluded}
-                == {k: v for k, v in new.get("environment", {}).items() if k not in excluded},
-                "Provider or private configuration differs.",
+            compatible_release_environment(
+                service, old.get("environment", {}), new.get("environment", {})
             )
             require(
                 new["environment"].get("VASA_PUBLIC_ORIGIN") == "https://vasa.litatech.xyz"

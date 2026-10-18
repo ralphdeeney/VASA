@@ -475,3 +475,11 @@ migration gates. No Evolution replacement/pairing mutation, no tunnel/n8n change
 Mail specialist extension: owns a new focused tests/saas/test_email_token_boundaries.py
 only, adding explicit expired verification/invitation and malformed-token rejection
 regressions with existing fixtures. Root owns all production/config/workflow code.
+The requested SMTP configuration authorizes only the first complete web-only
+binding for smtp.reloop.sh:587, VASA <noreply@send.litatech.xyz>, authenticated
+STARTTLS and an owned mode0600 smtp.env. Root's release-environment compatibility
+rule permits only those seven exact SMTP fields in the web service; replacement
+of existing SMTP settings, voice injection and all other provider/private changes
+remain refused. Delivery verification stays a separately recorded operator
+attestation after actual receipt. This does not approve activation while any
+existing release, backup, migration, health or WhatsApp gate fails.

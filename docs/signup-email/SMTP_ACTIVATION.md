@@ -79,8 +79,13 @@ restoration/rollback checks, compatible private web-only configuration and the
 existing all-instance logged-in/connected gate. SMTP configuration must not be
 used to bypass any gate. In particular an offline WhatsApp account requires the
 phone owner's action; do not delete, recreate or re-pair it automatically. If
-new private environment keys trigger the existing configuration-difference gate,
-obtain a narrowly scoped review rather than excluding provider settings wholesale.
+new private environment keys differ outside the seven approved SMTP fields,
+activation still refuses them. The reviewed compatibility rule accepts only a
+first complete web-only binding for the exact Reloop host, port, sender,
+authenticated STARTTLS transport and private file specified above. It cannot
+replace existing SMTP credentials/settings or ignore any LLM/TTS/voice difference.
+The verified-delivery boolean remains a trusted operator attestation, never
+set by the controller or the SMTP acceptance test.
 
 Schema 0007 was current in the fresh read-only baseline. No live migration is
 authorized automatically. Keep the canonical operator edge/tunnel files untouched

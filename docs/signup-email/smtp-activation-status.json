@@ -27,10 +27,18 @@
   "previous_active_release": "858b5f853957d719a34ea96f28b5ea726100d402",
   "key_used": false,
   "no_evolution_or_tunnel_change": true,
-  "preparation": "pending current code verification",
+  "preparation": {
+    "status": "success",
+    "run": 39099028451,
+    "target_sha": "729906439f4047c8a0a9163e9ba991677183e505",
+    "marker": "VASA_RECOVERY_PREPARE_OK",
+    "backup_restored": true,
+    "schema_already_current": true,
+    "live_services_unchanged": true
+  },
   "automated_verification": {
-    "python_tests": 1508,
-    "duration_seconds": 81.95,
+    "python_tests": 1524,
+    "duration_seconds": 80.09,
     "focused_operator_and_deployment_tests": 116,
     "real_public_layouts": 10,
     "ruff": "pass",
@@ -39,5 +47,15 @@
     "operator_script_mypy": "pass",
     "actionlint": "pass",
     "shell_syntax": "pass"
-  }
+  },
+  "tooling_commit": "729906439f4047c8a0a9163e9ba991677183e505",
+  "tooling_ci_run": 39099016045,
+  "tooling_ci_result": "1508 passed",
+  "smtp_acceptance_action": {
+    "run": 39099196078,
+    "result": "SMTP_PRIVATE_CONFIGURATION_REQUIRED",
+    "smtp_authentication": "not attempted",
+    "email_sent": false
+  },
+  "narrow_smtp_compatibility": "only first complete approved web binding permitted; existing SMTP/other providers/voice remain protected"
 }
