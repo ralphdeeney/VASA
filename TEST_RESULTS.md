@@ -853,3 +853,17 @@ changed automatically. Sixteen boundary regressions added; updated full local
 pass. An independent Actions live SaaS session/admin/tenant/browser run is next;
 real email verification/recovery/invitations remain blocked, never represented
 by fake-mailbox results. No activation attempted while WhatsApp remains offline.
+
+
+Compatible releasea109c792c799c6437aed843cbba7a5638f285d20 passed CI39099290705
+(1524tests) and isolated prepare39099295306. No app activation or SMTPsend;
+private key remains unavailable, registered WhatsApp instance remains offline.
+Live session/admin acceptance39099264955 stopped at fixture_pending_cleanup
+before preparing accounts, and final cleanup could not be confirmed. Existing
+runner discarded child bridge errors, leaving cause unproven. Fixed allowlisted
+bridge categories now expose only status, not child stderr/stdout or credentials;
+tests prove malicious output/unknown errors stay private. Strictmypy also covers
+this runner now. Full local1530 tests passed79.48s;35 focused runner/payload tests
+pass. Plan: one diagnostic cleanup-only call, no web-pool recycle/restart, then
+bounded full acceptance retry only if bridge/cleanup succeeds. No live email
+acceptance is represented by these disposable session/admin fixtures.

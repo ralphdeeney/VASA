@@ -70,6 +70,7 @@ on:
       - 'deploy/evolution_instance_check.py'
       # Masked operator credential entry is not an application replacement.
       - 'scripts/configure_smtp.py'
+      - 'scripts/run_live_saas_acceptance.py'
       - 'docs/**'
       - 'tests/**'
       - '*.md'

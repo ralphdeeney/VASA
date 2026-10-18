@@ -93,6 +93,39 @@ def test_child_timeout_is_sanitized(monkeypatch):
     assert result.returncode == 1 and result.stdout == "" and result.stderr == ""
 
 
+@pytest.mark.parametrize(
+    "body,expected",
+    [
+        ("ssh: private-host: Connection refused Authorization: secret", "connection_refused"),
+        ("SSH host-key scan failed; private-host private-key", "host_scan"),
+        ("Private acceptance payload construction failed. private-body", "private_payload"),
+        ("Host trust is missing or mismatched private-host", "host_trust"),
+        ("private-api-key unexpected secret exception", "unclassified"),
+    ],
+)
+def test_failed_bridge_prints_only_fixed_safe_category(monkeypatch, capsys, body, expected):
+    monkeypatch.setattr(
+        runner.subprocess,
+        "run",
+        lambda *a, **k: SimpleNamespace(returncode=1, stdout="private-body", stderr=body),
+    )
+    result = runner.execute(["bash", "deploy/actions-ssh.sh"], {}, 10)
+    assert result.returncode == 1
+    assert capsys.readouterr().out == "LIVE_SAAS_BRIDGE_FAILED=" + expected + "\n"
+
+
+def test_successful_bridge_does_not_echo_child_output(monkeypatch, capsys):
+    monkeypatch.setattr(
+        runner.subprocess,
+        "run",
+        lambda *a, **k: SimpleNamespace(
+            returncode=0, stdout="private-credential", stderr="private-response"
+        ),
+    )
+    runner.execute(["bash", "deploy/actions-ssh.sh"], {}, 10)
+    assert capsys.readouterr().out == ""
+
+
 def test_only_fixed_fixture_diagnostics_survive(capsys):
     runner.emit_fixture_failures(
         "LIVE_SAAS_TASK_FAILED=health\n"

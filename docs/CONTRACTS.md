@@ -483,3 +483,7 @@ of existing SMTP settings, voice injection and all other provider/private change
 remain refused. Delivery verification stays a separately recorded operator
 attestation after actual receipt. This does not approve activation while any
 existing release, backup, migration, health or WhatsApp gate fails.
+Live acceptance runner recovery is root-owned: add only fixed allowlisted bridge
+failure categories, never raw child stdout/stderr or credentials. The first live
+run stopped before fixture preparation; diagnose the hidden bridge failure before
+one bounded retry. No database/provider/authorization bypass or restart is allowed.

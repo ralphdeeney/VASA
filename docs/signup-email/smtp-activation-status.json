@@ -37,8 +37,8 @@
     "live_services_unchanged": true
   },
   "automated_verification": {
-    "python_tests": 1524,
-    "duration_seconds": 80.09,
+    "python_tests": 1530,
+    "duration_seconds": 79.48,
     "focused_operator_and_deployment_tests": 116,
     "real_public_layouts": 10,
     "ruff": "pass",
@@ -57,5 +57,16 @@
     "smtp_authentication": "not attempted",
     "email_sent": false
   },
-  "narrow_smtp_compatibility": "only first complete approved web binding permitted; existing SMTP/other providers/voice remain protected"
+  "narrow_smtp_compatibility": "only first complete approved web binding permitted; existing SMTP/other providers/voice remain protected",
+  "compatible_release_commit": "a109c792c799c6437aed843cbba7a5638f285d20",
+  "compatible_release_ci_run": 39099290705,
+  "compatible_release_ci_result": "1524 passed",
+  "compatible_release_preparation_run": 39099295306,
+  "compatible_release_preparation_result": "VASA_RECOVERY_PREPARE_OK",
+  "live_saas_acceptance": {
+    "run": 39099264955,
+    "result": "failed at fixture_pending_cleanup before account preparation",
+    "safe_bridge_diagnostics": "added; one diagnostic cleanup-only recovery permitted before bounded full retry",
+    "email_workflows": "not tested live"
+  }
 }

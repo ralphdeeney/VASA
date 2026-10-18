@@ -34,10 +34,12 @@ FAIL_STAGES = frozenset(
 )
 
 
-def execute(command: list[str], environment: dict[str, str], timeout: int):
+def execute(
+    command: list[str], environment: dict[str, str], timeout: int
+) -> subprocess.CompletedProcess[str]:
     """Capture all child output; neither exceptions nor stderr are displayed."""
     try:
-        return subprocess.run(
+        result = subprocess.run(
             command,
             env=environment,
             stdin=subprocess.DEVNULL,
@@ -46,8 +48,33 @@ def execute(command: list[str], environment: dict[str, str], timeout: int):
             timeout=timeout,
             check=False,
         )
+        if result.returncode and command == ["bash", "deploy/actions-ssh.sh"]:
+            bridge_failure(result.stdout + "\n" + result.stderr)
+        return result
     except (OSError, subprocess.TimeoutExpired, UnicodeError):
+        if command == ["bash", "deploy/actions-ssh.sh"]:
+            print("LIVE_SAAS_BRIDGE_FAILED=execution_unavailable", flush=True)
         return subprocess.CompletedProcess(command, 1, stdout="", stderr="")
+
+
+def bridge_failure(output: str) -> None:
+    """Classify known bridge failures without relaying a byte of child output."""
+    categories = (
+        ("SSH host-key scan failed", "host_scan"),
+        ("Host trust is missing or mismatched", "host_trust"),
+        ("SSH key is not configured", "missing_ssh_key"),
+        ("SSH private key is invalid", "invalid_ssh_key"),
+        ("Permission denied (publickey", "ssh_authentication"),
+        ("Connection refused", "connection_refused"),
+        ("Connection timed out", "connection_timeout"),
+        ("Connection closed", "connection_closed"),
+        ("Private acceptance payload construction failed", "private_payload"),
+        ("LIVE_SAAS_TASK_FAILED=preflight", "remote_preflight"),
+        ("LIVE_SAAS_TASK_FAILED=fixture", "remote_fixture"),
+        ("LIVE_SAAS_TASK_FAILED=health", "remote_health"),
+    )
+    code = next((code for phrase, code in categories if phrase in output), "unclassified")
+    print("LIVE_SAAS_BRIDGE_FAILED=" + code, flush=True)
 
 
 def safe_browser_markers(output: str) -> set[str]:
@@ -170,7 +197,7 @@ def main() -> int:
         root.chmod(0o700)
         payload_file = root / "input.json"
         result_file = root / "result.json"
-        payload = {
+        payload: dict[str, object] = {
             "action": "cleanup_pending",
             "run": secrets.token_hex(16),
             "password": secrets.token_urlsafe(36),
