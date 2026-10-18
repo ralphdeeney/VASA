@@ -1051,3 +1051,22 @@ passed39118952372. Operator's chosen password was not changed by testing.
 Post-owner independent read-only39119596734 passed all existing no-call/pool/
 paired-device checks; both WhatsApp accounts remain connected/logged in.
 Owner setup caused no service restart or unrelated infrastructure change.
+
+## 2026-10-18 — Public branding/contact and n8n operator guide
+
+Implemented approved PNG branding on remaining public, identity, login and error
+headers/footers; existing customer/admin branding preserved. Contact content is
+width-limited with separate spaced actions. Without the separately trusted contact
+recipient, the unusable form stays hidden and a neutral availability message is
+shown. No recipient or runtime secret changed.
+
+n8n guide: docs/integrations/N8N.md and strict example manifest. Documents actual
+VASA-to-authenticated-webhook envelope, HTTP Request downstream API, raw JSON
+response and private operator wiring still required. Does not claim scoped
+external VASA API keys or an activated business integration. No n8n change.
+Browser fixtures passed 15 public/account/error routes at four widths and contact
+availability/failure states at five widths. Exact-SHA CI/activation pending.
+
+Final local scripts/check.sh: 1600 tests passed in92.19s, Ruff/format/strict
+mypy passed; known Starlette deprecation warning only. Actionlint, shell syntax
+and git diff whitespace checks passed.

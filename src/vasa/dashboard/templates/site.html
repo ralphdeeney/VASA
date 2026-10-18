@@ -10,7 +10,7 @@
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="topbar">
-      <a class="wordmark" href="/">vasa.</a>
+      <a class="site-brand" href="/" aria-label="VASA home"><img src="/dashboard/assets/vasa-logo.png" alt="VASA" width="661" height="548" /></a>
       <nav class="public-nav" aria-label="Main navigation">
         <a href="/features">Features</a><a href="/how-it-works">How it works</a
         ><a href="/pricing">Pricing</a><a href="/contact">Contact</a
@@ -142,17 +142,16 @@
         </details>
       </section>
       <section id="contact" class="marketing-section callout">
+        <div class="contact-content">
         <p class="eyebrow">Contact & access</p>
         <h2>Start with a conversation.</h2>
         <p>
-          Ask about VASA or request a demo when contact delivery is enabled.
-          Existing customers can also use their established workspace support
-          channel.
+          Ask about VASA or sign in to manage your workspace.
         </p>
-        <p id="contact-status" class="notice" role="status" aria-live="polite">
+        <p id="contact-status" class="small muted" role="status" aria-live="polite">
           Checking contact availability…
         </p>
-        <form id="contact-form" class="stack">
+        <form id="contact-form" class="stack contact-form" hidden>
           <div>
             <label for="contact-name">Full name</label
             ><input
@@ -192,11 +191,15 @@
             Send request
           </button>
         </form>
-        <a class="button" href="/login">Sign in to your workspace</a>
+        <div class="contact-actions">
+          <span class="small muted">Already a customer?</span>
+          <a class="button secondary" href="/login">Sign in to your workspace</a>
+        </div>
+        </div>
       </section>
     </main>
     <footer class="site-footer">
-      <a class="wordmark" href="/">vasa.</a>
+      <a class="site-brand" href="/" aria-label="VASA home"><img src="/dashboard/assets/vasa-logo.png" alt="VASA" width="661" height="548" /></a>
       <p class="small muted">Your business. Always available.</p>
       <a href="/login">Your workspace</a>
     </footer>

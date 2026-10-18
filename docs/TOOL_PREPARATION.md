@@ -1,8 +1,10 @@
 # Concrete tools and call storage
 
-These are independently verified library components. Live OpenAI verification
-is deferred by the user. The voice worker still rejects model tool output and
-does not yet configure these tools or write complete transcripts.
+Historical build notes below describe the library stages. Current voice_worker
+loads trusted per-tenant webhook actions and tool specifications at startup.
+For the current n8n contract, operator activation gates and HTTP Request guide,
+see [Connect VASA to n8n](integrations/N8N.md). Library or configuration tests do
+not prove an external business workflow has been deployed or completed.
 
 ## Approved webhook actions
 
@@ -38,7 +40,8 @@ Create a gateway per call when registering the call-bound end_call object;
 multiple calls for the same tenant need separate bindings. Shared webhook and
 knowledge objects can be registered in those gateways. Future integration must
 observe end_requested, stop local work and retain bounded worker final cleanup.
-This wiring is not enabled yet.
+The current voice worker wires these tools per call; external actions still
+require approved private configuration and separate live acceptance.
 
 KnowledgeSearch passes trusted context, query and top_k (one to five) to an
 injected KnowledgeRetriever. Matches carry tenant/source/chunk IDs, bounded text

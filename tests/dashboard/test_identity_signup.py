@@ -50,7 +50,9 @@ def test_other_identity_routes_keep_existing_account_links(client: TestClient, p
     assert '<a href="/login">Sign in</a> · <a href="/signup">Create account</a>' in response.text
     assert 'id="identity-form"' in response.text
     assert "Already have an account?" not in response.text
-    assert "<img" not in response.text
+    assert 'class="identity-logo"' not in response.text
+    assert 'class="site-brand"' in response.text
+    assert 'src="/dashboard/assets/vasa-logo.png"' in response.text
 
 
 def test_route_context_cannot_interpolate_query_text(client: TestClient) -> None:

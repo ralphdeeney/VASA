@@ -21,11 +21,12 @@ if (section) document.getElementById(section)?.scrollIntoView();
         credentials: "same-origin",
         signal: AbortSignal.timeout(15000),
       });
-      if (!response.ok || !(await response.json()).contact_available) {
+      if (!response.ok || (await response.json()).contact_available !== true) {
         status.textContent =
-          "Public contact delivery is not configured. Please use your established workspace support channel.";
+          "The enquiry form is not available yet. You can still sign in to your workspace below.";
         return;
       }
+      form.hidden = false;
       for (const field of fields) field.disabled = false;
       submit.disabled = false;
       status.textContent =
@@ -52,6 +53,7 @@ if (section) document.getElementById(section)?.scrollIntoView();
         signal: AbortSignal.timeout(15000),
       });
       if (!response.ok) {
+        status.className = "notice error";
         status.textContent =
           response.status === 429
             ? "Too many requests. Please wait before trying again."
@@ -60,10 +62,12 @@ if (section) document.getElementById(section)?.scrollIntoView();
               : "Your request could not be sent. Check your details and try again.";
         return;
       }
+      status.className = "small muted";
       form.reset();
       form.hidden = true;
       status.textContent = "Your request has been sent to the VASA team.";
     } catch {
+      status.className = "notice error";
       status.textContent =
         "Could not reach VASA. Check your connection and retry.";
     } finally {

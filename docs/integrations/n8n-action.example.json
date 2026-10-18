@@ -1,0 +1,32 @@
+{
+  "tenants": {
+    "11111111-1111-4111-8111-111111111111": {
+      "approved_origins": ["https://automation.example.com"],
+      "actions": {
+        "check_availability": {
+          "url": "https://automation.example.com/webhook/vasa-availability",
+          "token_env": "VASA_WEBHOOK_AVAILABILITY_TOKEN",
+          "input_schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["service", "date"],
+            "properties": {
+              "service": {"type": "string", "minLength": 1, "maxLength": 80},
+              "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"}
+            }
+          },
+          "output_schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["available", "slots", "message"],
+            "properties": {
+              "available": {"type": "boolean"},
+              "slots": {"type": "array", "maxItems": 10, "items": {"type": "string", "maxLength": 64}},
+              "message": {"type": "string", "maxLength": 500}
+            }
+          }
+        }
+      }
+    }
+  }
+}
