@@ -1,0 +1,23 @@
+{
+  "deployed_release": "fb0cfad6c000ee40ed0d71dfa748ba52fa2bd04e",
+  "ci_run": 39122020379,
+  "ci_tests_passed": 1617,
+  "local_tests_passed": 1617,
+  "local_seconds": 88.79,
+  "ci_seconds": 89.91,
+  "preflight_run": 39122174365,
+  "activation_run": 39122279084,
+  "activation_markers": ["RECOVERY_BACKUP_RESTORE_OK", "VASA_RECOVERY_PREPARE_OK", "VASA_RELEASE_ACTIVATION_OK", "VASA_DEPLOYMENT_OK"],
+  "database_schema": "0007 already current; no live migration applied",
+  "live_browser_run": 39122415142,
+  "live_acceptance_passed": ["login_session_persistence", "workspace_tenant_platform_boundaries", "admin_directory_audit", "admin_password_rotation", "mobile_desktop", "logout_revocation"],
+  "disposable_fixtures_cleaned": true,
+  "live_public_branding": {"routes": 14, "widths": [320, 393, 1280], "approved_logo": true, "overflow": false, "contact_form_hidden": true, "served_assets_match": true},
+  "auth_boundary_statuses": {"/login": 200, "/health/ready": 200, "/dashboard": 401, "/admin": 401},
+  "postflight_run": 39122545079,
+  "postflight": {"pool_preflight": true, "active_calls": 0, "registered_accounts": 2, "connected_logged_in_accounts": 2},
+  "preservation": "Existing Evolution/dependencies, operator/private files, runtime providers and ingress preserved by guarded controller; no actual customer suspension/deletion performed.",
+  "organization_erasure_testing": "Real disposable SQL/Redis integration tests and mocked owned Evolution HTTP contracts/browser tests; no real paired account deleted for acceptance.",
+  "n8n": "Guide and schema example verified; private runtime webhook bindings and real business workflow activation not performed.",
+  "remaining": ["Public contact recipient remains unconfigured", "Human stable-network call needed to investigate empty STT and reconnect; no reconnect fix claimed", "Real email-link flows outside this acceptance scope"]
+}

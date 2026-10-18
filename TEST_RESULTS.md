@@ -1150,3 +1150,29 @@ Both registered accounts remain connected/loggedin; calls0. No live mutation.
 CI196e8df39121781760 passed. Its normal canonical push job39121781727 was
 cancelled before SSH; no remote changes. Await final source CI and isolated
 activation; no Evolution restart/replacement or real customer erasure performed.
+
+## 2026-10-18 — UI/admin deployment and live acceptance VERIFIED
+
+Actual app/voice release fb0cfad6c000ee40ed0d71dfa748ba52fa2bd04e.
+CI39122020379 passed1617 tests89.91s. Fresh preflight39122174365 passed
+calls0 and both accounts connected/loggedin. Activation39122279084 SUCCEEDED:
+RECOVERY_BACKUP_RESTORE_OK, VASA_RECOVERY_PREPARE_OK,
+VASA_RELEASE_ACTIVATION_OK, VASA_DEPLOYMENT_OK. Schema0007 alreadycurrent;
+no live migration. Existing Evolution/dependencies/private/operator files/ingress
+preserved. Normal canonical push39122020415 correctly refused dirty checkout.
+
+Live disposable acceptance39122415142 passed6stages: login/session, tenant/admin
+boundaries, admin directory/audit, actual disposable password rotation, responsive
+UI, logout. Fixtures cleaned. Real customer suspension/deletion and WhatsApp
+erasure were not performed; new actions have SQL/Redis/HTTP-fixture/browser tests.
+Public browser14routes at320/393/1280px passed approvedlogo/nooverflow/contacthidden
+and source asset match. Auxiliary Playwright APIRequest client failed; ordinary
+browser fetch and independent TLS-verified urllib both verified actualassets,
+without bypassing TLS/security. Login/readiness200; dashboard/admin401.
+
+Postflight39122545079 SUCCEEDED no-call/pool/paired-device gates; registered2,
+connected/loggedin2. No live call or n8n activation performed. Complete evidence:
+docs/ui-refinement/verification.json. n8n guide docs/integrations/N8N.md published.
+Public contact remains separately unconfigured; old unusable form now hidden.
+Call root cause unresolved: previous report shows empty transcription path/no LLM
+turns and recoveredmedia gaps, remoteend; human stable-network call remains next.
