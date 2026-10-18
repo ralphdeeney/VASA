@@ -49,8 +49,8 @@
         <p class="eyebrow">Getting started</p>
         <h2 id="onboarding-heading">Make this workspace your own</h2>
         <p class="small muted">
-          Follow these steps when you are ready. No WhatsApp account is paired
-          automatically.
+          Set up one section at a time using Next and Back. Save your changes
+          in each section before moving on. WhatsApp pairing is always your choice.
         </p>
         <ol class="onboarding-steps">
           <li>
@@ -73,7 +73,7 @@
         ><a href="#team-heading">Team</a
         ><a href="#settings-heading">Settings</a>
       </nav>
-      <section class="card product-section" aria-labelledby="agent-heading">
+      <section class="card product-section" data-workspace-section="agent" aria-labelledby="agent-heading">
         <h2 id="agent-heading">Your assistant</h2>
         <p class="muted small">
           Tell your assistant how to help callers. English with one built-in
@@ -138,7 +138,7 @@
         ></p>
         <p id="agent-error" class="notice error" role="alert" hidden></p>
       </section>
-      <div class="connection-layout">
+      <div class="connection-layout" data-workspace-section="connections">
         <section
           class="card connection-list"
           aria-labelledby="connections-heading"
@@ -228,7 +228,7 @@
           ></p>
         </section>
       </div>
-      <section class="card product-section" aria-labelledby="knowledge-heading">
+      <section class="card product-section" data-workspace-section="knowledge" aria-labelledby="knowledge-heading">
         <h2 id="knowledge-heading">Business knowledge</h2>
         <p class="muted small">
           Add helpful facts or questions and answers your assistant can use
@@ -292,7 +292,7 @@
           aria-label="Knowledge sources"
         ></ul>
       </section>
-      <section class="card product-section" aria-labelledby="calls-heading">
+      <section class="card product-section" data-workspace-section="calls" aria-labelledby="calls-heading">
         <div class="detail-heading">
           <h2 id="calls-heading">Recent calls</h2>
           <button id="calls-refresh" class="secondary" type="button" disabled>
@@ -322,7 +322,7 @@
       </section>
       <section
         class="card product-section"
-        aria-labelledby="integrations-heading"
+        data-workspace-section="integrations" aria-labelledby="integrations-heading"
       >
         <h2 id="integrations-heading">Integrations</h2>
         <p class="muted">
@@ -351,7 +351,7 @@
           role="status"
           aria-live="polite"
         ></p>
-        <section class="card product-section">
+        <section class="card product-section" data-workspace-section="settings">
           <h2>Switch workspace</h2>
           <form id="workspace-select-form" class="stack">
             <label for="workspace-select">Authorized workspace</label
@@ -359,7 +359,7 @@
             ><button type="submit">Open workspace</button>
           </form>
         </section>
-        <section class="card product-section" aria-labelledby="team-heading">
+        <section class="card product-section" data-workspace-section="team" aria-labelledby="team-heading">
           <h2 id="team-heading">Your team</h2>
           <p class="small muted">
             Owners and admins can invite colleagues and manage membership. Owner
@@ -396,7 +396,7 @@
         </section>
         <section
           class="card product-section"
-          aria-labelledby="settings-heading"
+          data-workspace-section="settings" aria-labelledby="settings-heading"
         >
           <h2 id="settings-heading">Settings</h2>
           <div class="saas-grid">
@@ -420,6 +420,11 @@
           </div>
         </section>
       </section>
+      <nav id="section-controls" class="section-controls" aria-label="Section navigation" hidden>
+        <button id="section-back" class="secondary" type="button">Back</button>
+        <p id="section-progress" class="small muted" role="status" aria-live="polite"></p>
+        <button id="section-next" type="button">Next</button>
+      </nav>
       <noscript
         ><p class="notice">
           Enable JavaScript to manage your WhatsApp connections.

@@ -895,3 +895,16 @@ login/session persistence, logout revocation, tenant/platform boundaries, admin
 directory/audit and mobile/desktop; fixture cleanup confirmed. Email links were
 not exercised: the existing harness hardcodes blocked_smtp, which is now an
 outdated scope label, not a new SMTP failure. Actual SMTP delivery is confirmed.
+
+## 2026-10-18 — Customer section navigation
+
+Workspace now shows one section at a time with Next/Back, progress, active links,
+hash deep links and browser-history support. Draft form values stay mounted;
+navigation does not save or issue mutation requests. Existing assistant/knowledge
+save controls and WhatsApp explicit Connect/QR pairing remain unchanged.
+QR already appears in-site after Connect WhatsApp, not merely account creation.
+Full Python/static suite1557 passed; browser checks at320/375/393/768/1280px
+passed navigation, retained draft, history/deep links and no mutations/overflow.
+Reproduce browser check: node tests/dashboard/workspace_navigation.cjs
+(with Playwright and Chromium installed). Deployment pending exact-SHA CI and
+guarded isolated-release activation; no live QR requested or account altered.

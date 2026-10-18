@@ -233,3 +233,12 @@ th { color: var(--muted); font-size: .8rem; }
   height: auto;
   margin: 0 auto 24px;
 }
+
+/* Keep onboarding compact without remounting forms or their current values. */
+.workspace-nav a[aria-current="step"] { color: #07372D; font-weight: 700; text-decoration-thickness: 2px; }
+.section-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 24px 0; flex-wrap: wrap; }
+.section-controls p { margin: 0; }
+.section-controls button { max-width: 100%; }
+@media (max-width: 480px) {
+  .section-controls p { order: -1; flex-basis: 100%; text-align: center; }
+}

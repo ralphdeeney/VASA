@@ -538,3 +538,41 @@ function initializeProduct() {
 
 // Keep the established dashboard entry point; load optional SaaS controls separately.
 import("/dashboard/assets/workspace.js");
+
+// Navigation only: changing a section never saves, pairs, or discards form values.
+const workspaceSections = ["agent", "connections", "knowledge", "calls", "integrations", "team", "settings"];
+const sectionLabels = ["Assistant", "WhatsApp", "Knowledge", "Calls", "Integrations", "Team", "Settings"];
+const sectionPanels = [...document.querySelectorAll("[data-workspace-section]")];
+const sectionLinks = [...document.querySelectorAll('.workspace-nav a')];
+let sectionIndex = 0;
+function showWorkspaceSection(focus = false) {
+  const requested = window.location.hash.slice(1).replace(/-heading$/, "");
+  sectionIndex = Math.max(0, workspaceSections.indexOf(requested));
+  const selected = workspaceSections[sectionIndex];
+  for (const section of sectionPanels) section.hidden = section.dataset.workspaceSection !== selected;
+  for (const link of sectionLinks) {
+    if (link.hash === `#${selected}-heading`) link.setAttribute("aria-current", "step");
+    else link.removeAttribute("aria-current");
+  }
+  panel("section-progress").textContent = `Section ${sectionIndex + 1} of ${workspaceSections.length} · ${sectionLabels[sectionIndex]}`;
+  panel("section-back").disabled = sectionIndex === 0;
+  panel("section-next").disabled = sectionIndex === workspaceSections.length - 1;
+  panel("section-next").textContent = sectionIndex < workspaceSections.length - 1
+    ? `Next: ${sectionLabels[sectionIndex + 1]}` : "Last section";
+  panel("section-controls").hidden = false;
+  if (focus) {
+    const heading = panel(`${selected}-heading`);
+    if (heading && !heading.closest("[hidden]")) {
+      heading.tabIndex = -1;
+      heading.focus();
+    }
+  }
+}
+panel("section-back").addEventListener("click", () => {
+  if (sectionIndex > 0) window.location.hash = `${workspaceSections[sectionIndex - 1]}-heading`;
+});
+panel("section-next").addEventListener("click", () => {
+  if (sectionIndex < workspaceSections.length - 1) window.location.hash = `${workspaceSections[sectionIndex + 1]}-heading`;
+});
+window.addEventListener("hashchange", () => showWorkspaceSection(true));
+showWorkspaceSection();
