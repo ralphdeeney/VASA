@@ -18,6 +18,119 @@ class Deferred(Exception):
     pass
 
 
+def call_evidence_lines(raw):
+    """Bounded structural evidence only; caller/provider content never escapes."""
+    if len(raw) > 4 * 1024**2:
+        return ["CALL_DIAGNOSTICS=limit_reached"]
+    markers = []
+    fixed = {
+        "CALL_MEDIA=upstream_stop",
+        "CALL_MEDIA=receive_gap_started",
+        "CALL_MEDIA=recovery_grace_expired",
+        "CALL_MEDIA=read_timeout",
+        "CALL_MEDIA=receive_gap",
+        "CALL_MEDIA=receive_recovered",
+        "CALL_MEDIA=read_closed",
+        "CALL_LIFECYCLE=remote_terminate",
+        "CALL_LIFECYCLE=local_hangup",
+        "CALL_LIFECYCLE=local_hangup_failed",
+    }
+    states = {
+        "RINGING",
+        "ANSWERING",
+        "CONNECTED",
+        "LISTENING",
+        "TRANSCRIBING",
+        "THINKING",
+        "TOOL_EXECUTION",
+        "SPEAKING",
+        "ENDING",
+        "ENDED",
+        "ERROR",
+    }
+    errors = {
+        "call_failed",
+        "hangup_failed",
+        "cancelled",
+        "cache_cleanup_failed",
+        "finalization_failed",
+        "timeout",
+        "invalid_response",
+        "provider_error",
+    }
+    for line in raw.splitlines()[-400:]:
+        if len(line) > 65536:
+            continue
+        for marker in sorted(fixed):
+            if re.search(r"(?:^|\s)" + re.escape(marker) + r"(?:\s|$)", line):
+                markers.append(marker)
+        match = re.search(r"(?:^|\s)CALL_MEDIA=receive_recovered_ms=([0-9]{1,6})(?:\s|$)", line)
+        if match:
+            markers.append("CALL_MEDIA=receive_recovered_ms=" + match[1])
+        if "Unhandled event *events.CallTransport" in line:
+            kind = re.search(r'transport-message-type="([13])"', line)
+            markers.append("CALL_TRANSPORT=type_" + kind[1] if kind else "CALL_TRANSPORT=other")
+        if "Got call terminate" in line:
+            markers.append("CALL_UPSTREAM=terminate_observed")
+        try:
+            item = json.loads(line)
+        except (ValueError, RecursionError):
+            continue
+        if not isinstance(item, dict) or "session_id" not in item or "error" not in item:
+            continue
+        markers.append("CALL_SUMMARY=observed")
+        for key in ("received_frames", "sent_frames", "completed_turns", "interruptions"):
+            value = item.get(key)
+            if type(value) is int and 0 <= value <= 100000000:
+                markers.append("CALL_SUMMARY_" + key.upper() + "=" + str(value))
+        error = item["error"]
+        markers.append(
+            "CALL_SUMMARY_ERROR="
+            + (
+                "none"
+                if error is None
+                else error
+                if isinstance(error, str) and error in errors
+                else "other"
+            )
+        )
+        timings = item.get("latencies_ms")
+        if isinstance(timings, dict):
+            for name in (
+                "stt_finalization",
+                "llm_time_to_first_token",
+                "tts_time_to_first_audio",
+                "end_of_speech_to_first_audio",
+            ):
+                values = timings.get(name)
+                if isinstance(values, list):
+                    for value in values[:20]:
+                        if type(value) in (float, int) and 0 <= value <= 3600000:
+                            markers.append(
+                                "CALL_SUMMARY_" + name.upper() + "_MS=" + str(round(value))
+                            )
+        transitions = item.get("state_transitions")
+        if isinstance(transitions, list):
+            for state in transitions[:100]:
+                if isinstance(state, str) and state in states:
+                    markers.append("CALL_SUMMARY_STATE=" + state)
+    return markers
+
+
+def recent_call_evidence(ns):
+    try:
+        for service in ("voice", "evolution"):
+            cid, _ = ns["container"](service)
+            raw = ns["read_container_logs"](cid)
+            print("CALL_DIAGNOSTICS_SERVICE=" + service, flush=True)
+            for marker in call_evidence_lines(raw):
+                print(marker, flush=True)
+        print("CALL_DIAGNOSTICS_OK", flush=True)
+    except Exception:
+        # Diagnostic availability is separate from existing preflight gates.
+        print("CALL_DIAGNOSTICS=unavailable", flush=True)
+
+
 def emit_probe(ns, script, expected, *arguments):
     cid, _ = ns["container"]("vasa")
     result = ns["capture"](
@@ -293,6 +406,7 @@ def run(ns, target, deploy, gate, instances, backup_source, capacity_source):
             print("EVOLUTION_ROLLOUT_DEFERRED=" + str(error), flush=True)
             return 2
         if not deploy:
+            recent_call_evidence(ns)
             print("EVOLUTION_POOL_PREFLIGHT_OK", flush=True)
             return 0
         git("fetch", "origin", ns["BRANCH"])

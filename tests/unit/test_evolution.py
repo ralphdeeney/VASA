@@ -244,3 +244,34 @@ async def test_phone_metadata_refuses_wrong_instance() -> None:
         client = EvolutionCalls("http://127.0.0.1:8080", ADMIN, STREAM, INSTANCE, http_client=http)
         with pytest.raises(EvolutionError, match="invalid_response"):
             await client.phone_number(INSTANCE_ID)
+
+
+@pytest.mark.parametrize("kind", ["valid", "wrong_token", "invalid_id", "malformed", "duplicate"])
+async def test_private_deletion_inventory_requires_owned_valid_records(kind):
+    token = hmac.new(
+        INSTANCE.encode(), ("vasa:instance:" + INSTANCE_ID).encode(), hashlib.sha256
+    ).hexdigest()
+    row = {"id": INSTANCE_ID, "token": token}
+    rows = [row]
+    if kind == "wrong_token":
+        row["token"] = "unrelated-secret"
+    elif kind == "invalid_id":
+        row["id"] = "../unsafe"
+    elif kind == "malformed":
+        rows = [{}]
+    elif kind == "duplicate":
+        rows = [row, row]
+
+    def handler(request):
+        assert request.url.path == "/instance/all"
+        assert request.headers["apikey"] == ADMIN
+        return httpx.Response(200, json={"data": rows})
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as http:
+        client = EvolutionCalls("http://evolution:8080", ADMIN, STREAM, INSTANCE, http_client=http)
+        if kind == "valid":
+            assert await client.owned_instance_ids() == {INSTANCE_ID}
+        else:
+            with pytest.raises(EvolutionError) as exc:
+                await client.owned_instance_ids()
+            assert token not in str(exc.value) and ADMIN not in str(exc.value)

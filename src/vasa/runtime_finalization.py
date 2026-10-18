@@ -94,6 +94,13 @@ class DurableCall:
     ) -> "DurableCall":
         async with asyncio.timeout(5):
             async with database.session() as session, session.begin():
+                from vasa.saas.models import OrganizationProfile
+
+                organization = await session.get(
+                    OrganizationProfile, context.tenant_id, with_for_update=True
+                )
+                if organization is not None and organization.status != "active":
+                    raise ValueError("workspace inactive")
                 record = await CallRepository(session, context).create(
                     instance, external_call_id, caller=caller
                 )

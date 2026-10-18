@@ -10,6 +10,7 @@ from redis.asyncio import Redis
 from redis.exceptions import RedisError
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from vasa.contracts.models import TenantContext
 from vasa.control.auth import (
@@ -283,6 +284,15 @@ async def list_instances(request: Request, context: Authenticated) -> list[dict[
         raise HTTPException(503, "unavailable") from None
 
 
+async def _lock_active_workspace(request: Request, session: AsyncSession, tenant: UUID) -> None:
+    if request.app.state.settings.saas_enabled:
+        from vasa.saas.models import OrganizationProfile
+
+        profile = await session.get(OrganizationProfile, tenant, with_for_update=True)
+        if profile is None or profile.status != "active":
+            raise HTTPException(403, "workspace_inactive")
+
+
 @router.post("/api/whatsapp/instances", status_code=201)
 async def create_instance(
     payload: InstanceInput, request: Request, context: Mutation
@@ -299,6 +309,7 @@ async def create_instance(
     created = False
     try:
         async with database.session() as session, session.begin():
+            await _lock_active_workspace(request, session, context.tenant_id)
             session.add(instance)
             await session.flush()
             await client.create_instance(instance.external_id, instance.name)
@@ -356,7 +367,9 @@ async def instance_qr(id: UUID, request: Request, context: Authenticated) -> dic
 async def connect_instance(id: UUID, request: Request, context: Mutation) -> dict[str, str]:
     instance = await _instance(request, context, id)
     try:
-        await _evolution(request).connect(instance.external_id)
+        async with request.app.state.database.session() as session, session.begin():
+            await _lock_active_workspace(request, session, context.tenant_id)
+            await _evolution(request).connect(instance.external_id)
     except EvolutionError as error:
         raise _upstream_error(error) from None
     return {"status": "connecting"}

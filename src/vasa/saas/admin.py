@@ -379,6 +379,26 @@ async def user_status(
     return {"status": "updated"}
 
 
+class DeleteOrganizationInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    confirm: Literal[True]
+    confirm_name: str = Field(min_length=1, max_length=200)
+    current_password: str = Field(min_length=8, max_length=256, repr=False)
+
+
+@router.post("/organizations/{tenant_id}/delete", dependencies=[Depends(require_csrf)])
+async def delete_organization(
+    tenant_id: UUID, data: DeleteOrganizationInput, request: Request, actor: User = _ADMIN
+) -> dict[str, str]:
+    from vasa.saas.deletion import erase_organization
+
+    await check_login_limit(request)
+    if not await authenticate_password(data.current_password, actor.password_hash):
+        raise HTTPException(403, "invalid_current_password")
+    await erase_organization(request, tenant_id, data.confirm_name, actor)
+    return {"status": "deleted"}
+
+
 @router.post("/organizations/{tenant_id}/status", dependencies=[Depends(require_csrf)])
 async def organization_status(
     tenant_id: UUID,

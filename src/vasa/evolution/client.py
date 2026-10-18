@@ -173,6 +173,32 @@ class EvolutionCalls:
     async def disconnect(self, instance_id: str) -> None:
         await self._request("POST", "/instance/disconnect", self.token_for_instance(instance_id))
 
+    async def owned_instance_ids(self) -> set[str]:
+        """Private ownership proof; never return upstream tokens to a browser/log."""
+        result = await self._request("GET", "/instance/all", self._admin_key)
+        rows = result.get("data")
+        if not isinstance(rows, list) or len(rows) > 1024:
+            raise EvolutionError("invalid_response")
+        owned: set[str] = set()
+        for row in rows:
+            if not isinstance(row, dict) or not isinstance(row.get("id"), str):
+                raise EvolutionError("invalid_response")
+            try:
+                identifier = validate_id(row["id"])
+            except ValueError:
+                raise EvolutionError("invalid_response") from None
+            if identifier in owned:
+                raise EvolutionError("invalid_response")
+            token = row.get("token")
+            if not isinstance(token, str):
+                raise EvolutionError("invalid_response")
+            if hmac.compare_digest(token, self.token_for_instance(identifier)):
+                owned.add(identifier)
+            else:
+                # An unknown ownership record must never be treated as absent.
+                raise EvolutionError("invalid_response")
+        return owned
+
     async def delete_instance(self, instance_id: str) -> None:
         await self._request(
             "DELETE", "/instance/delete/" + validate_id(instance_id), self._admin_key

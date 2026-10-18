@@ -4,6 +4,18 @@
   let page = 1;
   let busy = false;
   const message = document.getElementById("admin-message");
+  const refusalMessages = {
+    self_organization_deletion_denied: "You cannot delete the workspace used by your current session.",
+    suspend_organization_first: "Suspend this organization before deleting it.",
+    organization_name_mismatch: "The organization name does not match. Nothing was deleted.",
+    active_calls_block_deletion: "Deletion is blocked by active or unresolved call state. Wait for calls to finish.",
+    disconnect_whatsapp_first: "WhatsApp disconnection could not be verified. No registration was removed. Check connection state before retrying.",
+    deletion_capacity_exceeded: "This organization requires operator-assisted deletion.",
+    self_suspension_denied: "You cannot suspend your own platform login.",
+    platform_admin_protected: "Platform administrators are protected from suspension.",
+    last_role_required: "This user is the last active owner or admin of a workspace. Assign a replacement first, or suspend the organization instead.",
+    self_organization_suspension_denied: "You cannot suspend the workspace used by your current session.",
+  };
   async function api(path, method = "GET", body) {
     const response = await fetch(path, {
       method,
@@ -16,7 +28,16 @@
       window.location.assign("/admin/login");
       throw new Error("Sign in with your platform account to continue.");
     }
-    if (!response.ok)
+    if (!response.ok) {
+      if (path.endsWith("/delete") && [403, 503].includes(response.status)) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.detail === "invalid_current_password" ? "Your current password is incorrect."
+          : "Deletion could not finish. The organization remains suspended. Retry to reconcile its connections; do not recreate it.");
+      }
+      if (response.status === 409) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(refusalMessages[data.detail] || "This operation was refused by account safety rules.");
+      }
       throw new Error(
         response.status === 403
           ? "Platform permission is required."
@@ -24,6 +45,7 @@
             ? "This operation was refused by account safety rules."
             : "The request could not be completed. Check the filters and retry.",
       );
+    }
     return response.json();
   }
   async function safe(action) {
@@ -36,12 +58,15 @@
       await action();
     } catch (error) {
       const approved = [
+        "Your current password is incorrect.",
+        "Deletion could not finish. The organization remains suspended. Retry to reconcile its connections; do not recreate it.",
         "Platform permission is required.",
         "This operation was refused by account safety rules.",
         "The request could not be completed. Check the filters and retry.",
         "Sign in with your platform account to continue.",
       ];
-      message.textContent = approved.includes(error.message)
+      message.className = "notice admin-notice admin-feedback-error";
+      message.textContent = [...approved, ...Object.values(refusalMessages)].includes(error.message)
         ? error.message : "The request could not be completed. Please retry.";
     } finally {
       buttons.forEach((button, index) => { button.disabled = disabled[index]; });
@@ -57,6 +82,36 @@
     registrations: ["email", "tenant_id", "status", "created_at"],
     audit: ["action", "target", "actor_id", "tenant_id", "created_at"],
   };
+  let deletionTarget = null;
+  document.getElementById("admin-delete-cancel").addEventListener("click", () => {
+    document.getElementById("admin-delete-dialog").close();
+    document.getElementById("admin-delete-password").value = "";
+    deletionTarget = null;
+  });
+  document.getElementById("admin-delete-dialog").addEventListener("close", () => {
+    document.getElementById("admin-delete-password").value = "";
+  });
+  document.getElementById("admin-delete-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!deletionTarget) return;
+    if (document.getElementById("admin-delete-name").value !== deletionTarget.name) {
+      document.getElementById("admin-delete-message").textContent = "Enter the exact organization name.";
+      return;
+    }
+    safe(async () => {
+      const target = deletionTarget;
+      const password = document.getElementById("admin-delete-password").value;
+      document.getElementById("admin-delete-password").value = "";
+      document.getElementById("admin-delete-dialog").close();
+      await api(`/api/saas/admin/organizations/${encodeURIComponent(target.id)}/delete`, "POST", {
+        confirm: true, confirm_name: target.name, current_password: password,
+      });
+      deletionTarget = null;
+      await load();
+      message.className = "notice admin-notice admin-feedback-success";
+      message.textContent = "Organization and its WhatsApp registrations deleted. Other workspaces were preserved.";
+    });
+  });
   async function load() {
     const directory = document.getElementById("admin-directory").value;
     const params = new URLSearchParams({ page: String(page), page_size: "20" });
@@ -90,6 +145,12 @@
       for (const key of columns[directory]) {
         const td = document.createElement("td");
         td.textContent = String(item[key] ?? "—");
+        if (key === "status" && ["active", "suspended", "pending"].includes(item[key])) {
+          const badge = document.createElement("span");
+          badge.className = `admin-status-badge admin-status-${item[key]}`;
+          badge.textContent = item[key][0].toUpperCase() + item[key].slice(1);
+          td.replaceChildren(badge);
+        }
         row.append(td);
       }
       if (directory !== "audit") {
@@ -122,9 +183,27 @@
                 { status, confirm: true },
               );
               await load();
+              message.className = "notice admin-notice admin-feedback-success";
+              message.textContent = status === "suspended"
+                ? "Suspended successfully. You can reactivate this account here."
+                : status === "active" ? "Reactivated successfully." : "Registration updated.";
             }),
           );
           td.append(button);
+        }
+        if (directory === "organizations") {
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "secondary compact";
+          remove.textContent = "Delete…";
+          remove.addEventListener("click", () => {
+            deletionTarget = item;
+            document.getElementById("admin-delete-form").reset();
+            document.getElementById("admin-delete-message").textContent = "";
+            document.getElementById("admin-delete-scope").textContent = `Selected organization: ${item.name} (${item.id})`;
+            document.getElementById("admin-delete-dialog").showModal();
+          });
+          td.append(remove);
         }
         if (directory === "users") {
           const details = document.createElement("details");
@@ -149,6 +228,7 @@
     document.getElementById("admin-previous").disabled = page <= 1;
     hasNext = page * 20 < data.total;
     document.getElementById("admin-next").disabled = !hasNext;
+    message.className = "notice admin-notice";
     message.textContent = data.items.length
       ? "Authorized records loaded."
       : "No matching records.";

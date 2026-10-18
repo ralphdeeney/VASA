@@ -46,6 +46,18 @@
       <section id="system-health" class="admin-panel"><p class="eyebrow">Operations</p><h2>System health</h2><p id="admin-health" role="status">Checking…</p><p class="small muted">Readiness reflects backend checks, not a live WhatsApp call test. Provider credentials remain private.</p><button id="admin-health-refresh" type="button" class="secondary">Refresh health</button></section>
     </div>
     <section id="security" class="admin-panel"><p class="eyebrow">Your account</p><h2>Security &amp; password</h2><p id="admin-account" class="small muted">Loading platform account…</p><p class="small muted">Choose a unique password of at least 12 characters. Changing it signs out all sessions, including this one.</p><form id="admin-password-form" class="admin-password-grid"><div><label for="admin-current-password">Current password</label><input id="admin-current-password" type="password" minlength="8" autocomplete="current-password" required maxlength="256" /></div><div><label for="admin-new-password">New password</label><input id="admin-new-password" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /></div><div><label for="admin-confirm-password">Confirm new password</label><input id="admin-confirm-password" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /></div><button type="submit">Change password</button></form><p id="admin-password-message" class="small" role="status" aria-live="polite"></p></section>
+    <dialog id="admin-delete-dialog" aria-labelledby="admin-delete-title">
+      <form id="admin-delete-form" class="stack">
+        <h2 id="admin-delete-title">Delete organization</h2>
+        <p id="admin-delete-scope"></p>
+        <p>This permanently removes this workspace, its WhatsApp registrations, agents, knowledge and call history. Shared users keep their other workspaces. Backups follow the existing retention policy.</p>
+        <p>Suspend the organization first. After verifying no calls are active, deletion disconnects and removes only its WhatsApp registrations. Active calls or unknown connection state block deletion.</p>
+        <label for="admin-delete-name">Type the exact organization name</label><input id="admin-delete-name" required maxlength="200" autocomplete="off" />
+        <label for="admin-delete-password">Your current platform password</label><input id="admin-delete-password" type="password" required minlength="8" maxlength="256" autocomplete="current-password" />
+        <p id="admin-delete-message" role="status" aria-live="polite"></p>
+        <div class="admin-dialog-actions"><button id="admin-delete-cancel" type="button" class="secondary">Cancel</button><button type="submit">Delete organization permanently</button></div>
+      </form>
+    </dialog>
     <footer class="admin-footer">Platform access does not expose tenant conversations. Customer data remains scoped and protected.</footer>
   </main>
 </div>

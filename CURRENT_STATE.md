@@ -1070,3 +1070,35 @@ availability/failure states at five widths. Exact-SHA CI/activation pending.
 Final local scripts/check.sh: 1600 tests passed in92.19s, Ruff/format/strict
 mypy passed; known Starlette deprecation warning only. Actionlint, shell syntax
 and git diff whitespace checks passed.
+
+## 2026-10-18 — Admin account actions and live-call evidence
+
+Admin status now renders explicit badges, a green success confirmation and an
+updated Reactivate/Suspend action. Fixed allowlisted conflict reasons explain
+self/admin/last-role protections; no arbitrary API detail is rendered. Summary
+cards and membership rows are compact.
+
+Organization erasure is explicit, password/CSRF/name-confirmed and platform-only.
+Requires a separately suspended organization and no durable/Redis calls.
+Owned upstream accounts are disconnected and verified offline before removal. Uses authenticated ownership inventory,
+targeted upstream removal and verification before local FK cascade. On uncertain
+upstream outcome local mappings remain for ownership-verified reconciliation.
+Shared identities are rehomed to another membership; own/current platform
+workspace and platform-admin anchors are protected. Existing backups retain their
+normal retention. No real organization is deleted during delivery or acceptance.
+No schema change is required. Connect/create and durable admission share the
+organization-profile lock so suspended/deleting workspaces cannot race admission.
+
+Existing read-only Evolution preflight additionally emits bounded sanitized recent
+media/lifecycle markers and structural call-summary counters/state/timings. No
+transcripts, caller identifiers, provider content or secrets. Diagnostic failure is
+reported independently and never changes existing maintenance health gates.
+Read-only39121236627 confirmed zero active calls and both accounts connected/
+logged in. Reconnect root cause remains unproven; no provider/transport fix claimed.
+
+Final verification: scripts/check.sh passed1619 tests in87.47s, Ruff/format/
+strict mypy. Focused evolution/admin/diagnostic99 passed before final added
+call-free disconnect case (all12 deletion cases pass). Admin action browser at
+5widths passed badges/green feedback/exact conflict reason/typed deletion/CSRF;
+existing platform admin login/password browser also passes. Workflow and shell
+validation plus whitespace checks pass. Pending exact-SHA CI and safe activation.
