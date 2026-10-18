@@ -935,3 +935,20 @@ no native OAuth/self-service connector or arbitrary API executor was introduced.
 Guide: docs/CUSTOMER_WORKSPACE_GUIDE.md. Full suite1565 passed plus Ruff, format,
 strict mypy. Focused46 passed. Browser5widths covers brand, number, draft retention,
 navigation/history, panel overflow and zero mutations. Deployment still pending.
+
+Minimal-workspace delivery checkpoint: source a4846de5ed90bb7caa6f11e2dee1b0ec636fe35e.
+Exact-SHA CI39105007144 PASSED. Normal push39105007084 refused the preserved
+operator checkout without changes. Read-only preflight39105028182 confirmed
+durable calls0, Redis calls0, media sockets0, but now registered/upstream
+instances2. Paired-device verification FAILED (missing JID/device metadata for
+at least one registered account); connection status checks were not reached.
+Do not claim both accounts connected or bypass this gate. No rollout attempted.
+Human QR pairing of pending account requested through the existing web UI.
+
+All independent reversible preparation completed: Actions39105278213 SUCCEEDED
+VASA_RECOVERY_PREPARE_OK / RECOVERY_BACKUP_RESTORE_OK. Target a4846de prepared,
+rollback verified, previous/current active release remains6060e768634de6656bf900ef6b1e08b59b4fb8ed;
+schema0007 already current, no live migration. Services/private/operator files
+unchanged. Next: fresh no-call/instance preflight after phone-owner pairing, then
+existing guarded isolated activation with reviewed0007SQL hash. Do not restart
+voice/Evolution, remove accounts, or weaken instance checks to force deployment.
