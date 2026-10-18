@@ -23,13 +23,13 @@
     "logout_revocation"
   ],
   "disposable_fixture_cleanup": "LIVE_SAAS_FIXTURE_CLEANUP_OK",
-  "real_owner_setup_run": 39119041534,
-  "real_owner_setup": "blocked before SSH execution: PLATFORM_OWNER_PRIVATE_INPUT_REQUIRED",
-  "protected_password_binding": "absent in the Actions runner",
-  "real_owner_role_changed": false,
-  "real_owner_password_changed": false,
+  "real_owner_setup_run": 39119521010,
+  "real_owner_setup": "SUCCEEDED: PLATFORM_OWNER_PROVISIONED / PLATFORM_OWNER_LOGIN_OK / VASA_PLATFORM_OWNER_SETUP_OK",
+  "protected_password_binding": "operator-supplied repository secret; never retrieved by Codex",
+  "real_owner_role_changed": true,
+  "real_owner_password_changed": true,
   "owner_email_supplied_privately": true,
-  "external_dependency": "Operator must save VASA_PLATFORM_ADMIN_PASSWORD as a repository Actions secret; connected GitHub authentication cannot write it",
+  "external_dependency": null,
   "whatsapp_accounts_before": 2,
   "both_connected_and_logged_in_before": true,
   "evolution_not_restarted": true,
@@ -37,10 +37,15 @@
   "email_link_flows_exercised": false,
   "full_human_live_call_exercised": false,
   "postcheck": {
-    "run": 39119183117,
+    "run": 39119596734,
     "marker": "EVOLUTION_POOL_PREFLIGHT_OK",
     "both_whatsapp_connected": true,
     "both_whatsapp_logged_in": true,
     "no_active_calls": true
-  }
+  },
+  "owner_setup_previous_blocked_run": 39119041534,
+  "real_owner_verified_role": "super_admin",
+  "real_owner_login_verified": true,
+  "verification_session_logged_out": true,
+  "owner_setup_backup_restore_verified": true
 }

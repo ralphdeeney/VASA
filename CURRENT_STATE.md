@@ -1033,3 +1033,21 @@ Full evidence docs/platform-admin/activation.json. UI preview uses fixture data.
 Independent postcheck39119183117 passed pool/no-call/paired-device gates; both
 registered WhatsApp accounts remain connected and logged in after UI deployment
 and disposable acceptance. Owner-input refusal caused no service or data change.
+
+## 2026-10-18 — Real platform-owner access VERIFIED
+
+After the operator saved the protected secret, Actions39119521010 SUCCEEDED:
+RECOVERY_BACKUP_RESTORE_OK, VASA_RECOVERY_PREPARE_OK, PLATFORM_OWNER_PROVISIONED,
+PLATFORM_OWNER_LOGIN_OK, VASA_PLATFORM_OWNER_SETUP_OK. The audited real owner
+role is super_admin, username alias admin. Actual public HTTPS login, exact own
+account/role, protected admin page and logout all passed. No credential value
+was retrieved by Codex, committed, exposed in argv or logged. Verification
+session was logged out. Runtime release remains3608af7448609d175030e8bbc123365e742b5029;
+no service replacement, private/operator file change or live migration. The
+previous private-input gate is resolved. Password change is available at
+Platform admin → Security; real disposable password/session acceptance already
+passed39118952372. Operator's chosen password was not changed by testing.
+
+Post-owner independent read-only39119596734 passed all existing no-call/pool/
+paired-device checks; both WhatsApp accounts remain connected/logged in.
+Owner setup caused no service restart or unrelated infrastructure change.
