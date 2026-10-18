@@ -459,3 +459,19 @@ a generic icon or change other identity pages. No SMTP key or verified sender
 is available yet: request protected configuration asynchronously, never a chat
 secret or frontend field. Test inbox is recipient only, not an approved sender.
 Existing activation/dirty-check/migration gates remain authoritative.
+
+## Verified-domain SMTP continuation — 2026-10-18
+
+The operator reports send.litatech.xyz verified, approves sender
+VASA <noreply@send.litatech.xyz>, and requests real transactional acceptance through
+the established Actions bridge. Root owns secure operator configuration tooling,
+workflow/controller integration, documentation, tests and commits. Mail specialist
+reviews existing SMTP transport and auth/token regression coverage read-only;
+browser specialist verifies public health/auth/responsiveness read-only. No secret
+may be entered in chat or printed. Protected VPS configuration is .local/smtp.env,
+web-only, mode0600; delivery attestation stays false until actual inbox receipt.
+Do not bypass offline WhatsApp activation, backups, exact release approval, or
+migration gates. No Evolution replacement/pairing mutation, no tunnel/n8n changes.
+Mail specialist extension: owns a new focused tests/saas/test_email_token_boundaries.py
+only, adding explicit expired verification/invitation and malformed-token rejection
+regressions with existing fixtures. Root owns all production/config/workflow code.

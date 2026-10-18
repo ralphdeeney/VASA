@@ -1,5 +1,11 @@
 # Signup layout and Reloop transactional email
 
+Current operator procedure: [SMTP_ACTIVATION.md](SMTP_ACTIVATION.md). On 18 October
+2026 the operator reported `send.litatech.xyz` verified and supplied the VASA sender.
+The original logo is now implemented and tested; older missing-logo/domain notes
+below describe earlier attempts. No protected key or real inbox receipt has yet
+been observed. The previous release was rolled back at the offline-instance gate.
+
 ## Implemented scope
 
 Signup alone now removes navigation back to signup and shows “Already have an

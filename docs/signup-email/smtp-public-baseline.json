@@ -1,0 +1,188 @@
+{
+  "timestamp": "2026-10-18T04:54:01.010Z",
+  "scope": "read-only public baseline before SMTP activation; no accounts/email/providers/calls/pairing",
+  "layouts": [
+    {
+      "width": 320,
+      "path": "/signup",
+      "httpStatus": 200,
+      "overflow": false,
+      "fieldsLabelled": true,
+      "main": true,
+      "heading": true,
+      "logoPresent": false,
+      "logoLoaded": false,
+      "naturalWidth": null,
+      "naturalHeight": null,
+      "signupSelfLinks": 2,
+      "signupDisabled": true
+    },
+    {
+      "width": 320,
+      "path": "/login",
+      "httpStatus": 200,
+      "overflow": false,
+      "fieldsLabelled": true,
+      "main": true,
+      "heading": true,
+      "logoPresent": false,
+      "logoLoaded": false,
+      "naturalWidth": null,
+      "naturalHeight": null,
+      "signupSelfLinks": 1,
+      "signupDisabled": null
+    },
+    {
+      "width": 375,
+      "path": "/signup",
+      "httpStatus": 200,
+      "overflow": false,
+      "fieldsLabelled": true,
+      "main": true,
+      "heading": true,
+      "logoPresent": false,
+      "logoLoaded": false,
+      "naturalWidth": null,
+      "naturalHeight": null,
+      "signupSelfLinks": 2,
+      "signupDisabled": true
+    },
+    {
+      "width": 375,
+      "path": "/login",
+      "httpStatus": 200,
+      "overflow": false,
+      "fieldsLabelled": true,
+      "main": true,
+      "heading": true,
+      "logoPresent": false,
+      "logoLoaded": false,
+      "naturalWidth": null,
+      "naturalHeight": null,
+      "signupSelfLinks": 1,
+      "signupDisabled": null
+    },
+    {
+      "width": 393,
+      "path": "/signup",
+      "httpStatus": 200,
+      "overflow": false,
+      "fieldsLabelled": true,
+      "main": true,
+      "heading": true,
+      "logoPresent": false,
+      "logoLoaded": false,
+      "naturalWidth": null,
+      "naturalHeight": null,
+      "signupSelfLinks": 2,
+      "signupDisabled": true
+    },
+    {
+      "width": 393,
+      "path": "/login",
+      "httpStatus": 200,
+      "overflow": false,
+      "fieldsLabelled": true,
+      "main": true,
+      "heading": true,
+      "logoPresent": false,
+      "logoLoaded": false,
+      "naturalWidth": null,
+      "naturalHeight": null,
+      "signupSelfLinks": 1,
+      "signupDisabled": null
+    },
+    {
+      "width": 768,
+      "path": "/signup",
+      "httpStatus": 200,
+      "overflow": false,
+      "fieldsLabelled": true,
+      "main": true,
+      "heading": true,
+      "logoPresent": false,
+      "logoLoaded": false,
+      "naturalWidth": null,
+      "naturalHeight": null,
+      "signupSelfLinks": 2,
+      "signupDisabled": true
+    },
+    {
+      "width": 768,
+      "path": "/login",
+      "httpStatus": 200,
+      "overflow": false,
+      "fieldsLabelled": true,
+      "main": true,
+      "heading": true,
+      "logoPresent": false,
+      "logoLoaded": false,
+      "naturalWidth": null,
+      "naturalHeight": null,
+      "signupSelfLinks": 1,
+      "signupDisabled": null
+    },
+    {
+      "width": 1280,
+      "path": "/signup",
+      "httpStatus": 200,
+      "overflow": false,
+      "fieldsLabelled": true,
+      "main": true,
+      "heading": true,
+      "logoPresent": false,
+      "logoLoaded": false,
+      "naturalWidth": null,
+      "naturalHeight": null,
+      "signupSelfLinks": 2,
+      "signupDisabled": true
+    },
+    {
+      "width": 1280,
+      "path": "/login",
+      "httpStatus": 200,
+      "overflow": false,
+      "fieldsLabelled": true,
+      "main": true,
+      "heading": true,
+      "logoPresent": false,
+      "logoLoaded": false,
+      "naturalWidth": null,
+      "naturalHeight": null,
+      "signupSelfLinks": 1,
+      "signupDisabled": null
+    }
+  ],
+  "checks": {
+    "/health/ready": {
+      "status": 200
+    },
+    "/dashboard": {
+      "status": 401
+    },
+    "/api/saas/admin/users": {
+      "status": 401
+    },
+    "/api/site/capabilities": {
+      "status": 200,
+      "capabilities": {
+        "saas_enabled": true,
+        "email_delivery_available": false,
+        "signup_available": false,
+        "contact_available": false
+      }
+    },
+    "/dashboard/assets/vasa-logo.png": {
+      "status": 404
+    }
+  },
+  "summary": {
+    "responsivePass": true,
+    "healthAuthPass": true,
+    "postRequests": 0,
+    "externalRequests": 0,
+    "pageErrors": 0
+  },
+  "postRequests": 0,
+  "externalRequests": 0
+}

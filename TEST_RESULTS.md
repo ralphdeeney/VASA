@@ -812,3 +812,26 @@ it or delete/recreate pairing. Phone-owner action is required before retry.
 Independent real browser confirms old UI (newlogo404), login/ready200, dashboard
 and admin401, signup/email/contact unavailable. SMTP domain/live delivery remain
 operator-deferred. No Evolution replacement, provider, tunnel, or n8n changes.
+
+
+Reloop activation continuation2026-10-18: sender domain send.litatech.xyz verified
+per operator; VASA <noreply@send.litatech.xyz> authorized. Official Reloop docs
+reconfirm APIkey=username=password,587STARTTLS. Fresh read-only39098676524 shows
+five healthy services/restarts0, schema0007 and approved SMTP bindings absent.
+39098678599 confirms one registered/upstream instance, CONNECTED=0/LOGGED_IN=0.
+No activation attempted while known gate fails. Existing app858b5f8 unchanged.
+New stdlib masked scripts/configure_smtp.py creates only ignored web-private
+.local/smtp.env0600 with delivery attestation false; refuses existing files,
+symlinks, unsafe ownership and non-TTY entry. No key supplied or used. Existing
+Actions now supports opt-in check/recovery=smtp_check against a prepared release
+using a bounded one-off web container, preserving all running service/private
+state and printing only allowlisted success/failure markers even on nonzeroexit.
+No service replacement, provider smoke or auto-attestation. Maintenance-only
+operator helper changes do not trigger ordinary application replacement.
+Full local1508 tests pass81.95s, Ruff/format, application strictmypy, operator
+helpermypy, actionlint/shell/diff pass;116 focused operator/deploy regressionspass.
+Eleven new SQL-backed expiry/invalid verification/reset/invitation tests pass.
+Public read-only10layouts pass;login/ready200, dashboard/admin401, signup/email
+disabled, targetlogo notdeployed. SMTP credential, real inbox receipt and existing
+WhatsApp login/connection remain external gates. Instructions:
+docs/signup-email/SMTP_ACTIVATION.md; evidence:smtp-activation-status.json.

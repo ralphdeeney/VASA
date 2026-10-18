@@ -862,6 +862,108 @@ def release_compose(source, image, saas, *args, unchecked=False):
     return result.stdout.strip()
 
 
+def smtp_acceptance(target, recipient):
+    """One explicit email from a prepared web image; never replace a running service."""
+    require(re.fullmatch(r"[0-9a-f]{40}", target) is not None, "Invalid SMTP release SHA.")
+    require(
+        len(recipient) <= 254
+        and re.fullmatch(
+            r"[A-Za-z0-9][A-Za-z0-9._%+-]{0,63}@[A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z]{2,63}",
+            recipient,
+        )
+        is not None,
+        "Invalid SMTP test mailbox.",
+    )
+    source = ROOT / ".local/releases" / target
+    require(source.is_dir() and not source.is_symlink(), "Prepared SMTP release required.")
+    require(
+        git("-C", str(source), "rev-parse", "HEAD") == target
+        and not git("-C", str(source), "status", "--porcelain")
+        and git("-C", str(source), "remote", "get-url", "origin") in ORIGINS,
+        "Prepared SMTP source differs.",
+    )
+    private = ROOT / ".local/smtp.env"
+    require(
+        private.is_file()
+        and not private.is_symlink()
+        and private.stat().st_uid == os.getuid()
+        and private.stat().st_mode & 0o777 == 0o600,
+        "SMTP_PRIVATE_CONFIGURATION_REQUIRED",
+    )
+    lock_path = ROOT / ".local/actions-deploy.lock"
+    descriptor = os.open(lock_path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(descriptor, "a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        before = snapshot_services(DEPENDENCIES + SERVICES)
+        hashes = private_hashes()
+        baseline = git("status", "--porcelain=v1", "--untracked-files=all")
+        image = "vasa-app:release-" + target
+        run("docker", "image", "inspect", "--format", "{{.Id}}", image)
+        try:
+            result = release_compose(
+                source,
+                image,
+                None,
+                "run",
+                "--rm",
+                "--no-deps",
+                "-T",
+                "--entrypoint",
+                "python",
+                "vasa",
+                "scripts/check_smtp.py",
+                "--recipient",
+                recipient,
+                unchecked=True,
+            )
+        finally:
+            assert_unchanged(before)
+            require(private_hashes() == hashes, "Private SMTP configuration changed during test.")
+            require(
+                git("status", "--porcelain=v1", "--untracked-files=all") == baseline,
+                "Canonical operator files changed during SMTP test.",
+            )
+        # Discard arbitrary output, provider replies, stderr and exception text.
+        reports = []
+        failures = {
+            "missing_configuration",
+            "delivery_unverified",
+            "authentication_failed",
+            "tls_failed",
+            "connection_failed",
+            "timeout",
+            "recipient_refused",
+            "delivery_failed",
+            "busy",
+            "invalid_recipient",
+            "configuration_invalid",
+        }
+        for line in result.stdout.splitlines():
+            try:
+                value = json.loads(line)
+            except (ValueError, TypeError):
+                continue
+            if value == {"status": "smtp_accepted", "mailbox_delivery_verified": False}:
+                reports.append("accepted")
+            elif (
+                isinstance(value, dict)
+                and set(value) == {"status", "code"}
+                and value.get("status") == "failed"
+                and isinstance(value.get("code"), str)
+                and value["code"] in failures
+            ):
+                reports.append(value["code"])
+        if len(reports) != 1:
+            print("SMTP_ACCEPTANCE_FAILED=invalid_response", flush=True)
+            raise Refusal("SMTP acceptance response unavailable; raw output withheld.")
+        if reports[0] != "accepted" or result.returncode != 0:
+            code = reports[0] if reports[0] != "accepted" else "delivery_failed"
+            print("SMTP_ACCEPTANCE_FAILED=" + code, flush=True)
+            raise Refusal("SMTP acceptance failed; raw output withheld.")
+        print("VASA_SMTP_ACCEPTANCE_OK", flush=True)
+        print("SMTP_MAILBOX_VERIFIED=false", flush=True)
+
+
 def activate_recovery(target, sql_hash):
     """Explicitly approved additive migration and targeted immutable-image rollout."""
     require(re.fullmatch(r"[0-9a-f]{40}", target) is not None, "Invalid activation target.")
@@ -1941,15 +2043,17 @@ def deploy(target, branch, previous, *, smoke=False):
 def main():
     try:
         require(
-            len(sys.argv) in (3, 4, 5, 7) and sys.argv[1] in ("check", "bootstrap", "deploy"),
+            len(sys.argv) in (3, 4, 5, 7, 8) and sys.argv[1] in ("check", "bootstrap", "deploy"),
             "Invalid invocation.",
         )
         smoke = sys.argv[3] if len(sys.argv) >= 4 else "false"
         recovery = sys.argv[4] if len(sys.argv) >= 5 else "none"
-        release = sys.argv[5] if len(sys.argv) == 7 else ""
-        approved_sql = sys.argv[6] if len(sys.argv) == 7 else ""
+        release = sys.argv[5] if len(sys.argv) >= 7 else ""
+        approved_sql = sys.argv[6] if len(sys.argv) >= 7 else ""
+        recipient = sys.argv[7] if len(sys.argv) == 8 else ""
         require(
-            recovery in ("none", "investigate", "prepare", "activate"), "Invalid recovery option."
+            recovery in ("none", "investigate", "prepare", "activate", "smtp_check"),
+            "Invalid recovery option.",
         )
         require(
             recovery == "none" or (sys.argv[1] == "check" and smoke == "false"),
@@ -1963,10 +2067,20 @@ def main():
                 and re.fullmatch(r"[0-9a-f]{64}", approved_sql) is not None,
                 "Explicit release SHA and approved migration SQL hash are required.",
             )
+        elif recovery == "smtp_check":
+            require(
+                re.fullmatch(r"[0-9a-f]{40}", release) is not None
+                and not approved_sql
+                and bool(recipient),
+                "Explicit SMTP release and test mailbox required.",
+            )
         else:
             require(
                 not release and not approved_sql, "Release approval applies only to activation."
             )
+        require(
+            not recipient or recovery == "smtp_check", "SMTP mailbox applies only to SMTP test."
+        )
         branch, previous = preflight()
         if sys.argv[1] == "check":
             if recovery == "investigate":
@@ -1977,6 +2091,8 @@ def main():
             elif recovery == "activate":
                 prepare_recovery(release, exact_tip=False)
                 activate_recovery(release, approved_sql)
+            elif recovery == "smtp_check":
+                smtp_acceptance(release, recipient)
             if recovery == "none":
                 print(
                     "Read-only check: no fetch, checkout, writes, builds or restarts.", flush=True
@@ -1988,6 +2104,8 @@ def main():
                 )
             elif recovery == "prepare":
                 print("Preparation only: no live migration or application activation.", flush=True)
+            elif recovery == "smtp_check":
+                print("SMTP acceptance only; inbox confirmation remains required.", flush=True)
             else:
                 print("Approved immutable staging activation completed.", flush=True)
             print("VASA_VPS_CONNECTIVITY_OK", flush=True)

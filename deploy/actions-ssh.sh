@@ -9,15 +9,20 @@ case "${VASA_DEPLOY_MODE:-}" in
 esac
 VASA_PROVIDER_SMOKE=${VASA_PROVIDER_SMOKE:-false}
 VASA_RECOVERY=${VASA_RECOVERY:-none}
-[[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate || "$VASA_RECOVERY" == prepare || "$VASA_RECOVERY" == activate || "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]] || exit 1
+[[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate || "$VASA_RECOVERY" == prepare || "$VASA_RECOVERY" == activate || "$VASA_RECOVERY" == smtp_check || "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]] || exit 1
 VASA_RELEASE_SHA=${VASA_RELEASE_SHA:-}
 VASA_MIGRATION_SQL_SHA256=${VASA_MIGRATION_SQL_SHA256:-}
+VASA_SMTP_TEST_RECIPIENT=${VASA_SMTP_TEST_RECIPIENT:-}
 if [[ "$VASA_RECOVERY" == activate ]]; then
   [[ "$VASA_RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]] || exit 1
   [[ "$VASA_MIGRATION_SQL_SHA256" =~ ^[0-9a-f]{64}$ ]] || exit 1
+elif [[ "$VASA_RECOVERY" == smtp_check ]]; then
+  [[ "$VASA_RELEASE_SHA" =~ ^[0-9a-f]{40}$ && -z "$VASA_MIGRATION_SQL_SHA256" ]] || exit 1
+  [[ ${#VASA_SMTP_TEST_RECIPIENT} -le 254 && "$VASA_SMTP_TEST_RECIPIENT" =~ ^[A-Za-z0-9][A-Za-z0-9._%+-]{0,63}@[A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z]{2,63}$ ]] || exit 1
 else
   [[ -z "$VASA_RELEASE_SHA" && -z "$VASA_MIGRATION_SQL_SHA256" ]] || exit 1
 fi
+[[ "$VASA_RECOVERY" == smtp_check || -z "$VASA_SMTP_TEST_RECIPIENT" ]] || exit 1
 [[ "$VASA_RECOVERY" == none || ( "$VASA_DEPLOY_MODE" == check && "$VASA_PROVIDER_SMOKE" == false ) ]] || exit 1
 [[ "$VASA_PROVIDER_SMOKE" == false || "$VASA_PROVIDER_SMOKE" == true ]] || exit 1
 [[ "$VASA_PROVIDER_SMOKE" == false || "$VASA_DEPLOY_MODE" == deploy ]] || exit 1
@@ -83,4 +88,4 @@ ssh -F /dev/null -T -p 22 -i "$vasa_ssh_dir/key" \
   -o ConnectTimeout=15 -o ConnectionAttempts=1 -o LogLevel=ERROR \
   -o ServerAliveInterval=15 -o ServerAliveCountMax=4 \
   "$VASA_VPS_USER@$VASA_VPS_HOST" \
-  "python3 - '$VASA_DEPLOY_MODE' '$GITHUB_SHA' '$VASA_PROVIDER_SMOKE' '$VASA_RECOVERY' '$VASA_RELEASE_SHA' '$VASA_MIGRATION_SQL_SHA256'" < "$vasa_remote_payload"
+  "python3 - '$VASA_DEPLOY_MODE' '$GITHUB_SHA' '$VASA_PROVIDER_SMOKE' '$VASA_RECOVERY' '$VASA_RELEASE_SHA' '$VASA_MIGRATION_SQL_SHA256' '$VASA_SMTP_TEST_RECIPIENT'" < "$vasa_remote_payload"

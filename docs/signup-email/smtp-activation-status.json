@@ -1,0 +1,43 @@
+{
+  "baseline_commit": "62f1d3c5500781e3606e3e8dc64525d24fcc2026",
+  "sending_domain": "send.litatech.xyz",
+  "domain_verification": "operator reported verified; not inferred from mock delivery",
+  "sender": "VASA <noreply@send.litatech.xyz>",
+  "recipient_privately_provided": true,
+  "credential_entry": "private VPS TTY only; no chat secret field available",
+  "smtp_authentication": "not run; protected key unavailable",
+  "smtp_message_acceptance": "not run",
+  "actual_mailbox_delivery": "not confirmed",
+  "public_signup_enabled": false,
+  "live_auth_email_workflows": "blocked on protected configuration, real inbox receipt and permitted activation",
+  "baseline_actions": {
+    "runtime_investigation": 39098676524,
+    "instance_readonly": 39098678599
+  },
+  "baseline_health": {
+    "five_services_healthy": true,
+    "all_restart_counts": 0,
+    "schema": "0007",
+    "registered_instances": 1,
+    "upstream_instances": 1,
+    "whatsapp_connected": false,
+    "whatsapp_logged_in": false
+  },
+  "activation": "not attempted; unchanged offline-instance gate does not pass",
+  "previous_active_release": "858b5f853957d719a34ea96f28b5ea726100d402",
+  "key_used": false,
+  "no_evolution_or_tunnel_change": true,
+  "preparation": "pending current code verification",
+  "automated_verification": {
+    "python_tests": 1508,
+    "duration_seconds": 81.95,
+    "focused_operator_and_deployment_tests": 116,
+    "real_public_layouts": 10,
+    "ruff": "pass",
+    "format": "pass",
+    "strict_application_mypy": "pass",
+    "operator_script_mypy": "pass",
+    "actionlint": "pass",
+    "shell_syntax": "pass"
+  }
+}

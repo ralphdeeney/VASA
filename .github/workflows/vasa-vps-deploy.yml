@@ -12,16 +12,21 @@ on:
       recovery:
         description: Recovery inspection, preparation, or explicitly approved live migration/activation (check mode only)
         type: choice
-        options: [none, investigate, prepare, activate, evolution_check, evolution_deploy]
+        options: [none, investigate, prepare, activate, smtp_check, evolution_check, evolution_deploy]
         default: none
         required: false
       release_sha:
-        description: Exact operator-approved immutable release SHA (activate only)
+        description: Exact prepared immutable release SHA (activate or smtp_check)
         type: string
         default: ''
         required: false
       migration_sql_sha256:
         description: SHA256 of operator-reviewed SQL (activate only; never automatic)
+        type: string
+        default: ''
+        required: false
+      smtp_test_recipient:
+        description: Explicit operator test mailbox (smtp_check only; never an API key)
         type: string
         default: ''
         required: false
@@ -63,6 +68,8 @@ on:
       - 'deploy/evolution_backups.py'
       - 'deploy/evolution_call_gate.py'
       - 'deploy/evolution_instance_check.py'
+      # Masked operator credential entry is not an application replacement.
+      - 'scripts/configure_smtp.py'
       - 'docs/**'
       - 'tests/**'
       - '*.md'
@@ -87,7 +94,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Require successful CI before automatic application deployment
-        if: github.event_name == 'push' || inputs.mode != 'check' || inputs.recovery == 'evolution_deploy' || inputs.recovery == 'activate'
+        if: github.event_name == 'push' || inputs.mode != 'check' || inputs.recovery == 'evolution_deploy' || inputs.recovery == 'activate' || inputs.recovery == 'smtp_check'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 deploy/wait_ci.py
@@ -130,6 +137,7 @@ jobs:
           VASA_SAAS_ACCEPTANCE: ${{ github.event_name == 'workflow_dispatch' && inputs.saas_acceptance && 'true' || 'false' }}
           VASA_DEPLOY_MODE: ${{ github.event_name == 'push' && 'deploy' || inputs.mode }}
           VASA_RELEASE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.release_sha || '' }}
+          VASA_SMTP_TEST_RECIPIENT: ${{ github.event_name == 'workflow_dispatch' && inputs.smtp_test_recipient || '' }}
           VASA_MIGRATION_SQL_SHA256: ${{ github.event_name == 'workflow_dispatch' && inputs.migration_sql_sha256 || '' }}
           VASA_RECOVERY: ${{ github.event_name == 'workflow_dispatch' && inputs.recovery || 'none' }}
           VASA_PROVIDER_SMOKE: ${{ github.event_name == 'workflow_dispatch' && inputs.provider_smoke && 'true' || 'false' }}
