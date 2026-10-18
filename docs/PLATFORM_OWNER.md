@@ -14,18 +14,25 @@ The UI preserves confirmations and last-owner/platform-role protections.
 
 ## Initial owner grant
 
-`VASA platform owner setup` is a manual-only, trusted repository-owner workflow;
+`VASA staging VPS` with `mode=check,recovery=owner_setup` is a manual-only,
+trusted repository-owner operation;
 Codex may dispatch it for the operator's explicitly requested setup. It is never
 triggered by a push, request-file flag, public registration or tenant action.
 It reuses the existing pinned SSH/rootless deployment bridge, CI gate, lock,
 service/private/operator-state checks and activated release journal. An exact
 healthy active release and a less-than-one-hour private backup receipt with
-restore verification/checksum are required before the audited transaction.
+restore verification/checksum are required before the audited transaction. Setup
+automatically reuses isolated preparation to take and restore-test a fresh backup
+without activating a release or restarting any service.
 
 The operator supplies the initial password through repository Actions secret
 `VASA_PLATFORM_ADMIN_PASSWORD`. Never commit a default password. The connected
 GitHub integration cannot write repository secrets; the operator must set it.
-Workflow inputs contain only email and exact release SHA. Credentials travel in
+Owner setup uses the existing `release_sha` and legacy-named
+`smtp_test_recipient` inputs for the recovery email, preserving GitHub’s ten-input
+limit and existing SMTP commands. The protected password is never an input.
+A separate feature-branch-only workflow is not used: GitHub will not dispatch it
+until registered on the default branch. No default-branch change is required. Credentials travel in
 0600 temporary files and encrypted SSH/Docker stdin, not command arguments.
 Only fixed allowlisted outcome markers are emitted.
 

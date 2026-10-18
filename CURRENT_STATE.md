@@ -992,3 +992,13 @@ Full local scripts/check.sh:1599 passed, Ruff/format/strict mypy pass. Focused a
 compatibility43 and private workflow/runner36 passed. Browser5widths passes admin
 layout, approved logo, login errors, password form/CSRF/redirect and no customer
 mutations. Workflow actionlint and shell syntax pass. docs/PLATFORM_OWNER.md.
+
+Owner workflow delivery correction: GitHub returned404 for a new manual-only
+workflow present only on the feature branch. Removed that unused separate file;
+owner_setup is now an opt-in recovery class in the established VASA staging VPS
+workflow, preserving the10input limit and using existing release_sha plus
+legacy-named smtp_test_recipient for recovery email. No password is an input.
+Protected secret binds only for explicit owner_setup; trusted actor/context checks
+remain required and fixture/smoke/deploy mixing refused. No default branch or
+repository permissions changed. Fresh backup uses existing isolated preparation,
+not service restart. Actionlint/shell and36 focused bridge/runner tests passed.
