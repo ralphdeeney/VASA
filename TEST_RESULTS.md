@@ -1022,3 +1022,17 @@ schema0007 already current, no live migration. Services/private/operator files
 unchanged. Next: fresh no-call/instance preflight after phone-owner pairing, then
 existing guarded isolated activation with reviewed0007SQL hash. Do not restart
 voice/Evolution, remove accounts, or weaken instance checks to force deployment.
+
+Minimal workspace ACTIVATED after operator confirmed pending-account pairing.
+Fresh preflight39105477787 passed paired-device verification for2 registered/
+upstream instances, both connected/logged in, zero durable/Redis calls and media
+sockets. Activation39105510096 SUCCEEDED: VASA_RELEASE_ACTIVATION_OK and
+VASA_DEPLOYMENT_OK. Actual app/voice release a4846de5ed90bb7caa6f11e2dee1b0ec636fe35e;
+backup restoration/rollback verified, schema0007 already current (no live
+migration), Evolution/dependencies/operator/private files preserved. Public
+login/ready200, anonymous dashboard/admin API401. Served dashboard.js, styles.css
+and approved logo match source byte-for-byte. Independent postcheck39105608701
+passed both accounts connected/logged in and existing pool/no-call gates.
+Admin UI already exists at /admin with server-enforced platform-super-admin
+authorization; organization ownership does not grant platform access. No role
+assignment was made. Customer workspace remains /dashboard.
