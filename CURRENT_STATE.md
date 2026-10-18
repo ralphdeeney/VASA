@@ -1002,3 +1002,34 @@ Protected secret binds only for explicit owner_setup; trusted actor/context chec
 remain required and fixture/smoke/deploy mixing refused. No default branch or
 repository permissions changed. Fresh backup uses existing isolated preparation,
 not service restart. Actionlint/shell and36 focused bridge/runner tests passed.
+
+## Platform admin deployment VERIFIED; owner private-input gate
+
+Actual app/voice release3608af7448609d175030e8bbc123365e742b5029 activated in
+Actions39118833129: VASA_RELEASE_ACTIVATION_OK / VASA_DEPLOYMENT_OK. CI39118612923
+passed1599 tests. Fresh preflight39118640181:2 paired/connected/logged-in accounts,
+calls0. Backup restoration/rollback verified; schema0007 current (no live SQL
+migration), operator/private files and Evolution/dependencies preserved. Public
+/admin/login200, anonymous/admin401 and/api/saas/admin/account401. Served
+admin.js/admin-login.js/admin.css exactly match tested source.
+
+Live disposable browser39118952372 passed login/sessions, tenant/platform access,
+admin directory/audit, admin PASSWORD ROTATION + re-login, responsive UI and logout;
+fixture cleanup confirmed. These are disposable test accounts, not the owner's
+credentials. Email-link acceptance was not run and the legacy blocked_smtp harness
+label is not evidence of a new SMTP failure.
+
+Authorized real owner setup39119041534 was attempted with valid trusted actor,
+branch and successful CI. It stopped at PLATFORM_OWNER_PRIVATE_INPUT_REQUIRED,
+BEFORE SSH execution/DB grant. Safe runner presence diagnostic confirmed
+VASA_PLATFORM_ADMIN_PASSWORD binding ABSENT. No real owner role/password changed.
+The GitHub integration cannot write repository secrets; operator was asked to save
+the chosen initial password privately under that name. Do not claim owner login
+ready, hardcode a default or bypass protected input. Resume same owner_setup on
+confirmed secret; it automatically prepares a fresh restore-tested backup, verifies
+active release and grants once idempotently, then real HTTPS login/account/logout.
+Full evidence docs/platform-admin/activation.json. UI preview uses fixture data.
+
+Independent postcheck39119183117 passed pool/no-call/paired-device gates; both
+registered WhatsApp accounts remain connected and logged in after UI deployment
+and disposable acceptance. Owner-input refusal caused no service or data change.

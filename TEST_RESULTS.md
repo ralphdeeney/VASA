@@ -1051,3 +1051,15 @@ stderr. HTTP owner verification closes its authenticated session even on failure
 Browser5widths320/375/393/768/1440 passed layout/brand/forms with test data, no
 page errors or customer mutations. No real password has entered source/tests.
 Live verification deferred until CI, safe activation and protected setup input.
+
+Platform admin live result: activation39118833129 and exact-sourceCI39118612923
+succeeded (1599 tests). Live disposable browser39118952372 passed six acceptance
+stages including actual admin password rotation/session revocation/re-login and
+fixture cleanup. Public admin login200; anonymous HTML/admin API401; assets exact.
+Owner grant39119041534 correctly refused missing protected password before SSH;
+no real credential/role change. This is an external private-configuration gate,
+not a live test failure of the disposable admin/password functionality.
+
+Independent postcheck39119183117 passed pool/no-call/paired-device gates; both
+registered WhatsApp accounts remain connected and logged in after UI deployment
+and disposable acceptance. Owner-input refusal caused no service or data change.

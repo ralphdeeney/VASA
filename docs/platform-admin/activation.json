@@ -1,0 +1,46 @@
+{
+  "deployed_release": "3608af7448609d175030e8bbc123365e742b5029",
+  "ci_run": 39118612923,
+  "tests_passed": 1599,
+  "activation_run": 39118833129,
+  "activation_markers": [
+    "VASA_RELEASE_ACTIVATION_OK",
+    "VASA_DEPLOYMENT_OK"
+  ],
+  "schema": "0007 already current; no live migration applied",
+  "public_login": "/admin/login",
+  "public_login_status": 200,
+  "anonymous_admin_status": 401,
+  "anonymous_admin_account_status": 401,
+  "served_admin_assets_match_source": true,
+  "live_acceptance_run": 39118952372,
+  "live_acceptance_passed": [
+    "login_session_persistence",
+    "workspace_tenant_platform_boundaries",
+    "admin_directory_audit",
+    "admin_password_rotation",
+    "mobile_desktop",
+    "logout_revocation"
+  ],
+  "disposable_fixture_cleanup": "LIVE_SAAS_FIXTURE_CLEANUP_OK",
+  "real_owner_setup_run": 39119041534,
+  "real_owner_setup": "blocked before SSH execution: PLATFORM_OWNER_PRIVATE_INPUT_REQUIRED",
+  "protected_password_binding": "absent in the Actions runner",
+  "real_owner_role_changed": false,
+  "real_owner_password_changed": false,
+  "owner_email_supplied_privately": true,
+  "external_dependency": "Operator must save VASA_PLATFORM_ADMIN_PASSWORD as a repository Actions secret; connected GitHub authentication cannot write it",
+  "whatsapp_accounts_before": 2,
+  "both_connected_and_logged_in_before": true,
+  "evolution_not_restarted": true,
+  "runtime_secrets_and_operator_files_preserved": true,
+  "email_link_flows_exercised": false,
+  "full_human_live_call_exercised": false,
+  "postcheck": {
+    "run": 39119183117,
+    "marker": "EVOLUTION_POOL_PREFLIGHT_OK",
+    "both_whatsapp_connected": true,
+    "both_whatsapp_logged_in": true,
+    "no_active_calls": true
+  }
+}
