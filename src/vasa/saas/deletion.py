@@ -71,17 +71,13 @@ async def erase_organization(request: Request, tenant_id: UUID, name: str, actor
                 if instances and client is None:
                     raise HTTPException(503, "deletion_dependency_unavailable")
                 present = await client.owned_instance_ids() if instances else set()
-                connected = []
+                # Inspect every owned account before mutation. The pinned
+                # DELETE implementation logs out/disconnects the owned client
+                # and removes its registration. Do not pre-disconnect: that API
+                # signals asynchronous goroutines and is not a logout receipt.
                 for instance in instances:
                     if instance.external_id in present:
-                        state = await client.status(instance.external_id)
-                        if state.connected or state.logged_in:
-                            connected.append(instance)
-                for instance in connected:
-                    await client.disconnect(instance.external_id)
-                    state = await client.status(instance.external_id)
-                    if state.connected or state.logged_in:
-                        raise HTTPException(409, "disconnect_whatsapp_first")
+                        await client.status(instance.external_id)
                 for instance in instances:
                     if instance.external_id in present:
                         await client.delete_instance(instance.external_id)

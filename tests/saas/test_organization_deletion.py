@@ -118,18 +118,12 @@ async def test_delete_solo_login_is_removed(saas_harness):
 
 
 @pytest.mark.integration
-@pytest.mark.parametrize("gate", ["connected", "logged_in", "durable", "redis", "upstream"])
+@pytest.mark.parametrize("gate", ["durable", "redis", "upstream"])
 async def test_delete_fails_closed_before_any_connection_removal(saas_harness, gate):
     h = saas_harness
     c, csrf, path, data, _, removed = await setup(h)
     await suspend(h)
-    if gate in {"connected", "logged_in"}:
-
-        async def status(_):
-            return SimpleNamespace(connected=gate == "connected", logged_in=gate == "logged_in")
-
-        h.evolution.status = status
-    elif gate == "upstream":
+    if gate == "upstream":
 
         async def owned():
             raise EvolutionError("unavailable")
@@ -221,23 +215,19 @@ async def test_suspended_workspace_cannot_admit_new_durable_call(saas_harness):
 
 
 @pytest.mark.integration
-async def test_confirmed_erase_disconnects_only_selected_call_free_accounts(saas_harness):
+async def test_confirmed_erase_uses_owned_delete_without_async_predisconnect(saas_harness):
     h = saas_harness
     c, csrf, path, data, _, removed = await setup(h)
     await suspend(h)
-    online = True
-    disconnected = []
 
     async def status(identifier):
         assert identifier == h.instances[1].external_id
-        return SimpleNamespace(connected=online, logged_in=online)
+        return SimpleNamespace(connected=True, logged_in=True)
 
     async def disconnect(identifier):
-        nonlocal online
-        disconnected.append(identifier)
-        online = False
+        pytest.fail("Do not use asynchronous predisconnect as a logout receipt")
 
     h.evolution.status = status
     h.evolution.disconnect = disconnect
     assert c.post(path, json=data, headers={"x-csrf-token": csrf}).status_code == 200
-    assert disconnected == removed == [h.instances[1].external_id]
+    assert removed == [h.instances[1].external_id]

@@ -1080,7 +1080,8 @@ cards and membership rows are compact.
 
 Organization erasure is explicit, password/CSRF/name-confirmed and platform-only.
 Requires a separately suspended organization and no durable/Redis calls.
-Owned upstream accounts are disconnected and verified offline before removal. Uses authenticated ownership inventory,
+The pinned owned DELETE API handles logout/disconnection and registration removal;
+full authenticated inventory verifies removal before local deletion. Uses authenticated ownership inventory,
 targeted upstream removal and verification before local FK cascade. On uncertain
 upstream outcome local mappings remain for ownership-verified reconciliation.
 Shared identities are rehomed to another membership; own/current platform
@@ -1102,3 +1103,20 @@ call-free disconnect case (all12 deletion cases pass). Admin action browser at
 5widths passed badges/green feedback/exact conflict reason/typed deletion/CSRF;
 existing platform admin login/password browser also passes. Workflow and shell
 validation plus whitespace checks pass. Pending exact-SHA CI and safe activation.
+
+Pinned-source review found disconnect is an asynchronous kill-channel signal,
+not a reliable logout receipt. Erasure therefore uses the existing owned DELETE
+API directly (which handles logout/disconnection) after suspended/no-call gates,
+then verifies disappearance in authenticated inventory. No Evolution source or
+transport change. Focused regression prevents accidental pre-disconnect use.
+
+Pinned-API final suite:1617 tests passed88.79s, Ruff/format/strict mypy pass.
+Read-only39121807464 SUCCEEDED with new sanitized call evidence:284 received/78
+sentframes,0completedturns, two empty-text-path STTfinalizations (14/12ms), no
+THINKING/LLM stage, TTSfirstaudio415/1033ms, receivegaprecovery1981/1129ms,
+remote termination/upstream stop, no runtime error. Exact audio/recognition and
+WhatsApp reconnect cause remains unproven. Evidence docs/call-recovery/.
+Both registered accounts remain connected/loggedin; calls0. No live mutation.
+CI196e8df39121781760 passed. Its normal canonical push job39121781727 was
+cancelled before SSH; no remote changes. Await final source CI and isolated
+activation; no Evolution restart/replacement or real customer erasure performed.

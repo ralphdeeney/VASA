@@ -1,0 +1,29 @@
+{
+  "actions_run_id": 39121807464,
+  "scope": "bounded recent voice and Evolution logs; read-only, sanitized structural metadata",
+  "active_calls_at_check": {"database": 0, "redis": 0},
+  "registered_accounts": 2,
+  "connected_and_logged_in_accounts": 2,
+  "observed_call": {
+    "received_frames": 284,
+    "sent_frames": 78,
+    "completed_turns": 0,
+    "interruptions": 0,
+    "runtime_error": null,
+    "receive_recovery_ms": [1981, 1129],
+    "stt_finalization_ms": [14, 12],
+    "tts_first_audio_ms": [415, 1033],
+    "states": ["CONNECTED", "LISTENING", "SPEAKING", "LISTENING", "TRANSCRIBING", "LISTENING", "TRANSCRIBING", "LISTENING", "ENDING", "ENDED"],
+    "terminal_markers": ["remote_terminate", "upstream_stop"],
+    "llm_thinking_observed": false
+  },
+  "interpretation": "TTS generated and transmitted audio. Receive gaps recovered. Both transcription responses returned to listening without entering thinking. respond() takes this path for empty transcription after the generation check. No completed caller-response turn was observed.",
+  "not_proven": [
+    "Exact cause of empty recognition output",
+    "Why WhatsApp displayed Reconnecting",
+    "Whether source audio contained intelligible speech",
+    "Whether transport rebind or caller network caused the gaps",
+    "A fix for reconnect or audio distortion"
+  ],
+  "privacy": "No audio, transcript, caller or instance identifier, prompt, provider content or credential retained."
+}

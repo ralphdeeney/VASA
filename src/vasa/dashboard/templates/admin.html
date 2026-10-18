@@ -51,7 +51,7 @@
         <h2 id="admin-delete-title">Delete organization</h2>
         <p id="admin-delete-scope"></p>
         <p>This permanently removes this workspace, its WhatsApp registrations, agents, knowledge and call history. Shared users keep their other workspaces. Backups follow the existing retention policy.</p>
-        <p>Suspend the organization first. After verifying no calls are active, deletion disconnects and removes only its WhatsApp registrations. Active calls or unknown connection state block deletion.</p>
+        <p>Suspend the organization first. After verifying no calls are active, the owned deletion API disconnects and removes only its WhatsApp registrations. Active calls or unknown connection state block deletion.</p>
         <label for="admin-delete-name">Type the exact organization name</label><input id="admin-delete-name" required maxlength="200" autocomplete="off" />
         <label for="admin-delete-password">Your current platform password</label><input id="admin-delete-password" type="password" required minlength="8" maxlength="256" autocomplete="current-password" />
         <p id="admin-delete-message" role="status" aria-live="polite"></p>
