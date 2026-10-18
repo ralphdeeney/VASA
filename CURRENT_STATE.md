@@ -919,3 +919,19 @@ verified, schema0007 already current (no live migration). Dependencies/Evolution
 operator/private files unchanged. Public login/readiness200, dashboard401; served
 JS/CSS match the tested commit byte-for-byte. Human QR scan was not performed
 and no pairing state was changed for testing.
+
+## 2026-10-18 — Minimal workspace, brand and linked number
+
+Compact sage setup summary, restrained section navigation, original first-party
+VASA logo in dashboard header, hidden empty notice, and linked-number display.
+Number uses new authenticated tenant-scoped /instances/{id}/phone lookup against
+pinned Evolution /instance/info/{id}; returns only validated +digits, never the
+raw record/token/JID. Missing metadata is explicit and never breaks call/status.
+No Evolution modification/restart, provider/schema change or pairing action.
+About-business/Knowledge guidance and Contact & links guidance explain content
+placement and that saved URLs are not imported. Integrations explains existing
+operator-configured n8n/Zapier/custom HTTPS webhook action paths and limitations;
+no native OAuth/self-service connector or arbitrary API executor was introduced.
+Guide: docs/CUSTOMER_WORKSPACE_GUIDE.md. Full suite1565 passed plus Ruff, format,
+strict mypy. Focused46 passed. Browser5widths covers brand, number, draft retention,
+navigation/history, panel overflow and zero mutations. Deployment still pending.

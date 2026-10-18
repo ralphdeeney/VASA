@@ -7,11 +7,11 @@
     <link rel="stylesheet" href="/dashboard/assets/styles.css" />
     <script src="/dashboard/assets/dashboard.js" defer></script>
   </head>
-  <body>
+  <body class="workspace-page">
     <header class="topbar">
-      <a class="wordmark" href="/dashboard" aria-label="VASA dashboard"
-        >VASA<span class="brand-dot" aria-hidden="true"></span
-      ></a>
+      <a class="workspace-brand" href="/dashboard" aria-label="VASA dashboard">
+        <img src="/dashboard/assets/vasa-logo.png" alt="VASA" width="661" height="548" />
+      </a>
       <div class="account-actions">
         <span id="account-email" class="small muted"></span>
         <button
@@ -46,23 +46,11 @@
         class="card product-section"
         aria-labelledby="onboarding-heading"
       >
-        <p class="eyebrow">Getting started</p>
-        <h2 id="onboarding-heading">Make this workspace your own</h2>
-        <p class="small muted">
-          Set up one section at a time using Next and Back. Save your changes
-          in each section before moving on. WhatsApp pairing is always your choice.
-        </p>
-        <ol class="onboarding-steps">
-          <li>
-            <a href="#agent-heading">Configure your assistant and greeting</a>
-          </li>
-          <li>
-            <a href="#connections-heading"
-              >Connect your WhatsApp account using QR pairing</a
-            >
-          </li>
-          <li><a href="#knowledge-heading">Add your business knowledge</a></li>
-        </ol>
+        <div class="setup-heading">
+          <div><p class="eyebrow">Quick setup</p><h2 id="onboarding-heading">Ready for your next call.</h2></div>
+          <p class="small muted">Assistant → WhatsApp → Knowledge</p>
+        </div>
+        <p class="small muted">One section at a time. Save your changes before moving on.</p>
       </section>
       <nav class="workspace-nav" aria-label="Workspace sections">
         <a href="#agent-heading">Agent</a
@@ -101,12 +89,13 @@
           <div class="wide">
             <label for="business-description">About your business</label
             ><textarea
-              id="business-description"
+              id="business-description" aria-describedby="business-description-help"
               maxlength="2000"
               rows="3"
               disabled
             ></textarea>
           </div>
+          <p id="business-description-help" class="small muted wide">A short overview: what you do, who you help, and your style. Put detailed prices, policies, and FAQs in Knowledge.</p>
           <div class="wide">
             <label for="instructions">How should your assistant help?</label
             ><textarea
@@ -175,6 +164,7 @@
             </div>
             <span id="connection-badge" class="badge">No account selected</span>
           </div>
+          <p id="connected-number" class="connected-number" aria-live="polite" hidden></p>
           <p id="connection-message" class="muted">
             Select an account or add one to connect WhatsApp.
           </p>
@@ -231,9 +221,13 @@
       <section class="card product-section" data-workspace-section="knowledge" aria-labelledby="knowledge-heading">
         <h2 id="knowledge-heading">Business knowledge</h2>
         <p class="muted small">
-          Add helpful facts or questions and answers your assistant can use
-          during calls.
+          The facts your assistant answers from: services, prices, hours, policies, and FAQs.
+          Keep “About your business” short; add the detail here.
         </p>
+        <details class="inline-help"><summary>Where do website, social links, and contact details go?</summary>
+          <p class="small muted">Add a source titled “Contact &amp; links” with your website, social profiles, address, email, and opening hours. Add services, pricing, and policies as separate sources so they are easier to maintain.</p>
+          <p class="small muted">Saving a link does not import its pages. Paste the relevant text or upload a document. Automatic website and social-media import is not available yet.</p>
+        </details>
         <form id="knowledge-form" class="stack">
           <div>
             <label for="knowledge-name">Title</label
@@ -241,7 +235,7 @@
           </div>
           <div>
             <label for="knowledge-text"
-              >Text or frequently asked questions</label
+              >Facts, links, or frequently asked questions</label
             ><textarea
               id="knowledge-text"
               rows="6"
@@ -326,9 +320,18 @@
       >
         <h2 id="integrations-heading">Integrations</h2>
         <p class="muted">
-          Tool Gateway connections are managed by your operator. Credentials are
-          never displayed here. Self-service integration setup is upcoming.
+          Give your assistant approved actions, such as checking availability, creating a booking, or sending a lead to your CRM.
         </p>
+        <div class="integration-options">
+          <article><h3>n8n</h3><p class="small muted">Run an approved workflow through its production webhook.</p></article>
+          <article><h3>Zapier</h3><p class="small muted">Trigger a Zap through an approved webhook.</p></article>
+          <article><h3>Your API</h3><p class="small muted">Connect an approved HTTPS endpoint for a business action.</p></article>
+        </div>
+        <details class="inline-help"><summary>How action setup works</summary>
+          <p class="small muted">Your operator configures the destination, private authentication, allowed inputs, and expected result for each action. The assistant can use only actions approved for this workspace. A webhook service must return the result format VASA expects; an adapter may be needed.</p>
+          <p class="small muted">For setup, provide the workflow or API documentation, the action you want, required fields, and confirmation rules. Send credentials through your operator’s private setup channel. Self-service connections, API-key management, and direct integrations are not available here yet.</p>
+        </details>
+        <h3 class="configured-heading">Configured actions</h3>
         <p
           id="integrations-status"
           class="small muted"

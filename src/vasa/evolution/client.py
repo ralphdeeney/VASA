@@ -192,6 +192,20 @@ class EvolutionCalls:
             raise EvolutionError("invalid_response")
         return ConnectionStatus(data["Connected"], data["LoggedIn"], data["Name"])
 
+    async def phone_number(self, instance_id: str) -> str:
+        """Read only the selected instance's canonical phone JID; never expose its record."""
+        result = await self._request(
+            "GET", "/instance/info/" + validate_id(instance_id), self._admin_key
+        )
+        data = result.get("data")
+        if not isinstance(data, dict) or data.get("id") != instance_id:
+            raise EvolutionError("invalid_response")
+        jid = data.get("jid", "")
+        if not isinstance(jid, str):
+            raise EvolutionError("invalid_response")
+        match = re.fullmatch(r"([1-9][0-9]{6,14})(?::[0-9]{1,5})?@s\.whatsapp\.net", jid)
+        return "+" + match.group(1) if match else ""
+
     async def qr(self, instance_id: str) -> PairingQR:
         result = await self._request("GET", "/instance/qr", self.token_for_instance(instance_id))
         data = result.get("data")

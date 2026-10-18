@@ -514,3 +514,15 @@ email is sent for attestation. Specialist owns only new tests/unit/test_smtp_rec
 regressions for exact file/credential/mode preservation. Root owns integration,
 shared tests/docs/commits and existing guarded activation. No migration or
 Evolution/dependency/network changes; fresh no-call preflight before activation.
+
+## Linked WhatsApp number — 2026-10-18
+
+Authenticated GET /api/whatsapp/instances/{id}/phone first checks trusted tenant
+ownership using the existing instance resolver. Calls the pinned upstream admin
+GET /instance/info/{external_id}; requires matching record id and returns only
+phone_number, with Cache-Control:no-store. Canonical phone JIDs on
+s.whatsapp.net (optional numeric device suffix) become +digits; lid, foreign
+hosts and malformed/absent JIDs do not become fabricated numbers. No upstream
+record, token, JID, number or response body is logged. Status/media/worker and
+pairing contracts unchanged. Dashboard fetches this optional metadata once per
+connected selection or explicit refresh; failure does not mark connection down.

@@ -4,7 +4,7 @@ const elements = Object.fromEntries([
   "account-email", "logout", "page-status", "page-error", "empty-state", "instance-list",
   "create-form", "instance-name", "create-submit", "selected-name", "connection-badge",
   "connection-message", "connection-controls", "connect", "disconnect", "refresh",
-  "qr-panel", "qr-image", "connection-status", "connection-error",
+  "qr-panel", "qr-image", "connected-number", "connection-status", "connection-error",
 ].map((id) => [id, document.getElementById(id)]));
 
 let csrfToken = "";
@@ -15,6 +15,7 @@ let pollTimer = null;
 let activeRequest = null;
 let busy = false;
 let connected = false;
+let numberRequested = false;
 let loaded = false;
 
 class ApiError extends Error {
@@ -151,6 +152,14 @@ async function syncConnection(id) {
       : connection.logged_in === true
         ? "Your account is linked. Connect WhatsApp to restore its connection."
         : "Connect WhatsApp to generate a QR code, then scan it with your phone.";
+    if (connected && !numberRequested) {
+      numberRequested = true;
+      loadConnectedNumber(id);
+    } else if (!connected) {
+      numberRequested = false;
+      elements["connected-number"].hidden = true;
+      elements["connected-number"].textContent = "";
+    }
     if (connected) {
       pairingRequested = false;
       hideQR();
@@ -196,9 +205,28 @@ async function syncConnection(id) {
   }
 }
 
+async function loadConnectedNumber(id) {
+  try {
+    const result = await api(`/api/whatsapp/instances/${encodeURIComponent(id)}/phone`);
+    if (id !== selectedId || !connected) return;
+    const number = result?.phone_number;
+    elements["connected-number"].textContent = typeof number === "string" && /^\+[1-9][0-9]{6,14}$/.test(number)
+      ? number : "Number not available from WhatsApp";
+    elements["connected-number"].hidden = false;
+  } catch {
+    if (id === selectedId && connected) {
+      elements["connected-number"].textContent = "Number unavailable · refresh status to retry";
+      elements["connected-number"].hidden = false;
+    }
+  }
+}
+
 function selectInstance(instance) {
   cancelPolling();
   selectedId = instance.id;
+  numberRequested = false;
+  elements["connected-number"].hidden = true;
+  elements["connected-number"].textContent = "";
   pairingRequested = false;
   connected = false;
   hideQR();
@@ -264,6 +292,7 @@ async function changeConnection(action) {
 elements.connect.addEventListener("click", () => changeConnection("connect"));
 elements.disconnect.addEventListener("click", () => changeConnection("disconnect"));
 elements.refresh.addEventListener("click", () => {
+  numberRequested = false;
   if (!selectedId || busy) return;
   cancelPolling();
   syncConnection(selectedId);

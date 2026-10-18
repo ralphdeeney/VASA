@@ -994,3 +994,14 @@ verified, schema0007 already current (no live migration). Dependencies/Evolution
 operator/private files unchanged. Public login/readiness200, dashboard401; served
 JS/CSS match the tested commit byte-for-byte. Human QR scan was not performed
 and no pairing state was changed for testing.
+
+## 2026-10-18 — Minimal workspace and owned phone metadata
+
+Full scripts/check.sh passed:1565 tests, Ruff, format, strict mypy; known Starlette
+warning only. Focused Evolution/control tests46 passed. New regression coverage:
+canonical phone/device JID normalization, foreign/lid/malformed JID refusal,
+wrong-instance refusal, authenticated ownership/no cross-tenant upstream lookup,
+minimal no-store response. Browser widths320/375/393/768/1280 passed approved logo,
+connected fixture number, navigation/deep links/history, retained drafts, no
+mutation requests or script errors, and section overflow checks. Preview is a
+fixture, not a measured production number. Deployment evidence pending.

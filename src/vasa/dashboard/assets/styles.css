@@ -242,3 +242,33 @@ th { color: var(--muted); font-size: .8rem; }
 @media (max-width: 480px) {
   .section-controls p { order: -1; flex-basis: 100%; text-align: center; }
 }
+
+/* Quiet workspace hierarchy; shared public and identity screens retain their layout. */
+.workspace-brand { display: inline-flex; flex: 0 0 auto; }
+.workspace-brand img { display: block; width: 72px; height: auto; }
+.workspace-page .topbar { padding-top: 10px; padding-bottom: 10px; }
+.workspace-page .workspace { max-width: 1120px; }
+.workspace-page .page-heading h1 { font-size: clamp(1.65rem, 3vw, 2.15rem); }
+.workspace-page [aria-labelledby="onboarding-heading"] { background: #EDF3ED; border: 0; padding: 20px 24px; }
+.setup-heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.setup-heading h2 { margin-bottom: 0; font-size: 1.1rem; }
+.setup-heading .eyebrow { margin-top: 0; }
+.workspace-page .workspace-nav { gap: 6px; padding: 5px; border: 1px solid var(--border); border-radius: 16px; width: fit-content; max-width: 100%; background: white; }
+.workspace-page .workspace-nav a { padding: 10px 14px; border-radius: 11px; text-decoration: none; font-size: .875rem; }
+.workspace-page .workspace-nav a[aria-current="step"] { background: #EDF3ED; font-weight: 600; }
+.workspace-page .card { box-shadow: none; }
+.workspace-page .connection-detail { min-height: 0; }
+.connected-number { font-size: 1.4rem; font-weight: 600; letter-spacing: -.02em; margin: 20px 0 8px; overflow-wrap: anywhere; }
+.inline-help { border-top: 1px solid var(--border); padding: 16px 0; margin: 12px 0; }
+.inline-help summary { cursor: pointer; font-size: .9rem; font-weight: 600; line-height: 1.5; }
+.integration-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 24px 0; }
+.integration-options article { padding: 18px; border: 1px solid var(--border); border-radius: 16px; }
+.integration-options h3 { margin-bottom: 8px; }
+.integration-options p { margin: 0; }
+.configured-heading { margin-top: 24px; }
+.workspace-page #saas-message:empty { display: none; }
+@media (max-width: 640px) {
+  .integration-options { grid-template-columns: 1fr; }
+  .setup-heading > p { margin: 0; }
+  .workspace-page .workspace-nav a { padding: 9px 10px; }
+}

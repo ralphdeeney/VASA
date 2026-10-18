@@ -84,7 +84,7 @@ async def test_unauthenticated_and_unknown_instances_never_reach_upstream(
     harness = control_harness
     client = harness.client()
     path = f"/api/whatsapp/instances/{harness.instances[0].id}"
-    for suffix in ("status", "qr"):
+    for suffix in ("status", "qr", "phone"):
         assert client.get(f"{path}/{suffix}").status_code == 401
     for suffix in ("connect", "disconnect"):
         assert client.post(f"{path}/{suffix}").status_code == 401
@@ -92,7 +92,7 @@ async def test_unauthenticated_and_unknown_instances_never_reach_upstream(
     assert client.post("/api/whatsapp/instances", json={"name": "Forbidden"}).status_code == 401
     csrf = harness.login(client)
     unknown = f"/api/whatsapp/instances/{uuid4()}"
-    for suffix in ("status", "qr"):
+    for suffix in ("status", "qr", "phone"):
         assert client.get(f"{unknown}/{suffix}").status_code == 404
     for suffix in ("connect", "disconnect"):
         assert client.post(f"{unknown}/{suffix}", headers={"x-csrf-token": csrf}).status_code == 404
@@ -176,3 +176,18 @@ async def test_database_commit_failure_compensates_created_upstream_instance(
             .all()
         )
         assert [instance.id for instance in instances] == [harness.instances[0].id]
+
+
+async def test_phone_metadata_is_owned_no_store_and_minimal(
+    control_harness: ControlHarness,
+) -> None:
+    harness = control_harness
+    client = harness.client()
+    harness.login(client)
+    response = client.get(f"/api/whatsapp/instances/{harness.instances[0].id}/phone")
+    assert response.status_code == 200
+    assert response.json() == {"phone_number": "+15551234567"}
+    assert response.headers["cache-control"] == "no-store"
+    assert harness.evolution.calls == [("phone_number", harness.instances[0].external_id)]
+    assert client.get(f"/api/whatsapp/instances/{harness.instances[1].id}/phone").status_code == 404
+    assert len(harness.evolution.calls) == 1

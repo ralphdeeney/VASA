@@ -45,6 +45,10 @@ class EvolutionStub:
         self.record("status", instance_id)
         return SimpleNamespace(connected=True, logged_in=True, name="Paired test instance")
 
+    async def phone_number(self, instance_id: str) -> str:
+        self.record("phone_number", instance_id)
+        return "+15551234567"
+
     async def qr(self, instance_id: str) -> SimpleNamespace:
         self.record("qr", instance_id)
         return SimpleNamespace(qrcode="data:image/png;base64,dGVzdA==", passkey_stage="qr")

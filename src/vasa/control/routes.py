@@ -280,6 +280,19 @@ async def instance_status(
     return {"connected": status.connected, "logged_in": status.logged_in, "name": status.name}
 
 
+@router.get("/api/whatsapp/instances/{id}/phone")
+async def instance_phone(
+    id: UUID, request: Request, context: Authenticated, response: Response
+) -> dict[str, str]:
+    instance = await _instance(request, context, id)
+    response.headers["Cache-Control"] = "no-store"
+    try:
+        number = await _evolution(request).phone_number(instance.external_id)
+    except EvolutionError as error:
+        raise _upstream_error(error) from None
+    return {"phone_number": number}
+
+
 @router.get("/api/whatsapp/instances/{id}/qr")
 async def instance_qr(id: UUID, request: Request, context: Authenticated) -> dict[str, str]:
     instance = await _instance(request, context, id)

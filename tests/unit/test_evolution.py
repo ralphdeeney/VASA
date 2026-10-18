@@ -207,3 +207,40 @@ def test_invalid_events_fail_closed(calls: EvolutionCalls, changes: dict[str, ob
 def test_bounds_and_validates_event_envelope(calls: EvolutionCalls, raw: str) -> None:
     with pytest.raises(EvolutionError, match="invalid_response"):
         calls.parse_event(raw, INSTANCE_ID)
+
+
+@pytest.mark.parametrize(
+    ("jid", "expected"),
+    [
+        ("15551234567@s.whatsapp.net", "+15551234567"),
+        ("15551234567:12@s.whatsapp.net", "+15551234567"),
+        ("123456789@lid", ""),
+        ("15551234567@evil.example", ""),
+        ("<script>@s.whatsapp.net", ""),
+        ("", ""),
+    ],
+)
+async def test_phone_metadata_extracts_only_canonical_number(jid: str, expected: str) -> None:
+    def respond(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/instance/info/" + INSTANCE_ID
+        assert request.headers["apikey"] == ADMIN
+        return httpx.Response(
+            200, json={"data": {"id": INSTANCE_ID, "jid": jid, "token": "never-forward"}}
+        )
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as http:
+        client = EvolutionCalls("http://127.0.0.1:8080", ADMIN, STREAM, INSTANCE, http_client=http)
+        assert await client.phone_number(INSTANCE_ID) == expected
+
+
+async def test_phone_metadata_refuses_wrong_instance() -> None:
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(
+            lambda request: httpx.Response(
+                200, json={"data": {"id": "other", "jid": "15551234567@s.whatsapp.net"}}
+            )
+        )
+    ) as http:
+        client = EvolutionCalls("http://127.0.0.1:8080", ADMIN, STREAM, INSTANCE, http_client=http)
+        with pytest.raises(EvolutionError, match="invalid_response"):
+            await client.phone_number(INSTANCE_ID)
