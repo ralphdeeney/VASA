@@ -487,3 +487,16 @@ Live acceptance runner recovery is root-owned: add only fixed allowlisted bridge
 failure categories, never raw child stdout/stderr or credentials. The first live
 run stopped before fixture preparation; diagnose the hidden bridge failure before
 one bounded retry. No database/provider/authorization bypass or restart is allowed.
+
+## GitHub protected SMTP binding — 2026-10-18
+
+Operator saved VASA_RELOOP_API_KEY as a repository Actions secret and reports the
+existing WhatsApp instance connected. Root owns guarded smtp_configure workflow/
+SSH stdin payload and shared private-file helper refactor, preserving every
+existing setting, service, operator file and release gate. Only the explicit setup
+operation may bind the GitHub secret. It travels in a mode0600 temporary payload
+on pinned encrypted SSH stdin, never remote argv/logs or source; temporary files
+are removed. First creation is private web-only smtp.env0600, verified=false;
+identical retry is idempotent, conflicting/existing attested configuration is never
+overwritten. A specialist audits this path read-only after implementation. No
+Evolution restart/migration or other provider/private change is authorized.

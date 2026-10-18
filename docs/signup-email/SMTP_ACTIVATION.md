@@ -12,6 +12,21 @@ verification. No additional SDK is needed.
 
 ## The only key-entry action
 
+The operator may instead save `VASA_RELOOP_API_KEY` in the repository's protected
+Actions secret interface and report it saved. The explicit `check` /
+`recovery=smtp_configure` operation then binds it only for that operation. Codex
+dispatches the existing workflow; the secret is placed in a mode0600 temporary
+payload, transmitted only over pinned encrypted SSH stdin, and removed by the
+runner's cleanup trap. It never appears in remote argv, log output, source,
+container images or another service's environment. The secret environment binding
+is unset before SSH. The remote controller verifies rootless identity/ownership,
+locks deployment, and preserves every running service, other private file and
+canonical Git state. It creates only the ignored private SMTP file below; an
+identical retry is accepted without rewriting it, while conflicts are refused.
+
+This is the selected route after the operator saved the GitHub secret. The private
+terminal procedure below remains an alternative, not another required step.
+
 Codex has no masked chat secret-entry field. Do not paste the key in chat, a
 prompt, workflow input, issue, shell command or tracked file. After Actions has
 prepared the exact immutable release, the operator opens their own private VPS

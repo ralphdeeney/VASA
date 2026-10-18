@@ -812,3 +812,21 @@ activation was attempted while existing WhatsApp remains disconnected/loggedout.
 Email/signup verification/recovery/invitations remain live-pending; do not enable
 signup until real mailbox receipt is confirmed. Human key entry and existing
 phone-owner pairing remain exact external gates. All existing safety remains.
+
+
+Protected Reloop continuation: operator saved VASA_RELOOP_API_KEY in Actions
+secrets and reports WhatsApp connected. Fresh read-only39100780437 confirms one
+registered/upstream instance, CONNECTED=1 LOGGED_IN=1 and CALL_GATE_OK plus
+POOL_PREFLIGHT_OK. No Evolution or other service mutation. Integration cannot
+list repository secret metadata (403); Actions-only binding will verify availability
+without printing or retrieving its value. Added explicit smtp_configure mode
+through the existing pinned SSH bridge: secret bound only to that operation,
+0600 temporary payload on encrypted stdin, never argv/source/logs, env unset before
+SSH, cleanup trap removes temporary material. Remote preflight/lock protect
+services and non-SMTP private hashes/canonical state. Private SMTPfile0600 is
+created verified=false; identical retry is idempotent; conflict/attested/operator
+files preserved. Gitignore/untracked checks also apply on retries (audited fix).
+Full local1540 tests pass78.50s; focused21 protected setup tests, strict helper/
+payloadmypy, Ruff/format/actionlint/shell/diff pass. No real SMTP submission yet;
+CI-gated setup and preactivation SMTP acceptance are next. Actual mailbox receipt
+remains a separate human gate before enabling signup/claiming email delivery.

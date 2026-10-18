@@ -108,3 +108,41 @@ def test_world_writable_private_directory_refused(private_project, monkeypatch, 
     (private_project / ".local").chmod(0o777)
     assert setup.main() == 1
     assert "unsafe_private_directory" in capsys.readouterr().out
+
+
+def test_protected_secret_entry_is_idempotent_but_never_overwrites(private_project):
+    key = "test-only-reloop-protected-key"
+    assert setup.configure(private_project, secret=key) is True
+    path = private_project / ".local/smtp.env"
+    original = path.read_bytes()
+    assert setup.configure(private_project, secret=key) is False
+    assert path.read_bytes() == original
+    with pytest.raises(setup.ConfigurationRefused, match="existing_configuration_preserved"):
+        setup.configure(private_project, secret="different-private-reloop-key")
+    assert path.read_bytes() == original
+    path.write_text(original.decode().replace("VERIFIED=false", "VERIFIED=true"))
+    verified = path.read_bytes()
+    with pytest.raises(setup.ConfigurationRefused, match="existing_configuration_preserved"):
+        setup.configure(private_project, secret=key)
+    assert path.read_bytes() == verified
+
+
+@pytest.mark.parametrize("git_failure", ["check-ignore", "ls-files"])
+def test_identical_retry_still_requires_ignored_untracked_path(
+    private_project, monkeypatch, git_failure
+):
+    key = "test-only-reloop-protected-key"
+    setup.configure(private_project, secret=key)
+    before = (private_project / ".local/smtp.env").read_bytes()
+    monkeypatch.setattr(
+        setup.subprocess,
+        "run",
+        lambda args, **kw: SimpleNamespace(
+            returncode=(1 if args[1] == "check-ignore" else 0)
+            if args[1] == git_failure
+            else (0 if args[1] == "check-ignore" else 1)
+        ),
+    )
+    with pytest.raises(setup.ConfigurationRefused, match="private_path_not_ignored"):
+        setup.configure(private_project, secret=key)
+    assert (private_project / ".local/smtp.env").read_bytes() == before
