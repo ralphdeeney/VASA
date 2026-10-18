@@ -1,17 +1,26 @@
 """Platform administration: metadata directories and explicitly confirmed actions."""
 
+import asyncio
 from datetime import UTC, datetime
 from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel, ConfigDict
-from sqlalchemy import func, or_, select
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import func, or_, select, update
+from sqlalchemy.exc import SQLAlchemyError
 
-from vasa.control.auth import require_csrf
+from vasa.control.auth import (
+    SESSION_COOKIE,
+    authenticate_password,
+    check_login_limit,
+    hash_password,
+    require_csrf,
+)
 from vasa.control.models import User, WhatsAppInstance
 from vasa.saas.models import (
     AuditEvent,
+    AuthToken,
     Membership,
     OrganizationProfile,
     PlatformRole,
@@ -439,3 +448,60 @@ async def review(
             )
         )
     return {"status": "reviewed"}
+
+
+class PasswordChangeInput(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    current_password: str = Field(min_length=8, max_length=256, repr=False)
+    new_password: str = Field(min_length=12, max_length=256, repr=False)
+
+
+@router.get("/account")
+async def account(request: Request, response: Response, actor: User = _ADMIN) -> dict[str, str]:
+    response.headers["Cache-Control"] = "no-store"
+    return {"email": actor.email, "username": "admin", "role": "super_admin"}
+
+
+@router.post("/password", dependencies=[Depends(require_csrf)])
+async def change_password(
+    payload: PasswordChangeInput, request: Request, response: Response, actor: User = _ADMIN
+) -> dict[str, str]:
+    await check_login_limit(request)
+    if payload.current_password == payload.new_password:
+        raise HTTPException(422, "different_password_required")
+    try:
+        async with request.app.state.database.session() as session, session.begin():
+            user = await session.scalar(select(User).where(User.id == actor.id).with_for_update())
+            profile = await session.get(UserProfile, actor.id, with_for_update=True)
+            if user is None or profile is None or profile.status != "active":
+                raise HTTPException(403, "permission_denied")
+            if not await authenticate_password(payload.current_password, user.password_hash):
+                raise HTTPException(403, "invalid_current_password")
+            try:
+                user.password_hash = await asyncio.to_thread(hash_password, payload.new_password)
+            except ValueError:
+                raise HTTPException(422, "invalid_password") from None
+            profile.auth_version += 1
+            await session.execute(
+                update(AuthToken)
+                .where(
+                    AuthToken.user_id == actor.id,
+                    AuthToken.purpose == "password_reset",
+                    AuthToken.consumed_at.is_(None),
+                )
+                .values(consumed_at=datetime.now(UTC))
+            )
+            session.add(
+                AuditEvent(
+                    actor_id=actor.id,
+                    tenant_id=None,
+                    action="platform.password_changed",
+                    target=str(actor.id),
+                    safe_metadata={},
+                )
+            )
+    except SQLAlchemyError:
+        raise HTTPException(503, "unavailable") from None
+    response.delete_cookie(SESSION_COOKIE, path="/", httponly=True, samesite="strict")
+    response.headers["Cache-Control"] = "no-store"
+    return {"status": "password_changed"}

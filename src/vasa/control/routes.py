@@ -77,19 +77,68 @@ def _upstream_error(error: EvolutionError) -> HTTPException:
     return HTTPException(503, code)
 
 
+class AdminLoginInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    username: str = Field(min_length=1, max_length=100)
+    password: str = Field(min_length=8, max_length=256, repr=False)
+
+
 @router.post("/api/auth/login")
 async def login(payload: LoginInput, request: Request, response: Response) -> dict[str, str]:
+    return await _login(payload.email, payload.password, request, response)
+
+
+@router.post("/api/auth/admin/login")
+async def admin_login(
+    payload: AdminLoginInput, request: Request, response: Response
+) -> dict[str, str]:
+    if not request.app.state.settings.saas_enabled:
+        raise HTTPException(404, "not_found")
+    return await _login(
+        payload.username.strip().lower(), payload.password, request, response, platform_admin=True
+    )
+
+
+async def _login(
+    identifier: str,
+    password: str,
+    request: Request,
+    response: Response,
+    *,
+    platform_admin: bool = False,
+) -> dict[str, str]:
     check_origin(request)
     await check_login_limit(request)
     database: Database = request.app.state.database
     cache: Redis = request.app.state.redis
     try:
         async with database.session() as session:
-            result = await session.execute(select(User).where(User.email == payload.email))
-            user = result.scalar_one_or_none()
-            if not await authenticate_password(
-                payload.password, user.password_hash if user else None
-            ):
+            if platform_admin:
+                from vasa.saas.models import PlatformRole, UserProfile
+
+                candidates = (
+                    list(
+                        (
+                            await session.scalars(
+                                select(User)
+                                .join(PlatformRole, PlatformRole.user_id == User.id)
+                                .join(UserProfile, UserProfile.user_id == User.id)
+                                .where(
+                                    PlatformRole.role == "super_admin",
+                                    UserProfile.status == "active",
+                                )
+                                .limit(2)
+                            )
+                        ).all()
+                    )
+                    if identifier == "admin"
+                    else []
+                )
+                user = candidates[0] if len(candidates) == 1 else None
+            else:
+                result = await session.execute(select(User).where(User.email == identifier))
+                user = result.scalar_one_or_none()
+            if not await authenticate_password(password, user.password_hash if user else None):
                 raise HTTPException(401, "invalid_credentials")
             assert user is not None
             state: dict[str, str | int] = {

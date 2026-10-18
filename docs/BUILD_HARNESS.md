@@ -1137,3 +1137,11 @@ destructive changes, secrets/trust and live calls remain human safety gates.
 Never bypass a hard gate to achieve a green run. Interrupted operations resume
 by verified receipts only. Record real health/connection metrics and distinguish
 container health, WhatsApp pairing/status and human call acceptance.
+
+Platform owner bootstrap is distinct from ordinary deployment: see
+[PLATFORM_OWNER.md](PLATFORM_OWNER.md). Only an explicit operator request and the
+trusted-owner manual workflow may grant the first platform role with protected
+stdin. Never promote organization owners on signup or infer approval from a
+request-file flag. Routine code deployment may publish the UI but must not
+provision/reset an owner. Preserve one-shot audit replay protections and require
+real login/account/logout validation before reporting access operational.

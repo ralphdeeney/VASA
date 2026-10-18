@@ -2,6 +2,7 @@
 (() => {
   let csrf = "";
   let page = 1;
+  let busy = false;
   const message = document.getElementById("admin-message");
   async function api(path, method = "GET", body) {
     const response = await fetch(path, {
@@ -11,6 +12,10 @@
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: AbortSignal.timeout(15000),
     });
+    if (response.status === 401) {
+      window.location.assign("/admin/login");
+      throw new Error("Sign in with your platform account to continue.");
+    }
     if (!response.ok)
       throw new Error(
         response.status === 403
@@ -22,12 +27,30 @@
     return response.json();
   }
   async function safe(action) {
+    if (busy) return;
+    busy = true;
+    const buttons = [...document.querySelectorAll("button")];
+    const disabled = buttons.map((button) => button.disabled);
+    buttons.forEach((button) => { button.disabled = true; });
     try {
       await action();
     } catch (error) {
-      message.textContent = error.message;
+      const approved = [
+        "Platform permission is required.",
+        "This operation was refused by account safety rules.",
+        "The request could not be completed. Check the filters and retry.",
+        "Sign in with your platform account to continue.",
+      ];
+      message.textContent = approved.includes(error.message)
+        ? error.message : "The request could not be completed. Please retry.";
+    } finally {
+      buttons.forEach((button, index) => { button.disabled = disabled[index]; });
+      document.getElementById("admin-previous").disabled = page <= 1;
+      document.getElementById("admin-next").disabled = !hasNext;
+      busy = false;
     }
   }
+  let hasNext = false;
   const columns = {
     users: ["email", "name", "status", "email_verified", "platform_admin"],
     organizations: ["id", "name", "slug", "status"],
@@ -124,7 +147,8 @@
     document.getElementById("admin-page").textContent =
       `Page ${page} · ${data.total} records`;
     document.getElementById("admin-previous").disabled = page <= 1;
-    document.getElementById("admin-next").disabled = page * 20 >= data.total;
+    hasNext = page * 20 < data.total;
+    document.getElementById("admin-next").disabled = !hasNext;
     message.textContent = data.items.length
       ? "Authorized records loaded."
       : "No matching records.";
@@ -133,14 +157,17 @@
     .getElementById("admin-search")
     .addEventListener("submit", (event) => {
       event.preventDefault();
+      if (busy) return;
       page = 1;
       safe(load);
     });
   document.getElementById("admin-previous").addEventListener("click", () => {
+    if (busy) return;
     page = Math.max(1, page - 1);
     safe(load);
   });
   document.getElementById("admin-next").addEventListener("click", () => {
+    if (busy) return;
     page += 1;
     safe(load);
   });
@@ -162,6 +189,48 @@
         message.textContent = "Scoped connections loaded.";
       });
     });
+  async function refreshHealth() {
+    const health = await api("/api/saas/admin/health");
+    document.getElementById("admin-health").textContent = health.status === "ready"
+      ? "Platform checks passed." : "Platform is not ready. Review operational monitoring.";
+  }
+  document.getElementById("admin-health-refresh").addEventListener("click", () => safe(refreshHealth));
+  document.querySelectorAll("[data-directory]").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (busy) return;
+      document.getElementById("admin-directory").value = link.dataset.directory;
+      document.getElementById("admin-status").value = "";
+      document.getElementById("admin-sort").value = "created_at";
+      page = 1;
+      document.querySelectorAll(".admin-navigation a").forEach((item) => item.removeAttribute("aria-current"));
+      link.setAttribute("aria-current", "page");
+      safe(load);
+    });
+  });
+  document.getElementById("admin-directory").addEventListener("change", () => {
+    document.getElementById("admin-status").value = "";
+    document.getElementById("admin-sort").value = "created_at";
+  });
+  document.getElementById("admin-password-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const current = document.getElementById("admin-current-password");
+    const password = document.getElementById("admin-new-password");
+    const confirm = document.getElementById("admin-confirm-password");
+    const status = document.getElementById("admin-password-message");
+    if (password.value !== confirm.value) {
+      status.textContent = "The new passwords do not match.";
+      return;
+    }
+    if (!window.confirm("Change your password and sign out all sessions?")) return;
+    safe(async () => {
+      await api("/api/saas/admin/password", "POST", {
+        current_password: current.value, new_password: password.value,
+      });
+      current.value = ""; password.value = ""; confirm.value = "";
+      status.textContent = "Password changed. Sign in again with your new password.";
+      window.location.assign("/admin/login");
+    });
+  });
   safe(async () => {
     csrf = (await api("/api/auth/me")).csrf_token;
     const overview = await api("/api/saas/admin/overview");
@@ -172,18 +241,16 @@
       "registrations",
     ]) {
       const card = document.createElement("p");
-      card.className = "card";
-      card.textContent = key;
+      card.className = "admin-metric";
+      card.textContent = {users: "Registered users", organizations: "Organizations", connections: "WhatsApp connections", registrations: "Registrations"}[key];
       const count = document.createElement("strong");
       count.textContent = String(overview[key]);
       card.append(count);
       document.getElementById("admin-metrics").append(card);
     }
-    const health = await api("/api/saas/admin/health");
-    document.getElementById("admin-health").textContent =
-      health.status === "ready"
-        ? "Platform checks passed."
-        : "Health information loaded. Review operational monitoring for details.";
+    const account = await api("/api/saas/admin/account");
+    document.getElementById("admin-account").textContent = `${account.username} · ${account.email} · Platform super admin`;
+    await refreshHealth();
     await load();
   });
 })();

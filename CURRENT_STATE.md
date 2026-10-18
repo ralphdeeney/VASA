@@ -966,3 +966,29 @@ passed both accounts connected/logged in and existing pool/no-call gates.
 Admin UI already exists at /admin with server-enforced platform-super-admin
 authorization; organization ownership does not grant platform access. No role
 assignment was made. Customer workspace remains /dashboard.
+
+## 2026-10-18 — Platform owner UI/login/security implementation
+
+Separate /admin/login and redesigned green/cream platform administration UI:
+approved logo, responsive navigation, real totals and directories, scoped
+connections, health and Security. Owner username alias admin is resolved only
+against one unambiguous active database super-admin; normal email login remains
+unchanged. Owners/members cannot acquire platform roles by signing in or through
+public signup. Trusted profile metadata reveals Platform admin navigation only
+for the signed-in platform role. Every backend admin route retains enforcement.
+
+Current-password/CSRF/rate-limited password change increments auth_version,
+invalidates all sessions, consumes pending resets and audits without secrets.
+New passwords12+ chars, initial login keeps existing8+ policy. Server-only audited
+owner provision is staging-scoped, serialized, rejects conflicting owners or
+inactive identities; replay never resets a user-changed password. New manual-only
+trusted-owner workflow reuses Actions SSH bridge/lock/CI and fresh restored backup,
+then real HTTPS login/account/page/logout validation. No secret in source/argv.
+Protected VASA_PLATFORM_ADMIN_PASSWORD is required; Codex GitHub integration has
+no secret-write capability. Operator was asked to save it privately. No owner
+role or password has been changed on staging, and no deployment is yet claimed.
+
+Full local scripts/check.sh:1599 passed, Ruff/format/strict mypy pass. Focused auth
+compatibility43 and private workflow/runner36 passed. Browser5widths passes admin
+layout, approved logo, login errors, password form/CSRF/redirect and no customer
+mutations. Workflow actionlint and shell syntax pass. docs/PLATFORM_OWNER.md.

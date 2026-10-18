@@ -1,107 +1,53 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Platform administration · VASA</title>
-    <link rel="stylesheet" href="/dashboard/assets/styles.css" />
-    <script src="/dashboard/assets/admin.js" defer></script>
-  </head>
-  <body>
-    <a class="skip-link" href="#main">Skip to content</a>
-    <header class="topbar">
-      <a class="wordmark" href="/dashboard">vasa.</a
-      ><a href="/dashboard">Back to workspace</a>
-    </header>
-    <main id="main" class="workspace">
-      <p class="eyebrow">Platform administration</p>
-      <h1>Overview</h1>
-      <p class="muted">
-        Global identity and organization administration. Tenant conversation
-        content is not exposed here.
-      </p>
-      <p id="admin-message" class="notice" role="status" aria-live="polite">
-        Loading authorized platform data…
-      </p>
-      <section
-        id="admin-metrics"
-        class="admin-metrics"
-        aria-label="Platform totals"
-      ></section>
-      <section class="card">
-        <form id="admin-search" class="form-grid">
-          <div>
-            <label for="admin-directory">Directory</label
-            ><select id="admin-directory">
-              <option value="users">Users</option>
-              <option value="organizations">Organizations</option>
-              <option value="registrations">Registrations</option>
-              <option value="audit">Audit history</option>
-            </select>
-          </div>
-          <div>
-            <label for="admin-query">Search</label
-            ><input id="admin-query" maxlength="200" type="search" />
-          </div>
-          <div>
-            <label for="admin-status">Status</label
-            ><select id="admin-status">
-              <option value="">All statuses</option>
-              <option>active</option>
-              <option>pending</option>
-              <option>suspended</option>
-              <option>approved</option>
-              <option>rejected</option>
-            </select>
-          </div>
-          <div>
-            <label for="admin-sort">Sort</label
-            ><select id="admin-sort">
-              <option value="created_at">Created date</option>
-              <option value="email">Email (users)</option>
-              <option value="name">Name (users/organizations)</option>
-            </select>
-          </div>
-          <button type="submit">Apply filters</button>
-        </form>
-        <div class="table-wrap">
-          <table>
-            <caption id="admin-caption">
-              User directory
-            </caption>
-            <thead id="admin-columns"></thead>
-            <tbody id="admin-rows"></tbody>
-          </table>
-        </div>
-        <div class="button-row">
-          <button id="admin-previous" type="button" class="secondary">
-            Previous
-          </button>
-          <p id="admin-page" class="small"></p>
-          <button id="admin-next" type="button" class="secondary">Next</button>
-        </div>
-      </section>
-      <section class="card product-section">
-        <h2>Connections</h2>
-        <p class="small muted">
-          Explicit organization scope is required and audited. Connection
-          identifiers only; no pairing secrets or caller data.
-        </p>
-        <form id="admin-connections" class="stack">
-          <label for="admin-tenant">Organization ID</label
-          ><input
-            id="admin-tenant"
-            required
-            pattern="[a-fA-F0-9-]{36}"
-            maxlength="36"
-          /><button type="submit">View scoped connections</button>
-        </form>
-        <ul id="admin-connection-list"></ul>
-      </section>
-      <section class="card product-section">
-        <h2>System health</h2>
-        <p id="admin-health" role="status">Checking…</p>
-      </section>
-    </main>
-  </body>
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Platform administration · VASA</title>
+  <link rel="stylesheet" href="/dashboard/assets/styles.css" />
+  <link rel="stylesheet" href="/dashboard/assets/admin.css" />
+  <script src="/dashboard/assets/admin.js" defer></script>
+</head>
+<body class="platform-admin">
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="admin-layout">
+  <aside class="admin-sidebar" aria-label="Platform navigation">
+    <a class="admin-brand" href="/admin" aria-label="VASA platform administration"><img src="/dashboard/assets/vasa-logo.png" alt="VASA" width="132" height="109" /></a>
+    <p class="eyebrow">Platform administration</p>
+    <nav class="admin-navigation" aria-label="Administration sections">
+      <a href="#overview" aria-current="page">Overview</a>
+      <a href="#directory" data-directory="users">Users</a>
+      <a href="#directory" data-directory="organizations">Organizations</a>
+      <a href="#directory" data-directory="registrations">Registrations</a>
+      <a href="#connections">Connections</a>
+      <a href="#directory" data-directory="audit">Audit history</a>
+      <a href="#system-health">System health</a>
+      <a href="#security">Security</a>
+    </nav>
+    <div class="admin-sidebar-footer"><a href="/dashboard">Open customer workspace ↗</a><a href="/logout">Sign out</a></div>
+  </aside>
+  <main id="main" class="admin-main">
+    <header id="overview" class="admin-page-heading"><div><p class="eyebrow">VASA control center</p><h1>Your platform, at a glance.</h1><p class="muted">Manage customers and access. Keep every workspace in its own lane.</p></div><span class="admin-role">Platform super admin</span></header>
+    <p id="admin-message" class="notice admin-notice" role="status" aria-live="polite">Loading authorized platform data…</p>
+    <section id="admin-metrics" class="admin-metrics" aria-label="Platform totals"></section>
+    <section id="directory" class="admin-panel">
+      <div class="admin-section-heading"><div><p class="eyebrow">Customer management</p><h2>Platform directory</h2></div><p class="small muted">Changes are permission checked and audited.</p></div>
+      <form id="admin-search" class="admin-filters">
+        <div><label for="admin-directory">Directory</label><select id="admin-directory"><option value="users">Users</option><option value="organizations">Organizations</option><option value="registrations">Registrations</option><option value="audit">Audit history</option></select></div>
+        <div><label for="admin-query">Search</label><input id="admin-query" maxlength="200" type="search" placeholder="Find a record" /></div>
+        <div><label for="admin-status">Status</label><select id="admin-status"><option value="">All statuses</option><option>active</option><option>pending</option><option>suspended</option><option>approved</option><option>rejected</option></select></div>
+        <div><label for="admin-sort">Sort</label><select id="admin-sort"><option value="created_at">Created date</option><option value="email">Email (users)</option><option value="name">Name (users/organizations)</option></select></div>
+        <button type="submit">Apply filters</button>
+      </form>
+      <div class="table-wrap" tabindex="0" role="region" aria-label="Scrollable platform directory"><table><caption id="admin-caption">User directory</caption><thead id="admin-columns"></thead><tbody id="admin-rows"></tbody></table></div>
+      <div class="admin-pagination"><button id="admin-previous" type="button" class="secondary">Previous</button><p id="admin-page" class="small"></p><button id="admin-next" type="button" class="secondary">Next</button></div>
+    </section>
+    <div class="admin-detail-grid">
+      <section id="connections" class="admin-panel"><p class="eyebrow">Scoped access</p><h2>WhatsApp connections</h2><p class="small muted">Look up one organization at a time. Access is audited; pairing secrets and caller data are never shown.</p><form id="admin-connections" class="stack"><label for="admin-tenant">Organization ID</label><input id="admin-tenant" required pattern="[a-fA-F0-9-]{36}" maxlength="36" placeholder="Organization UUID" /><button type="submit" class="secondary">View scoped connections</button></form><ul id="admin-connection-list" class="admin-connection-list"></ul></section>
+      <section id="system-health" class="admin-panel"><p class="eyebrow">Operations</p><h2>System health</h2><p id="admin-health" role="status">Checking…</p><p class="small muted">Readiness reflects backend checks, not a live WhatsApp call test. Provider credentials remain private.</p><button id="admin-health-refresh" type="button" class="secondary">Refresh health</button></section>
+    </div>
+    <section id="security" class="admin-panel"><p class="eyebrow">Your account</p><h2>Security &amp; password</h2><p id="admin-account" class="small muted">Loading platform account…</p><p class="small muted">Choose a unique password of at least 12 characters. Changing it signs out all sessions, including this one.</p><form id="admin-password-form" class="admin-password-grid"><div><label for="admin-current-password">Current password</label><input id="admin-current-password" type="password" minlength="8" autocomplete="current-password" required maxlength="256" /></div><div><label for="admin-new-password">New password</label><input id="admin-new-password" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /></div><div><label for="admin-confirm-password">Confirm new password</label><input id="admin-confirm-password" type="password" autocomplete="new-password" required minlength="12" maxlength="256" /></div><button type="submit">Change password</button></form><p id="admin-password-message" class="small" role="status" aria-live="polite"></p></section>
+    <footer class="admin-footer">Platform access does not expose tenant conversations. Customer data remains scoped and protected.</footer>
+  </main>
+</div>
+</body>
 </html>

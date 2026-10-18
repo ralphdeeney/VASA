@@ -55,7 +55,9 @@ def test_protected_and_error_pages(client: TestClient, path: str, code: int) -> 
     assert client.get(path).status_code == code
 
 
-@pytest.mark.parametrize("asset", ["site.js", "identity.js", "workspace.js", "admin.js"])
+@pytest.mark.parametrize(
+    "asset", ["site.js", "identity.js", "workspace.js", "admin.js", "admin-login.js"]
+)
 def test_scripts_are_served_without_html_injection(client: TestClient, asset: str) -> None:
     response = client.get(f"/dashboard/assets/{asset}")
     assert response.status_code == 200
@@ -83,7 +85,15 @@ class AccessibleForms(HTMLParser):
 
 
 @pytest.mark.parametrize(
-    "template", ["login.html", "identity.html", "dashboard.html", "admin.html", "site.html"]
+    "template",
+    [
+        "login.html",
+        "identity.html",
+        "dashboard.html",
+        "admin.html",
+        "admin-login.html",
+        "site.html",
+    ],
 )
 def test_form_controls_have_unique_ids_and_labels(template: str) -> None:
     parser = AccessibleForms()
@@ -130,3 +140,16 @@ def test_contact_form_requires_capability_and_posts_only_bounded_fields() -> Non
     assert 'fetch("/api/site/contact"' in script
     assert "response.status === 429" in script
     assert "response.status === 503" in script
+
+
+def test_platform_login_has_first_party_assets_and_no_default_credentials(
+    client: TestClient,
+) -> None:
+    client.app.state.settings.saas_enabled = True
+    response = client.get("/admin/login")
+    assert response.status_code == 200
+    assert 'id="admin-username"' in response.text
+    assert 'id="admin-login-password"' in response.text
+    assert "script-src 'self'" in response.headers["content-security-policy"]
+    assert client.get("/dashboard/assets/admin.css").status_code == 200
+    assert 'value="admin"' not in response.text

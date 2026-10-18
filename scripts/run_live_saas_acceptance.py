@@ -15,6 +15,7 @@ PASS_STAGES = frozenset(
         "login_session_persistence",
         "workspace_tenant_platform_boundaries",
         "admin_directory_audit",
+        "admin_password_rotation",
         "mobile_desktop",
         "logout_revocation",
     }
@@ -26,6 +27,7 @@ FAIL_STAGES = frozenset(
         "login_1",
         "tenant_boundaries",
         "admin",
+        "admin_security",
         "responsive",
         "logout",
         "private_result",

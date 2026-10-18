@@ -526,3 +526,18 @@ hosts and malformed/absent JIDs do not become fabricated numbers. No upstream
 record, token, JID, number or response body is logged. Status/media/worker and
 pairing contracts unchanged. Dashboard fetches this optional metadata once per
 connected selection or explicit refresh; failure does not mark connection down.
+
+## Platform owner login/security/UI — 2026-10-18
+
+Root owns Python/auth/provisioning/Actions/tests/docs; platform_admin_ui owns
+admin.html/admin.js and new admin.css/admin-login.html/admin-login.js only.
+POST /api/auth/admin/login accepts username,password and uses existing session
+issuance with server-side active super-admin lookup. Alias admin is accepted
+only for an unambiguous single active platform admin; ordinary email login stays
+unchanged. GET /api/saas/admin/account returns own email,username,role only.
+POST /api/saas/admin/password accepts current_password,new_password, requires
+platform role + CSRF, verifies current password, changes hash transactionally,
+increments auth_version, consumes pending reset tokens, audits without password
+metadata, and revokes sessions. Client redirects to /admin/login after success.
+No credentials or universal default password in source, frontend, fixtures or
+workflow; provisioning must use private protected input and audited role grant.

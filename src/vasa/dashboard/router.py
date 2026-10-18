@@ -127,3 +127,22 @@ async def identity_logo() -> FileResponse:
     return FileResponse(
         _ROOT / "assets" / "vasa-logo.png", media_type="image/png", headers=_HEADERS
     )
+
+
+@router.get("/admin/login")
+async def admin_login_page(request: Request) -> FileResponse:
+    if not request.app.state.settings.saas_enabled:
+        raise HTTPException(status_code=404, detail="not_found")
+    return FileResponse(_ROOT / "templates" / "admin-login.html", headers=_HEADERS)
+
+
+@router.get("/dashboard/assets/admin.css")
+async def admin_styles() -> FileResponse:
+    return FileResponse(_ROOT / "assets" / "admin.css", headers=_HEADERS)
+
+
+@router.get("/dashboard/assets/admin-login.js")
+async def admin_login_script() -> FileResponse:
+    return FileResponse(
+        _ROOT / "assets" / "admin-login.js", media_type="text/javascript", headers=_HEADERS
+    )

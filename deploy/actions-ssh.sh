@@ -9,6 +9,7 @@ case "${VASA_DEPLOY_MODE:-}" in
 esac
 VASA_PROVIDER_SMOKE=${VASA_PROVIDER_SMOKE:-false}
 VASA_RECOVERY=${VASA_RECOVERY:-none}
+[[ "${VASA_OWNER_PROVISION:-false}" == false || "${VASA_OWNER_PROVISION:-false}" == true ]] || exit 1
 [[ "$VASA_RECOVERY" == none || "$VASA_RECOVERY" == investigate || "$VASA_RECOVERY" == prepare || "$VASA_RECOVERY" == activate || "$VASA_RECOVERY" == smtp_configure || "$VASA_RECOVERY" == smtp_verify || "$VASA_RECOVERY" == smtp_check || "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]] || exit 1
 VASA_RELEASE_SHA=${VASA_RELEASE_SHA:-}
 VASA_MIGRATION_SQL_SHA256=${VASA_MIGRATION_SQL_SHA256:-}
@@ -69,6 +70,14 @@ if [[ "$VASA_RECOVERY" == smtp_configure || "$VASA_RECOVERY" == smtp_verify ]]; 
   unset GH_TOKEN
 fi
 unset VASA_RELOOP_API_KEY
+if [[ "${VASA_OWNER_PROVISION:-false}" == true ]]; then
+  [[ "$VASA_DEPLOY_MODE" == check && "$VASA_RECOVERY" == none && "$VASA_PROVIDER_SMOKE" == false ]] || exit 1
+  [[ -z "${VASA_REQUEST_FILE:-}" && -z "${VASA_LIVE_ACCEPTANCE_FILE:-}" ]] || exit 1
+  vasa_remote_payload="$vasa_ssh_dir/owner-task.py"
+  python3 deploy/actions_owner_payload.py > "$vasa_remote_payload"
+  chmod 600 "$vasa_remote_payload"
+fi
+unset VASA_PLATFORM_ADMIN_PASSWORD VASA_OWNER_EMAIL
 if [[ "$VASA_RECOVERY" == evolution_check || "$VASA_RECOVERY" == evolution_deploy ]]; then
   vasa_remote_payload="$vasa_ssh_dir/evolution-task.py"
   python3 deploy/actions_evolution_payload.py > "$vasa_remote_payload"

@@ -154,6 +154,7 @@
         document.getElementById("workspace-select").append(option);
       }
       const profile = await request("/api/saas/profile");
+      document.getElementById("platform-admin-link").hidden = profile.platform_admin !== true;
       document.getElementById("profile-name").value = profile.name;
       document.getElementById("profile-email").textContent = profile.email;
       const organization = await request("/api/saas/organization");

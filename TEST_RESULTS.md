@@ -1036,3 +1036,18 @@ passed both accounts connected/logged in and existing pool/no-call gates.
 Admin UI already exists at /admin with server-enforced platform-super-admin
 authorization; organization ownership does not grant platform access. No role
 assignment was made. Customer workspace remains /dashboard.
+
+## 2026-10-18 — Platform owner tests
+
+1599 full tests passed in82.12s; Ruff/format/strict mypy pass; known Starlette
+warning only. New realSQL/Redis tests cover role-only admin alias, ambiguous
+alias refusal, unchanged email auth, origin/rate limits, CSRF/current-password
+verification, all-session revocation, pending reset consumption and safe audit.
+Provision tests cover initial/existing owner, concurrent serialization, role
+conflicts/inactive identity refusal and replay preserving changed credentials.
+Private-payload tests cover fixed log allowlisting, trusted actor/branch/secret,
+backup freshness/restoration/checksum and release binding; no raw stdout or
+stderr. HTTP owner verification closes its authenticated session even on failure.
+Browser5widths320/375/393/768/1440 passed layout/brand/forms with test data, no
+page errors or customer mutations. No real password has entered source/tests.
+Live verification deferred until CI, safe activation and protected setup input.

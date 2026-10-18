@@ -19,6 +19,7 @@ from vasa.saas.models import (
     Invitation,
     Membership,
     OrganizationProfile,
+    PlatformRole,
     UserProfile,
 )
 from vasa.saas.permissions import require_enabled, require_member
@@ -355,6 +356,7 @@ async def profile(request: Request, context: TenantContext = _CONTEXT) -> dict[s
     async with request.app.state.database.session() as session:
         user = await session.get(User, context.user_id)
         data = await session.get(UserProfile, context.user_id)
+        platform_role = await session.get(PlatformRole, context.user_id)
     if data is None or user is None:
         raise HTTPException(404, "not_found")
     return {
@@ -362,6 +364,7 @@ async def profile(request: Request, context: TenantContext = _CONTEXT) -> dict[s
         "email": user.email,
         "status": data.status,
         "email_verified": data.email_verified_at is not None,
+        "platform_admin": platform_role is not None and platform_role.role == "super_admin",
     }
 
 

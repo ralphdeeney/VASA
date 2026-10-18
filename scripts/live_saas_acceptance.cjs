@@ -62,13 +62,32 @@ async function main() {
     const publicContext=await browser.newContext();
     const publicPage=await publicContext.newPage();
     let scriptError=false; publicPage.on("pageerror",()=>{scriptError=true;});
-    for(const width of [390,1440]) for(const path of ["/","/features","/pricing","/login","/signup","/forgot-password"]) {
+    for(const width of [390,1440]) for(const path of ["/","/features","/pricing","/login","/signup","/forgot-password","/admin/login"]) {
       await publicPage.setViewportSize({width,height:900});
       check((await publicPage.goto(origin+path)).status()===200);
       check(await publicPage.evaluate(()=>document.documentElement.scrollWidth <= innerWidth+1));
     }
     check(!scriptError); await publicContext.close();
     console.log("LIVE_SAAS_PASS=mobile_desktop");
+    stage="admin_security";
+    await admin.goto(origin+"/admin#security");
+    await admin.waitForFunction(()=>!document.querySelector("#admin-password-form button").disabled);
+    const rotated=data.password+"-rotated";
+    await admin.locator("#admin-current-password").fill(data.password);
+    await admin.locator("#admin-new-password").fill(rotated);
+    await admin.locator("#admin-confirm-password").fill(rotated);
+    admin.once("dialog",dialog=>dialog.accept());
+    await admin.locator("#admin-password-form button").click();
+    await admin.waitForURL(origin+"/admin/login");
+    check((await api(admin,"/api/auth/me")).status===401);
+    await admin.goto(origin+"/login");
+    await admin.locator("#email").fill(`acceptance-${data.run}-0@example.invalid`);
+    await admin.locator("#password").fill(rotated);
+    await admin.locator("#login-submit").click();
+    await admin.waitForURL(origin+"/dashboard");
+    for(const cookie of await admin.context().cookies(origin)) if(cookie.name==="vasa_session")sessions.add(cookie.value);
+    check((await api(admin,"/api/saas/admin/account")).status===200);
+    console.log("LIVE_SAAS_PASS=admin_password_rotation");
     stage="logout";
     for(const page of pages) {
       await page.goto(origin+"/logout");
