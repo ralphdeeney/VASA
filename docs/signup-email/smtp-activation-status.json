@@ -7,9 +7,9 @@
   "credential_entry": "protected GitHub Actions VASA_RELOOP_API_KEY; encrypted pinned SSH stdin; never retrieved by Codex",
   "smtp_authentication": "PASSED real VPS STARTTLS with certificate verification and Reloop AUTH",
   "smtp_message_acceptance": "VASA_SMTP_ACCEPTANCE_OK",
-  "actual_mailbox_delivery": "CONFIRMED by operator: received VASA SMTP acceptance test",
-  "public_signup_enabled": false,
-  "live_auth_email_workflows": "blocked on protected configuration, real inbox receipt and permitted activation",
+  "actual_mailbox_delivery": "CONFIRMED by operator",
+  "public_signup_enabled": true,
+  "live_auth_email_workflows": "Real SMTP test received; signup/verification/recovery/invitation link acceptance still requires mailbox interaction",
   "baseline_actions": {
     "runtime_investigation": 39098676524,
     "instance_readonly": 39098678599
@@ -23,9 +23,9 @@
     "whatsapp_connected": false,
     "whatsapp_logged_in": false
   },
-  "activation": "not attempted while actual inbox receipt is pending; active app/voice still858b5f8",
+  "activation": "SUCCEEDED VASA_RELEASE_ACTIVATION_OK and VASA_DEPLOYMENT_OK; Actions39102220594",
   "previous_active_release": "858b5f853957d719a34ea96f28b5ea726100d402",
-  "key_used": false,
+  "key_used": "protected Actions secret only; never retrieved by Codex",
   "no_evolution_or_tunnel_change": true,
   "preparation": {
     "status": "success",
@@ -37,7 +37,7 @@
     "live_services_unchanged": true
   },
   "automated_verification": {
-    "python_tests": 1540,
+    "python_tests": 1557,
     "duration_seconds": 78.5,
     "focused_operator_and_deployment_tests": 116,
     "real_public_layouts": 10,
@@ -56,7 +56,7 @@
     "result": "VASA_SMTP_ACCEPTANCE_OK",
     "smtp_authentication": "passed",
     "message_submitted": true,
-    "mailbox_verified": false,
+    "mailbox_verified": true,
     "running_services_and_private_files_unchanged": true
   },
   "narrow_smtp_compatibility": "only first complete approved web binding permitted; existing SMTP/other providers/voice remain protected",
@@ -100,7 +100,7 @@
     "running_services_unchanged": true,
     "other_private_files_unchanged": true,
     "key_exposed": false,
-    "delivery_verified": false
+    "delivery_verified": true
   },
   "current_whatsapp_readonly": {
     "run": 39100780437,
@@ -123,6 +123,59 @@
   "receipt_confirmation": {
     "operator_confirmed": true,
     "smtp_acceptance_run": 39101294179,
-    "private_attestation": "pending authenticated guarded operation"
+    "private_attestation": "VASA_SMTP_DELIVERY_VERIFIED",
+    "run": 39102037676
+  },
+  "active_release": {
+    "sha": "a1fbcb757c9a08b81a3ada5026393201bb2582e3",
+    "run": 39102220594,
+    "markers": [
+      "VASA_RELEASE_ACTIVATION_OK",
+      "VASA_DEPLOYMENT_OK"
+    ],
+    "schema": "0007 already current; no live migration executed",
+    "operator_files_preserved": true,
+    "dependency_containers_unchanged": true
+  },
+  "live_signup_readonly": {
+    "passed": true,
+    "viewports": [
+      320,
+      375,
+      393,
+      768,
+      1280
+    ],
+    "overflow": false,
+    "logo": "/dashboard/assets/vasa-logo.png",
+    "signup_enabled": true,
+    "email_delivery_available": true,
+    "contact_available": false,
+    "login": 200,
+    "readiness": 200,
+    "anonymous_dashboard": 401,
+    "anonymous_admin": 401,
+    "post_requests": 0
+  },
+  "post_activation_readonly": {
+    "run": 39102304347,
+    "result": "EVOLUTION_POOL_PREFLIGHT_OK",
+    "connected": true,
+    "logged_in": true,
+    "no_active_calls": true
+  },
+  "post_activation_live_saas": {
+    "run": 39102311023,
+    "result": "LIVE_SAAS_ACCEPTANCE_PARTIAL_OK",
+    "passed": [
+      "login_session_persistence",
+      "logout_revocation",
+      "workspace_tenant_platform_boundaries",
+      "admin_directory_audit",
+      "mobile_desktop"
+    ],
+    "fixture_cleanup": "LIVE_SAAS_FIXTURE_CLEANUP_OK",
+    "email_links_exercised": false,
+    "legacy_email_marker": "blocked_smtp is a hardcoded harness limitation; SMTP itself is verified operational"
   }
 }

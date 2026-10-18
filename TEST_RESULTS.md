@@ -939,3 +939,34 @@ attestation, fresh no-call preflight, then existing guarded activation of the
 previously prepared a1fbcb757c9a08b81a3ada5026393201bb2582e3 release, same
 reviewed0007SQLhash and no live migration ifschema0007. No Evolution/network
 changes and no activation claim before VASA_DEPLOYMENT_OK.
+
+## 2026-10-18 — Real SMTP receipt and guarded application activation verified
+
+Operator confirmed inbox receipt of real Reloop SMTP test39101294179.
+Authenticated Actions39102037676 bound that successful run to the private
+delivery flag: VASA_SMTP_DELIVERY_VERIFIED / SMTP_MAILBOX_VERIFIED=true.
+No extra email was sent and the protected API key was never retrieved by Codex.
+CI39102007886 succeeded; local full suite1557 passed, Ruff/format/strict mypy,
+actionlint and shell syntax passed. Fresh no-call preflight39102175893 confirmed
+one registered/upstream WhatsApp instance connected/logged in.
+
+Guarded activation39102220594 SUCCEEDED: VASA_RELEASE_ACTIVATION_OK and
+VASA_DEPLOYMENT_OK. Actual web/voice release is
+a1fbcb757c9a08b81a3ada5026393201bb2582e3. Backup restoration and rollback image
+verified; schema0007 already current, no live migration applied. Existing
+Evolution/dependency containers, private/operator files and ingress preserved.
+
+Read-only real browser checks passed at320/375/393/768/1280px: original PNG logo,
+proportions/alt/CSP/nosniff, no overflow, correct signup footer and enabled form.
+Capabilities report signup/email available, contact unavailable. Login/ready200;
+anonymous dashboard/admin401. No account, mail or provider calls from this check.
+Evidence: docs/signup-email/live-signup-enabled.json. Actual signup verification,
+password-recovery and invitation email-link acceptance remain human mailbox
+interaction gates; SMTP test receipt is not evidence those flows were exercised.
+
+Post-activation independent read-only39102304347 passed no-call/pool health;
+WhatsApp remains connected/logged in. Disposable live browser39102311023 passed
+login/session persistence, logout revocation, tenant/platform boundaries, admin
+directory/audit and mobile/desktop; fixture cleanup confirmed. Email links were
+not exercised: the existing harness hardcodes blocked_smtp, which is now an
+outdated scope label, not a new SMTP failure. Actual SMTP delivery is confirmed.

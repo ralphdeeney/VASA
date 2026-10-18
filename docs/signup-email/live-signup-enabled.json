@@ -1,0 +1,102 @@
+{
+  "scope": "read-only real public staging; no account creation, email, providers or credential access",
+  "records": [
+    {
+      "width": 320,
+      "overflow": false,
+      "logoLoaded": true,
+      "alt": "VASA",
+      "src": "/dashboard/assets/vasa-logo.png",
+      "logoWidth": 238,
+      "logoHeight": 197.3125,
+      "proportional": true,
+      "footer": true,
+      "signupSelfLinks": 0,
+      "signinHelp": true,
+      "submitDisabled": false
+    },
+    {
+      "width": 375,
+      "overflow": false,
+      "logoLoaded": true,
+      "alt": "VASA",
+      "src": "/dashboard/assets/vasa-logo.png",
+      "logoWidth": 260,
+      "logoHeight": 215.546875,
+      "proportional": true,
+      "footer": true,
+      "signupSelfLinks": 0,
+      "signinHelp": true,
+      "submitDisabled": false
+    },
+    {
+      "width": 393,
+      "overflow": false,
+      "logoLoaded": true,
+      "alt": "VASA",
+      "src": "/dashboard/assets/vasa-logo.png",
+      "logoWidth": 260,
+      "logoHeight": 215.546875,
+      "proportional": true,
+      "footer": true,
+      "signupSelfLinks": 0,
+      "signinHelp": true,
+      "submitDisabled": false
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "logoLoaded": true,
+      "alt": "VASA",
+      "src": "/dashboard/assets/vasa-logo.png",
+      "logoWidth": 260,
+      "logoHeight": 215.546875,
+      "proportional": true,
+      "footer": true,
+      "signupSelfLinks": 0,
+      "signinHelp": true,
+      "submitDisabled": false
+    },
+    {
+      "width": 1280,
+      "overflow": false,
+      "logoLoaded": true,
+      "alt": "VASA",
+      "src": "/dashboard/assets/vasa-logo.png",
+      "logoWidth": 260,
+      "logoHeight": 215.546875,
+      "proportional": true,
+      "footer": true,
+      "signupSelfLinks": 0,
+      "signinHelp": true,
+      "submitDisabled": false
+    }
+  ],
+  "statuses": {
+    "/login": 200,
+    "/health/ready": 200,
+    "/dashboard": 401,
+    "/api/saas/admin/users": 401
+  },
+  "capabilities": {
+    "httpStatus": 200,
+    "saas_enabled": true,
+    "email_delivery_available": true,
+    "signup_available": true,
+    "contact_available": false
+  },
+  "png": {
+    "status": 200,
+    "contentType": "image/png",
+    "nosniff": "nosniff"
+  },
+  "summary": {
+    "passed": true,
+    "viewports": 5,
+    "postRequests": 0,
+    "externalRequests": 0,
+    "pageErrors": 0,
+    "accountsCreated": false,
+    "emailSent": false
+  }
+}
